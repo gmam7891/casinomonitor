@@ -77,18 +77,17 @@ def capturar_frame_ffmpeg_imageio(m3u8_url, output_path="frame.jpg", skip_second
         print(f"Erro ao capturar frame: {e}")
         return None
 
-def varrer_url_customizada(url):
+def varrer_url_customizada(url, duracao_analise=30, intervalo_frames=1):
     resultados = []
-    skip_seconds = 0
-    frame_rate = 24  # 24 fps
-    duracao_analise = 24 * 60 * 60  # 24 horas (varredura completa estimada)
-    intervalo_frames = 1  # capturar 1 frame por segundo
     total_frames = duracao_analise // intervalo_frames
+    progresso = st.progress(0, text="🔎 Iniciando varredura...")
+    modelo = st.session_state.get("modelo_ml", None)
 
     for i in range(int(total_frames)):
         skip = i * intervalo_frames
         frame_path = f"custom_frame_{i}.jpg"
-        print(f"Capturando frame no segundo {skip}...")
+        progresso.progress(i / total_frames, text=f"⏱️ Analisando segundo {skip}...")
+
         if capturar_frame_ffmpeg_imageio(url, frame_path, skip_seconds=skip):
             jogo = prever_jogo_em_frame(frame_path)
             if jogo:
@@ -97,11 +96,20 @@ def varrer_url_customizada(url):
                     "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                     "fonte": f"URL personalizada (segundo {skip})"
                 })
-                st.image(frame_path, caption=f"Frame detectado no segundo {skip}", use_column_width=True)
+                st.image(frame_path, caption=f"✅ Frame detectado no segundo {skip}", use_column_width=True)
                 break
             else:
                 os.remove(frame_path)
+
+    progresso.empty()
+
+    if not resultados:
+        st.warning("❌ Nenhuma detecção foi feita na URL.")
+    else:
+        st.success("🎯 Jogo detectado com sucesso!")
+
     return resultados
+
 
 def verificar_jogo_em_live(streamer):
     try:
