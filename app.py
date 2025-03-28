@@ -77,7 +77,7 @@ def capturar_frame_ffmpeg_imageio(m3u8_url, output_path="frame.jpg", skip_second
         print(f"Erro ao capturar frame: {e}")
         return None
 
-def varrer_url_customizada(url, duracao_analise=30, intervalo_frames=1):
+def varrer_url_customizada(url, duracao_analise=86400, intervalo_frames=1):
     resultados = []
     total_frames = duracao_analise // intervalo_frames
     progresso = st.progress(0, text="🔎 Iniciando varredura...")
