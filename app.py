@@ -9,8 +9,6 @@ import numpy as np
 from PIL import Image
 import subprocess
 
-
-
 # ------------------------------
 # CONFIGURAÇÕES INICIAIS
 # ------------------------------
@@ -43,14 +41,10 @@ def match_template_from_image(image_path, template_path="templates/pragmaticplay
         template = cv2.imread(template_path, 0)
         if template is not None:
             res = cv2.matchTemplate(img_gray, template, cv2.TM_CCOEFF_NORMED)
-            min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(res)
+            _, max_val, _, _ = cv2.minMaxLoc(res)
             print(f"Similaridade máxima: {max_val:.3f}")
             if max_val >= 0.7:
                 return "pragmaticplay"
-            else:
-                print("Logo não encontrado no frame. Similaridade abaixo do limiar.")
-        else:
-            print("Template não foi carregado corretamente.")
     except Exception as e:
         print(f"Erro no template matching: {e}")
     return None
@@ -62,10 +56,7 @@ def capturar_frame_ffmpeg_imageio(m3u8_url, output_path="frame.jpg", skip_second
     try:
         width, height = 1280, 720
         cmd = [
-        "ffmpeg",
-        "-y",
-        "-ss", str(skip_seconds),
-        "-i", m3u8_url,
+            "ffmpeg", "-y", "-ss", str(skip_seconds), "-i", m3u8_url,
             "-vf", f"scale={width}:{height}",
             "-vframes", "1",
             "-q:v", "2",
@@ -77,7 +68,7 @@ def capturar_frame_ffmpeg_imageio(m3u8_url, output_path="frame.jpg", skip_second
         print(f"Erro ao capturar frame: {e}")
         return None
 
-def varrer_url_customizada(url, duracao_analise=86400, intervalo_frames=1):
+def varrer_url_customizada(url, duracao_analise=30, intervalo_frames=1):
     resultados = []
     total_frames = duracao_analise // intervalo_frames
     progresso = st.progress(0, text="🔎 Iniciando varredura...")
@@ -109,8 +100,6 @@ def varrer_url_customizada(url, duracao_analise=86400, intervalo_frames=1):
         st.success("🎯 Jogo detectado com sucesso!")
 
     return resultados
-
-
 def verificar_jogo_em_live(streamer):
     try:
         user_response = requests.get(BASE_URL_TWITCH + f'users?login={streamer}', headers=HEADERS_TWITCH)
@@ -207,10 +196,6 @@ def varrer_vods_com_template(data_inicio, data_fim):
             print(f"Erro ao buscar e varrer VODs: {e}")
     return resultados
 
-# ------------------------------
-# MACHINE LEARNING E SUGESTÃO DE NOVOS STREAMERS
-# ------------------------------
-
 def sugerir_novos_streamers(game_name="Slots"):
     sugestoes = []
     try:
@@ -224,7 +209,6 @@ def sugerir_novos_streamers(game_name="Slots"):
     except Exception as e:
         print(f"Erro ao buscar novos streamers: {e}")
     return sugestoes
-
 # ------------------------------
 # MODELO DE MACHINE LEARNING (CNN SIMPLES)
 # ------------------------------
@@ -243,8 +227,6 @@ def carregar_modelo():
         st.warning("Modelo de ML ainda não treinado. Usando detecção por template.", icon="⚠️")
         return None
 
-# modelo_ml será carregado dinamicamente com session_state
-
 if "modelo_ml" not in st.session_state and os.path.exists(MODEL_PATH):
     st.session_state["modelo_ml"] = load_model(MODEL_PATH)
 
@@ -262,22 +244,27 @@ def prever_jogo_em_frame(frame_path):
     except Exception as e:
         print(f"Erro ao prever com modelo ML: {e}")
         return None
-# ------------------------------
-# ⚠️ REMOVIDO para resolver erro: set_page_config deve ser o primeiro comando Streamlit
 
+# ------------------------------
+# FUNÇÃO UTILITÁRIA PARA FORMATAÇÃO DE DATAS
+# ------------------------------
+def formatar_datas_br(df, coluna="timestamp"):
+    if coluna in df.columns:
+        try:
+            df[coluna] = pd.to_datetime(df[coluna]).dt.strftime("%d/%m/%Y %H:%M:%S")
+        except Exception as e:
+            st.warning(f"⚠️ Erro ao formatar data: {e}")
+    return df
+
+# ------------------------------
+# INTERFACE STREAMLIT
+# ------------------------------
 st.markdown(
     """
     <style>
-        body {
-            background-color: white;
-            color: black;
-        }
-        .stApp {
-            background-color: white;
-        }
-        .css-18e3th9, .css-1d391kg {
-            background-color: white !important;
-        }
+        body { background-color: white; color: black; }
+        .stApp { background-color: white; }
+        .css-18e3th9, .css-1d391kg { background-color: white !important; }
     </style>
     """,
     unsafe_allow_html=True
@@ -295,9 +282,12 @@ st.markdown(
 st.sidebar.subheader("🎯 Filtros")
 streamers_input = st.sidebar.text_input("Streamers (separados por vírgula)")
 data_inicio = st.sidebar.date_input("Data de início", value=datetime.today() - timedelta(days=7))
+st.sidebar.write(f"Selecionada: **{data_inicio.strftime('%d/%m/%Y')}**")
 data_fim = st.sidebar.date_input("Data de fim", value=datetime.today())
+st.sidebar.write(f"Selecionada: **{data_fim.strftime('%d/%m/%Y')}**")
 url_custom = st.sidebar.text_input("URL .m3u8 personalizada")
-# Teste de detecção em tempo exato via input
+
+# TESTE DE SEGUNDO EXATO
 st.sidebar.markdown("---")
 st.sidebar.subheader("⏱️ Testar segundo exato")
 segundo_alvo = st.sidebar.number_input("Segundo do vídeo", min_value=0, max_value=100000, value=0, step=1)
@@ -314,7 +304,6 @@ if st.sidebar.button("🎯 Capturar frame no tempo exato") and url_custom:
             st.warning("❌ Nenhum jogo detectado nesse ponto.")
     else:
         st.error("⚠️ Não foi possível capturar o frame. Verifique a URL.")
-
 if st.sidebar.button("🚀 Treinar modelo agora"):
     from tensorflow.keras.preprocessing.image import ImageDataGenerator
     from tensorflow.keras import layers, models
@@ -354,21 +343,19 @@ if st.sidebar.button("🚀 Treinar modelo agora"):
     ])
 
     model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
-
     model.fit(train_gen, validation_data=val_gen, epochs=5)
 
     if not os.path.exists(MODEL_DIR):
         os.makedirs(MODEL_DIR)
     model.save(MODEL_PATH)
     if os.path.exists(MODEL_PATH):
-        st.sidebar.success("✅ Modelo treinado e salvo com sucesso como 'modelo_pragmatic.keras'")
+        st.sidebar.success("✅ Modelo treinado e salvo com sucesso!")
         st.sidebar.write(f"📁 Caminho: {MODEL_PATH}")
         st.rerun()
     else:
-        st.sidebar.error("❌ Modelo NÃO foi salvo! Verifique permissões ou erros no ambiente.")
+        st.sidebar.error("❌ Erro ao salvar modelo.")
 
 streamers_filtrados = [s.strip().lower() for s in streamers_input.split(",") if s.strip()] if streamers_input else []
-
 col1, col2, col3, col4 = st.columns(4)
 
 with col1:
@@ -400,7 +387,6 @@ with col3:
         resultado_url = varrer_url_customizada(url_custom)
         if resultado_url:
             st.session_state['dados_url'] = resultado_url
-            st.image("custom_frame_0.jpg", caption="Frame analisado", use_column_width=True)
 
 with col4:
     if st.button("🖼️ Varrer VODs com detecção de imagem"):
@@ -408,42 +394,44 @@ with col4:
         dt_fim = datetime.combine(data_fim, datetime.max.time())
         st.session_state['dados_vods_template'] = varrer_vods_com_template(dt_inicio, dt_fim)
 
+# ------------------------------
+# EXIBIÇÃO DAS TABELAS COM DATAS FORMATADAS
+# ------------------------------
+
 if 'dados_lives' in st.session_state:
     df = pd.DataFrame(st.session_state['dados_lives'])
+    df = formatar_datas_br(df)
     if streamers_filtrados and 'streamer' in df.columns:
         df = df[df['streamer'].str.lower().isin(streamers_filtrados)]
-    st.markdown("<h3 style='color:#F68B2A;'>Detecções em Lives</h3>", unsafe_allow_html=True)
-    for col in ['categoria']:
-        if col in df.columns:
-            df[col] = df[col].apply(lambda x: f"🎯 {x}")
+    st.markdown("### 📺 Detecções em Lives")
     st.dataframe(df, use_container_width=True)
 
 if 'dados_vods' in st.session_state:
     df = pd.DataFrame(st.session_state['dados_vods'])
+    df = formatar_datas_br(df)
     if streamers_filtrados and 'streamer' in df.columns:
         df = df[df['streamer'].str.lower().isin(streamers_filtrados)]
-    st.markdown("<h3 style='color:#F68B2A;'>Detecções em VODs</h3>", unsafe_allow_html=True)
+    st.markdown("### 🎞️ Detecções em VODs")
     st.dataframe(df, use_container_width=True)
 
 if 'dados_vods_template' in st.session_state:
     df = pd.DataFrame(st.session_state['dados_vods_template'])
-    st.markdown("<h3 style='color:#F68B2A;'>Detecções por imagem nas VODs</h3>", unsafe_allow_html=True)
+    df = formatar_datas_br(df)
+    st.markdown("### 🖼️ Detecções por imagem nas VODs")
     st.dataframe(df, use_container_width=True)
 
 if 'dados_url' in st.session_state:
     df = pd.DataFrame(st.session_state['dados_url'])
-    st.markdown("<h3 style='color:#F68B2A;'>Detecção em URL personalizada</h3>", unsafe_allow_html=True)
+    df = formatar_datas_br(df)
+    st.markdown("### 🌐 Detecção em URL personalizada")
     st.dataframe(df, use_container_width=True)
 
 if not any(k in st.session_state for k in ['dados_lives', 'dados_vods', 'dados_url', 'dados_vods_template']):
-    st.info("Nenhuma detecção encontrada.")
+    st.info("ℹ️ Nenhuma detecção ainda. Execute uma das ações acima para iniciar.")
 
-# Treinamento do modelo pelo Streamlit
-
-
-
-# Sugestão de novos streamers
-
+# ------------------------------
+# SUGESTÃO DE NOVOS STREAMERS
+# ------------------------------
 if st.sidebar.button("🔎 Buscar novos streamers"):
     novos = sugerir_novos_streamers()
     if novos:
