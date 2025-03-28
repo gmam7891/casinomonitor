@@ -297,6 +297,23 @@ streamers_input = st.sidebar.text_input("Streamers (separados por vírgula)")
 data_inicio = st.sidebar.date_input("Data de início", value=datetime.today() - timedelta(days=7))
 data_fim = st.sidebar.date_input("Data de fim", value=datetime.today())
 url_custom = st.sidebar.text_input("URL .m3u8 personalizada")
+# Teste de detecção em tempo exato via input
+st.sidebar.markdown("---")
+st.sidebar.subheader("⏱️ Testar segundo exato")
+segundo_alvo = st.sidebar.number_input("Segundo do vídeo", min_value=0, max_value=100000, value=7788, step=1)
+
+if st.sidebar.button("🎯 Capturar frame no tempo exato") and url_custom:
+    st.markdown("### 🎯 Teste de frame em tempo específico")
+    frame_path = "frame_exato.jpg"
+    if capturar_frame_ffmpeg_imageio(url_custom, frame_path, skip_seconds=segundo_alvo):
+        jogo = prever_jogo_em_frame(frame_path)
+        st.image(frame_path, caption=f"🕒 Frame em {segundo_alvo} segundos", use_column_width=True)
+        if jogo:
+            st.success(f"🎰 Jogo detectado: {jogo}")
+        else:
+            st.warning("❌ Nenhum jogo detectado nesse ponto.")
+    else:
+        st.error("⚠️ Não foi possível capturar o frame. Verifique a URL.")
 
 if st.sidebar.button("🚀 Treinar modelo agora"):
     from tensorflow.keras.preprocessing.image import ImageDataGenerator
