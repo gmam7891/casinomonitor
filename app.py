@@ -300,7 +300,7 @@ url_custom = st.sidebar.text_input("URL .m3u8 personalizada")
 # Teste de detecção em tempo exato via input
 st.sidebar.markdown("---")
 st.sidebar.subheader("⏱️ Testar segundo exato")
-segundo_alvo = st.sidebar.number_input("Segundo do vídeo", min_value=0, max_value=100000, value=7788, step=1)
+segundo_alvo = st.sidebar.number_input("Segundo do vídeo", min_value=0, max_value=100000, value=0, step=1)
 
 if st.sidebar.button("🎯 Capturar frame no tempo exato") and url_custom:
     st.markdown("### 🎯 Teste de frame em tempo específico")
