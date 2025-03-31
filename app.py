@@ -327,6 +327,9 @@ def exibir_ranking_jogos(dados):
     fig.update_layout(showlegend=False)
     st.plotly_chart(fig, use_container_width=True)
 
+import plotly.express as px
+import pandas as pd
+
 def exibir_timeline_jogos(dados):
     if not dados:
         st.info("Nenhum dado disponível para exibir a timeline.")
@@ -346,7 +349,7 @@ def exibir_timeline_jogos(dados):
         x="segundo",
         y="jogo_detectado",
         color="streamer",
-        hover_data=["streamer", "segundo", "url"],
+        hover_data=["streamer", "segundo", "url"] if 'url' in df.columns else ["streamer", "segundo"],
         title="🕒 Timeline de Jogos Detectados na VOD",
         labels={"segundo": "Tempo (s)", "jogo_detectado": "Jogo"}
     )
