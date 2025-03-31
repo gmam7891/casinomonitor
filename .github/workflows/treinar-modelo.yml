@@ -1,7 +1,7 @@
 name: Treinar Modelo
 
 on:
-  workflow_dispatch:  # Isso permite treinar manualmente no GitHub
+  workflow_dispatch:
 
 jobs:
   treinar:
@@ -26,8 +26,8 @@ jobs:
 
       - name: Commit e push do modelo treinado
         run: |
-          git config user.name github-actions
-          git config user.email github-actions@github.com
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
           git add modelo/modelo_pragmatic.keras
-          git commit -m "🤖 Modelo treinado automaticamente pelo GitHub Actions"
+          git commit -m "🤖 Modelo treinado automaticamente pelo GitHub Actions" || echo "Nada para commitar"
           git push
