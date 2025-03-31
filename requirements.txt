@@ -1,12 +1,5 @@
 streamlit
-requests
-pandas
-numpy
-opencv-python-headless
-pytz
-Pillow
-imageio
-imageio-ffmpeg
-schedule
-openpyxl
 tensorflow
+opencv-python
+pillow
+requests
