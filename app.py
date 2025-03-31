@@ -175,6 +175,19 @@ if st.sidebar.button("🚀 Treinar modelo agora"):
     else:
         st.sidebar.error("❌ Erro ao salvar modelo.")
         streamers_filtrados = [s.strip().lower() for s in streamers_input.split(",") if s.strip()] if streamers_input else []
+def sugerir_novos_streamers(game_name="Slots"):
+    sugestoes = []
+    try:
+        response = requests.get(BASE_URL_TWITCH + f'streams?game_name={game_name}&first=50', headers=HEADERS_TWITCH)
+        data = response.json().get("data", [])
+        atuais = set(STREAMERS_INTERESSE)
+        for stream in data:
+            login = stream.get("user_login")
+            if login and login not in atuais:
+                sugestoes.append(login)
+    except Exception as e:
+        logging.error(f"Erro ao buscar novos streamers: {e}")
+    return sugestoes
 
 col1, col2, col3, col4 = st.columns(4)
 
