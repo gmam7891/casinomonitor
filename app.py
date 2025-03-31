@@ -20,21 +20,42 @@ from ml_utils import (
 
 # ------------------ CONFIGURAÇÕES INICIAIS ------------------
 
-logging.basicConfig(level=logging.INFO, format='[%(levelname)s] %(asctime)s - %(message)s')
+import logging
+import os
+import streamlit as st
+
+# Configuração do layout da página Streamlit
+st.set_page_config(page_title="Monitor Cassino PP", layout="wide")
+
+# Configuração de logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='[%(levelname)s] %(asctime)s - %(message)s'
+)
+
+# Cabeçalho com logo da Pragmatic Play
 st.markdown("""
     <div style='background-color:white; padding:10px; display:flex; align-items:center;'>
-        <img src='https://findfaircasinos.com/gfx/uploads/620_620_kr/716_Pragmatic%20play%20logo.png' style='height:60px; margin-right:20px;'>
+        <img src='https://findfaircasinos.com/gfx/uploads/620_620_kr/716_Pragmatic%20play%20logo.png' 
+             style='height:60px; margin-right:20px;'>
         <h1 style='color:black; margin:0;'>Monitor Cassino Pragmatic Play</h1>
     </div>
     """, unsafe_allow_html=True)
 
+# Variáveis de ambiente e caminhos principais
 CLIENT_ID = os.getenv("TWITCH_CLIENT_ID", "gp762nuuoqcoxypju8c569th9wz7q5")
 ACCESS_TOKEN = os.getenv("TWITCH_ACCESS_TOKEN", "moila7dw5ejlk3eja6ne08arw0oexs")
-HEADERS_TWITCH = {'Client-ID': CLIENT_ID, 'Authorization': f'Bearer {ACCESS_TOKEN}'}
+
+HEADERS_TWITCH = {
+    'Client-ID': CLIENT_ID,
+    'Authorization': f'Bearer {ACCESS_TOKEN}'
+}
+
 BASE_URL_TWITCH = 'https://api.twitch.tv/helix/'
 STREAMERS_FILE = "streamers.txt"
-MODEL_PATH = "modelo/modelo_pragmatic.keras"
 TEMPLATES_DIR = "templates/"
+MODEL_PATH = "modelo/modelo_pragmatic.keras"
+
 
 # ------------------ FUNÇÕES AUXILIARES ------------------
 def carregar_streamers():
