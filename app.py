@@ -33,8 +33,8 @@ logging.basicConfig(
 # ------------------------------
 st.set_page_config(page_title="Monitor Cassino PP - Detecção", layout="wide")
 
-CLIENT_ID = os.getenv("TWITCH_CLIENT_ID", "seu_client_id_aqui")
-ACCESS_TOKEN = os.getenv("TWITCH_ACCESS_TOKEN", "seu_access_token_aqui")
+CLIENT_ID = os.getenv("TWITCH_CLIENT_ID", "gp762nuuoqcoxypju8c569th9wz7q5")
+ACCESS_TOKEN = os.getenv("TWITCH_ACCESS_TOKEN", "moila7dw5ejlk3eja6ne08arw0oexs")
 HEADERS_TWITCH = {
     'Client-ID': CLIENT_ID,
     'Authorization': f'Bearer {ACCESS_TOKEN}'
