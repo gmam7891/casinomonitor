@@ -86,25 +86,43 @@ def obter_user_id(login):
     data = resp.json().get("data", [])
     return data[0]["id"] if data else None
 
-def buscar_vods_twitch_por_periodo(dt_inicio, dt_fim, streamers):
+def buscar_vods_twitch_por_periodo(dt_inicio, dt_fim, headers, base_url, streamers):
     todos_vods = []
+
     for login in streamers:
-        user_id = obter_user_id(login)
-        if not user_id: continue
-        resp = requests.get(BASE_URL_TWITCH + f"videos?user_id={user_id}&type=archive&first=100", headers=HEADERS_TWITCH)
-        vods = resp.json().get("data", [])
-        for vod in vods:
-            created_at = datetime.fromisoformat(vod["created_at"].replace("Z", "+00:00"))
-            if dt_inicio <= created_at <= dt_fim:
+        user_id = obter_user_id(login, headers)
+        if not user_id:
+            logging.warning(f"❌ User ID não encontrado para streamer: {login}")
+            continue
+
+        url = f"{base_url}videos?user_id={user_id}&type=archive&first=100"
+        try:
+            resp = requests.get(url, headers=headers)
+            vods = resp.json().get("data", [])
+
+            for vod in vods:
+                created_at = vod.get("created_at")
+                if isinstance(created_at, str):
+                    created_at = datetime.fromisoformat(created_at.replace("Z", "+00:00"))
+
+                if not (dt_inicio <= created_at <= dt_fim):
+                    continue
+
+                dur = converter_duracao_para_segundos(vod["duration"])
+
                 todos_vods.append({
                     "streamer": login,
                     "titulo": vod["title"],
                     "url": vod["url"],
                     "data": created_at,
+                    "duração_segundos": dur,
                     "duração_raw": vod["duration"],
-                    "duração_segundos": converter_duracao_para_segundos(vod["duration"]),
                     "id_vod": vod["id"]
                 })
+
+        except Exception as e:
+            logging.error(f"Erro ao buscar VODs para {login}: {e}")
+
     return todos_vods
 
 def formatar_datas_br(df, coluna="timestamp"):
