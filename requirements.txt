@@ -1,10 +1,10 @@
-streamlit==1.32.2
-tensorflow==2.15.0
+streamlit
+tensorflow
 opencv-python-headless
 pillow
 numpy
-pandas==2.2.1
-requests==2.31.0
+pandas
+requests
 matplotlib
-imageio==2.34.0
-imageio-ffmpeg==0.4.9
+imageio
+imageio-ffmpeg
