@@ -1,4 +1,8 @@
 streamlit
 tensorflow
-opencv-python
+opencv-python  # ou opencv-python-headless se estiver em ambiente sem GUI
+pillow
 requests
+numpy
+pandas
+matplotlib
