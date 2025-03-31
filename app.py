@@ -174,3 +174,43 @@ if st.sidebar.button("🚀 Treinar modelo agora"):
         st.rerun()
     else:
         st.sidebar.error("❌ Erro ao salvar modelo.")
+        streamers_filtrados = [s.strip().lower() for s in streamers_input.split(",") if s.strip()] if streamers_input else []
+
+col1, col2, col3, col4 = st.columns(4)
+
+with col1:
+    if st.button("🔍 Verificar lives agora"):
+        resultados = []
+        for streamer in STREAMERS_INTERESSE:
+            resultado_live = verificar_jogo_em_live(streamer)
+            if resultado_live:
+                jogo, categoria = resultado_live
+                resultados.append({
+                    "streamer": streamer,
+                    "jogo_detectado": jogo,
+                    "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                    "fonte": "Live",
+                    "categoria": categoria
+                })
+        st.session_state['dados_lives'] = resultados
+
+with col2:
+    if st.button("📺 Verificar VODs no período"):
+        dt_inicio = datetime.combine(data_inicio, datetime.min.time())
+        dt_fim = datetime.combine(data_fim, datetime.max.time())
+        vod_resultados = buscar_vods_twitch_por_periodo(dt_inicio, dt_fim)
+        if vod_resultados:
+            st.session_state['dados_vods'] = vod_resultados
+
+with col3:
+    if st.button("🌐 Rodar varredura na URL personalizada") and url_custom:
+        resultado_url = varrer_url_customizada(url_custom)
+        if resultado_url:
+            st.session_state['dados_url'] = resultado_url
+
+with col4:
+    if st.button("🖼️ Varrer VODs com detecção de imagem"):
+        dt_inicio = datetime.combine(data_inicio, datetime.min.time())
+        dt_fim = datetime.combine(data_fim, datetime.max.time())
+        st.session_state['dados_vods_template'] = varrer_vods_com_template(dt_inicio, dt_fim)
+
