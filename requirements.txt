@@ -2,7 +2,7 @@ streamlit
 tensorflow
 opencv-python-headless
 pillow
-requests
 numpy
 pandas
+requests
 matplotlib
