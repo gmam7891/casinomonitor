@@ -306,15 +306,21 @@ if st.sidebar.button("🎯 Capturar frame no tempo exato") and url_custom:
         st.error("⚠️ Não foi possível capturar o frame. Verifique a URL.")
 if st.sidebar.button("🚀 Treinar modelo agora"):
     from tensorflow.keras.preprocessing.image import ImageDataGenerator
+    from tensorflow.keras.applications import MobileNetV2
     from tensorflow.keras import layers, models
+    from tensorflow.keras.layers import GlobalAveragePooling2D, Dropout, Dense
+    from collections import Counter
 
-    st.sidebar.write("Iniciando treinamento...")
+    st.sidebar.write("🔧 Iniciando treinamento com MobileNetV2...")
 
     dataset_dir = "dataset"
     img_height, img_width = 224, 224
     batch_size = 32
 
-    datagen = ImageDataGenerator(rescale=1./255, validation_split=0.2)
+    datagen = ImageDataGenerator(
+        preprocessing_function=tf.keras.applications.mobilenet_v2.preprocess_input,
+        validation_split=0.2
+    )
 
     train_gen = datagen.flow_from_directory(
         dataset_dir,
@@ -332,18 +338,26 @@ if st.sidebar.button("🚀 Treinar modelo agora"):
         subset='validation'
     )
 
+    # 🔍 MobileNetV2 como base
+    base_model = MobileNetV2(weights='imagenet', include_top=False, input_shape=(img_height, img_width, 3))
+    base_model.trainable = False
+
     model = models.Sequential([
-        layers.Conv2D(32, (3, 3), activation='relu', input_shape=(img_height, img_width, 3)),
-        layers.MaxPooling2D(2, 2),
-        layers.Conv2D(64, (3, 3), activation='relu'),
-        layers.MaxPooling2D(2, 2),
-        layers.Flatten(),
-        layers.Dense(64, activation='relu'),
-        layers.Dense(1, activation='sigmoid')
+        base_model,
+        GlobalAveragePooling2D(),
+        Dropout(0.3),
+        Dense(64, activation='relu'),
+        Dense(1, activation='sigmoid')
     ])
 
     model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
-    model.fit(train_gen, validation_data=val_gen, epochs=5)
+
+    # 🧮 Class weights
+    counter = Counter(train_gen.classes)
+    total = float(sum(counter.values()))
+    class_weight = {cls: total / count for cls, count in counter.items()}
+
+    model.fit(train_gen, validation_data=val_gen, epochs=5, class_weight=class_weight)
 
     if not os.path.exists(MODEL_DIR):
         os.makedirs(MODEL_DIR)
@@ -354,6 +368,7 @@ if st.sidebar.button("🚀 Treinar modelo agora"):
         st.rerun()
     else:
         st.sidebar.error("❌ Erro ao salvar modelo.")
+
 
 streamers_filtrados = [s.strip().lower() for s in streamers_input.split(",") if s.strip()] if streamers_input else []
 col1, col2, col3, col4 = st.columns(4)
