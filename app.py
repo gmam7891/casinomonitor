@@ -20,7 +20,7 @@ logging.basicConfig(
 # ------------------------------
 # IMPORTS DE FUNÇÕES
 # ------------------------------
-from utils import (
+from ml_utils import (
     match_template_from_image,
     capturar_frame_ffmpeg_imageio,
     prever_jogo_em_frame
