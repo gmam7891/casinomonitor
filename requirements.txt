@@ -1,6 +1,5 @@
 streamlit
 tensorflow
-opencv-python
 pillow
 requests
 pip install opencv-python
