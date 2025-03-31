@@ -247,7 +247,7 @@ with col4:
         resultados = varrer_vods_com_template(dt_ini, dt_fim, HEADERS_TWITCH, BASE_URL_TWITCH, STREAMERS_INTERESSE)
         st.session_state['dados_vods_template'] = resultados
 
-abas = st.tabs(["🔍 Resultados", "📊 Ranking de Jogos, "'🕒' Timeline"])
+abas = st.tabs(["Resultados", "Ranking de Jogos, "Timeline"])
 
 with abas[0]:
     # Aqui você mostra resultados das varreduras (frames, tabelas, etc.)
