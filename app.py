@@ -86,6 +86,14 @@ def obter_user_id(login):
     data = resp.json().get("data", [])
     return data[0]["id"] if data else None
 
+def obter_user_id(login, headers):
+    url = f"https://api.twitch.tv/helix/users?login={login}"
+    resp = requests.get(url, headers=headers)
+    data = resp.json()
+    if data.get("data"):
+        return data["data"][0]["id"]
+    return None
+
 def buscar_vods_twitch_por_periodo(dt_inicio, dt_fim, headers, base_url, streamers):
     todos_vods = []
 
