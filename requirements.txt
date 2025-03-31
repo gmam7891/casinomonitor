@@ -6,3 +6,5 @@ numpy
 pandas
 requests
 matplotlib
+imageio
+imageio-ffmpeg
