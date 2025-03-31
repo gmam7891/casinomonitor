@@ -4,9 +4,7 @@ from PIL import Image
 import imageio_ffmpeg as ffmpeg
 import os
 import requests
-from io import BytesIO
 
-# ===================== CAPTURA DE FRAME =====================
 def capturar_frame_ffmpeg_imageio(url, output_path, skip_seconds=0):
     try:
         w, h = 1280, 720
@@ -29,7 +27,6 @@ def capturar_frame_ffmpeg_imageio(url, output_path, skip_seconds=0):
         print(f"[Erro] capturar_frame_ffmpeg_imageio: {e}")
         return False
 
-# ===================== TEMPLATE MATCHING =====================
 def match_template_from_image(image_path, templates_dir="templates/", threshold=0.8):
     try:
         img = cv2.imread(image_path)
@@ -40,22 +37,18 @@ def match_template_from_image(image_path, templates_dir="templates/", threshold=
         for template_file in os.listdir(templates_dir):
             template_path = os.path.join(templates_dir, template_file)
             template = cv2.imread(template_path, 0)
-
             if template is None:
                 continue
 
             res = cv2.matchTemplate(gray_img, template, cv2.TM_CCOEFF_NORMED)
-            min_val, max_val, _, _ = cv2.minMaxLoc(res)
-
+            _, max_val, _, _ = cv2.minMaxLoc(res)
             if max_val >= threshold:
-                nome_jogo = os.path.splitext(template_file)[0]
-                return nome_jogo
+                return os.path.splitext(template_file)[0]
         return None
     except Exception as e:
         print(f"[Erro] match_template_from_image: {e}")
         return None
 
-# ===================== PREDIÇÃO VIA MODELO =====================
 def prever_jogo_em_frame(image_path, modelo=None):
     try:
         if modelo is None:
@@ -68,15 +61,11 @@ def prever_jogo_em_frame(image_path, modelo=None):
         x = np.expand_dims(x, axis=0)
 
         y_pred = modelo.predict(x)[0][0]
-        if y_pred > 0.5:
-            return "Pragmatic Play (detecção por ML)"
-        else:
-            return None
+        return "Pragmatic Play (ML)" if y_pred > 0.5 else None
     except Exception as e:
         print(f"[Erro] prever_jogo_em_frame: {e}")
         return None
 
-# ===================== VERIFICAR LIVE =====================
 def verificar_jogo_em_live(streamer, headers, base_url):
     try:
         user_resp = requests.get(f"{base_url}users?login={streamer}", headers=headers)
@@ -85,7 +74,6 @@ def verificar_jogo_em_live(streamer, headers, base_url):
             return None
 
         user_id = user_data[0]["id"]
-
         stream_resp = requests.get(f"{base_url}streams?user_id={user_id}", headers=headers)
         stream_data = stream_resp.json().get("data", [])
         if not stream_data:
@@ -102,12 +90,11 @@ def verificar_jogo_em_live(streamer, headers, base_url):
         print(f"[Erro] verificar_jogo_em_live: {e}")
         return None
 
-# ===================== VARREDURA EM URL CUSTOM =====================
 def varrer_url_customizada(url, st, session_state, prever_func, skip_inicial=0, intervalo=30, max_frames=300):
     resultados = []
     tempo_atual = skip_inicial
 
-    for i in range(max_frames):
+    for _ in range(max_frames):
         frame_path = f"frame_{tempo_atual}.jpg"
         sucesso = capturar_frame_ffmpeg_imageio(url, frame_path, skip_seconds=tempo_atual)
         if not sucesso:
@@ -125,33 +112,23 @@ def varrer_url_customizada(url, st, session_state, prever_func, skip_inicial=0, 
 
     return resultados
 
-# ===================== VARREDURA EM VODs COM TEMPLATE =====================
 def varrer_vods_com_template(dt_inicio, dt_fim, headers, base_url, streamers, intervalo=60):
+    from app import buscar_vods_twitch_por_periodo  # cuidado com circular import se mover código
     resultados = []
-    from app import buscar_vods_twitch_por_periodo  # importa para reusar
-
-    vods = buscar_vods_twitch_por_periodo(dt_inicio, dt_fim, headers, base_url, streamers)
-
+    vods = buscar_vods_twitch_por_periodo(dt_inicio, dt_fim, streamers)
     for vod in vods:
+        dur = vod["duração_segundos"]
         url = vod["url"]
-        vod_id = vod["id_vod"]
-        duracao = vod["duração_segundos"]
-
-        for segundo in range(0, duracao, intervalo):
-            frame_path = f"vod_{vod_id}_{segundo}.jpg"
-            sucesso = capturar_frame_ffmpeg_imageio(url, frame_path, skip_seconds=segundo)
-            if not sucesso:
-                continue
-
-            jogo = match_template_from_image(frame_path)
-            if jogo:
-                resultados.append({
-                    "vod_id": vod_id,
-                    "streamer": vod["streamer"],
-                    "segundo": segundo,
-                    "frame": frame_path,
-                    "jogo_detectado": jogo,
-                    "url": url
-                })
-
+        for segundo in range(0, dur, intervalo):
+            frame_path = f"vod_{vod['id_vod']}_{segundo}.jpg"
+            if capturar_frame_ffmpeg_imageio(url, frame_path, skip_seconds=segundo):
+                jogo = match_template_from_image(frame_path)
+                if jogo:
+                    resultados.append({
+                        "streamer": vod["streamer"],
+                        "segundo": segundo,
+                        "frame": frame_path,
+                        "jogo_detectado": jogo,
+                        "url": url
+                    })
     return resultados
