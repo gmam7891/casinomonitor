@@ -8,9 +8,12 @@ from tensorflow.keras.models import load_model
 from ml_utils import (
     match_template_from_image,
     capturar_frame_ffmpeg_imageio,
-    prever_jogo_em_frame
+    prever_jogo_em_frame,
+    verificar_jogo_em_live,
+    buscar_vods_twitch_por_periodo,
+    varrer_vods_com_template,
+    varrer_url_customizada
 )
-
 # ------------------------------
 # LOGGING CONFIG
 # ------------------------------
