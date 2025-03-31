@@ -221,6 +221,23 @@ with col4:
         resultados = varrer_vods_com_template(dt_ini, dt_fim, HEADERS_TWITCH, BASE_URL_TWITCH, STREAMERS_INTERESSE)
         st.session_state['dados_vods_template'] = resultados
 
+abas = st.tabs(["🔍 Resultados", "📊 Ranking de Jogos"])
+
+with abas[0]:
+    # Aqui você mostra resultados das varreduras (frames, tabelas, etc.)
+    # Ex: dados_url, dados_vods, dados_lives...
+    ...
+
+with abas[1]:
+    dados_para_ranking = []
+    
+    if 'dados_url' in st.session_state:
+        dados_para_ranking += st.session_state['dados_url']
+    if 'dados_vods_template' in st.session_state:
+        dados_para_ranking += st.session_state['dados_vods_template']
+    if 'dados
+
+
 # ------------------ RESULTADOS ------------------
 if 'dados_url' in st.session_state:
     st.markdown("### 🎰 Resultados da VOD personalizada")
@@ -247,3 +264,27 @@ if st.sidebar.button("🔎 Buscar novos streamers"):
             st.write(f"- {s}")
     else:
         st.warning("Nenhum novo streamer encontrado.")
+def exibir_ranking_jogos(dados):
+    if not dados:
+        st.info("Nenhum jogo detectado ainda.")
+        return
+
+    # Montar DataFrame
+    df = pd.DataFrame(dados)
+
+    # Extrair só o nome do jogo
+    if 'jogo_detectado' not in df.columns:
+        st.warning("⚠️ Coluna 'jogo_detectado' não encontrada nos dados.")
+        return
+
+    ranking = df['jogo_detectado'].value_counts().reset_index()
+    ranking.columns = ['Jogo', 'Aparições']
+
+    st.markdown("### 🏆 Ranking de Jogos Detectados")
+    st.dataframe(ranking, use_container_width=True)
+
+    # Gráfico de barras (opcional)
+    import plotly.express as px
+    fig = px.bar(ranking, x='Jogo', y='Aparições', text='Aparições', color='Jogo', title="Top Jogos")
+    fig.update_layout(showlegend=False)
+    st.plotly_chart(fig, use_container_width=True)
