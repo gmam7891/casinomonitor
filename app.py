@@ -14,6 +14,9 @@ from ml_utils import (
     varrer_vods_com_template,
     varrer_url_customizada
 )
+from tensorflow.keras.models import load_model
+import tensorflow as tf 
+
 # ------------------------------
 # LOGGING CONFIG
 # ------------------------------
