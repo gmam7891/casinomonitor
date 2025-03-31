@@ -258,7 +258,7 @@ if 'dados_url' in st.session_state:
 def sugerir_novos_streamers(game_name="Slots"):
     sugestoes = []
     try:
-        response = requests.get(BASE_URL_TWITCH + f'streams?game_name={game_name}&first=50', headers=HEADERS_TWITCH)
+        response = requests.get(BASE_URL_TWITCH + f'streams?game_name={game_name}&first=100', headers=HEADERS_TWITCH)
         data = response.json().get("data", [])
         atuais = set(STREAMERS_INTERESSE)
         for stream in data:
