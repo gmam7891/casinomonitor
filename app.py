@@ -254,9 +254,15 @@ with col2:
         st.session_state['dados_vods'] = vod_resultados
 
 with col3:
-    if st.button("🌐 Rodar varredura na URL personalizada") and url_custom:
-        resultado_url = varrer_url_customizada(url_custom, st, st.session_state, prever_jogo_em_frame)
-        st.session_state['dados_url'] = resultado_url
+   import time
+
+if st.button("🌐 Rodar varredura na URL personalizada") and url_custom:
+    inicio = time.time()
+    resultado_url = varrer_url_customizada(url_custom, st, st.session_state, prever_jogo_em_frame)
+    fim = time.time()
+    duracao = fim - inicio
+    st.session_state['dados_url'] = resultado_url
+    st.success(f"✅ Varredura concluída em {duracao:.2f} segundos.")
 
 with col4:
     if st.button("🖼️ Varrer VODs com detecção de imagem"):
