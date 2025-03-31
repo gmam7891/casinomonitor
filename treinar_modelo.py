@@ -1,6 +1,6 @@
 import os
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
-from tensorflow.keras.applications import MobileNetV2
+from tensorflow.keras.applications.mobilenet_v2 import MobileNetV2, preprocess_input
 from tensorflow.keras import layers, models
 from tensorflow.keras.layers import GlobalAveragePooling2D, Dropout, Dense
 
@@ -14,7 +14,7 @@ img_height, img_width = 224, 224
 batch_size = 32
 
 datagen = ImageDataGenerator(
-    preprocessing_function=MobileNetV2.preprocess_input,
+    preprocessing_function=preprocess_input,
     validation_split=0.2
 )
 
