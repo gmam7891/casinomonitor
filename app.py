@@ -33,12 +33,11 @@ logging.basicConfig(
     format='[%(levelname)s] %(asctime)s - %(message)s'
 )
 
-# Cabeçalho com logo da Pragmatic Play
+# Cabeçalho apenas com o logo da Pragmatic Play
 st.markdown("""
     <div style='background-color:white; padding:10px; display:flex; align-items:center;'>
         <img src='https://findfaircasinos.com/gfx/uploads/620_620_kr/716_Pragmatic%20play%20logo.png' 
-             style='height:60px; margin-right:20px;'>
-        <h1 style='color:black; margin:0;'>Monitor Cassino Pragmatic Play</h1>
+             style='height:60px; margin:0 auto; display:block;'>
     </div>
     """, unsafe_allow_html=True)
 
@@ -55,6 +54,7 @@ BASE_URL_TWITCH = 'https://api.twitch.tv/helix/'
 STREAMERS_FILE = "streamers.txt"
 TEMPLATES_DIR = "templates/"
 MODEL_PATH = "modelo/modelo_pragmatic.keras"
+
 
 
 # ------------------ FUNÇÕES AUXILIARES ------------------
