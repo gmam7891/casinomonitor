@@ -235,7 +235,6 @@ with abas[1]:
         dados_para_ranking += st.session_state['dados_url']
     if 'dados_vods_template' in st.session_state:
         dados_para_ranking += st.session_state['dados_vods_template']
-    if 'dados
 
 
 # ------------------ RESULTADOS ------------------
