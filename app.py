@@ -264,8 +264,6 @@ with abas[1]:
 
 with abas[2]:
     dados_timeline = []
-
-    # Consolidar de todas as fontes disponíveis
     if 'dados_url' in st.session_state:
         dados_timeline += st.session_state['dados_url']
     if 'dados_vods_template' in st.session_state:
