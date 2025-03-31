@@ -391,15 +391,3 @@ def exibir_ranking_jogos(dados):
     fig = px.bar(ranking, x='Jogo', y='Aparições', text='Aparições', color='Jogo', title="Top Jogos")
     fig.update_layout(showlegend=False)
     st.plotly_chart(fig, use_container_width=True)
-if st.button("📥 Coletar dados para treino (da URL)"):
-    if url_custom:
-        tempo_inicial = extrair_segundos_da_url_vod(url_custom)
-        varrer_e_salvar_para_treinamento(
-            url=url_custom,
-            modelo=st.session_state.get("modelo_ml"),
-            intervalo=30,
-            max_frames=50,
-            skip_inicial=tempo_inicial
-        )
-    else:
-        st.warning("⚠️ Insira uma URL personalizada para iniciar a coleta.")
