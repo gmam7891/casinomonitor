@@ -247,6 +247,38 @@ with col4:
         resultados = varrer_vods_com_template(dt_ini, dt_fim, HEADERS_TWITCH, BASE_URL_TWITCH, STREAMERS_INTERESSE)
         st.session_state['dados_vods_template'] = resultados
 
+import plotly.express as px
+import pandas as pd
+
+def exibir_timeline_jogos(dados):
+    if not dados:
+        st.info("Nenhum dado disponível para exibir a timeline.")
+        return
+
+    df = pd.DataFrame(dados)
+
+    if 'segundo' not in df.columns or 'jogo_detectado' not in df.columns:
+        st.warning("⚠️ Dados incompletos para a timeline.")
+        return
+
+    if 'streamer' not in df.columns:
+        df['streamer'] = 'Desconhecido'
+
+    fig = px.scatter(
+        df,
+        x="segundo",
+        y="jogo_detectado",
+        color="streamer",
+        hover_data=["streamer", "segundo", "url"] if 'url' in df.columns else ["streamer", "segundo"],
+        title="🕒 Timeline de Jogos Detectados na VOD",
+        labels={"segundo": "Tempo (s)", "jogo_detectado": "Jogo"}
+    )
+
+    fig.update_traces(marker=dict(size=10))
+    fig.update_layout(height=500)
+    st.plotly_chart(fig, use_container_width=True)
+
+
 abas = st.tabs(["Resultados", "Ranking de Jogos", "Timeline"])
 
 with abas[0]:
@@ -323,35 +355,4 @@ def exibir_ranking_jogos(dados):
     import plotly.express as px
     fig = px.bar(ranking, x='Jogo', y='Aparições', text='Aparições', color='Jogo', title="Top Jogos")
     fig.update_layout(showlegend=False)
-    st.plotly_chart(fig, use_container_width=True)
-
-import plotly.express as px
-import pandas as pd
-
-def exibir_timeline_jogos(dados):
-    if not dados:
-        st.info("Nenhum dado disponível para exibir a timeline.")
-        return
-
-    df = pd.DataFrame(dados)
-
-    if 'segundo' not in df.columns or 'jogo_detectado' not in df.columns:
-        st.warning("⚠️ Dados incompletos para a timeline.")
-        return
-
-    if 'streamer' not in df.columns:
-        df['streamer'] = 'Desconhecido'
-
-    fig = px.scatter(
-        df,
-        x="segundo",
-        y="jogo_detectado",
-        color="streamer",
-        hover_data=["streamer", "segundo", "url"] if 'url' in df.columns else ["streamer", "segundo"],
-        title="🕒 Timeline de Jogos Detectados na VOD",
-        labels={"segundo": "Tempo (s)", "jogo_detectado": "Jogo"}
-    )
-
-    fig.update_traces(marker=dict(size=10))
-    fig.update_layout(height=500)
     st.plotly_chart(fig, use_container_width=True)
