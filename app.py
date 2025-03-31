@@ -135,7 +135,6 @@ if "modelo_ml" not in st.session_state:
     else:
         st.warning("Modelo não encontrado. Será usada detecção por template.")
 
-st.title("🎰 Monitor Cassino Pragmatic Play")
 st.sidebar.header("🎯 Filtros")
 streamers_input = st.sidebar.text_input("Streamers (separados por vírgula)")
 data_inicio = st.sidebar.date_input("Data de início", value=datetime.today() - timedelta(days=7))
