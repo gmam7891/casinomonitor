@@ -201,7 +201,7 @@ with col2:
     if st.button("📺 Verificar VODs no período"):
         dt_ini = datetime.combine(data_inicio, datetime.min.time())
         dt_fim = datetime.combine(data_fim, datetime.max.time())
-        def buscar_vods_twitch_por_periodo(dt_inicio, dt_fim, headers, base_url, streamers):
+        vods = buscar_vods_twitch_por_periodo(dt_ini, dt_fim, HEADERS_TWITCH, BASE_URL_TWITCH, STREAMERS_INTERESSE)
         st.session_state['dados_vods'] = vods
 
 with col3:
