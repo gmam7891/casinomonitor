@@ -4,18 +4,18 @@ import os
 import pandas as pd
 import logging
 import requests
+import tensorflow as tf
 from tensorflow.keras.models import load_model
+
 from ml_utils import (
     match_template_from_image,
     capturar_frame_ffmpeg_imageio,
     prever_jogo_em_frame,
     verificar_jogo_em_live,
     buscar_vods_twitch_por_periodo,
-    varrer_vods_com_template,
-    varrer_url_customizada
+    varrer_url_customizada,
+    varrer_vods_com_template
 )
-from tensorflow.keras.models import load_model
-import tensorflow as tf 
 
 # ------------------------------
 # LOGGING CONFIG
@@ -66,8 +66,8 @@ def carregar_modelo():
         st.warning("Modelo de ML ainda não treinado. Usando detecção por template.", icon="⚠️")
         return None
 
-if "modelo_ml" not in st.session_state and os.path.exists(MODEL_PATH):
-    st.session_state["modelo_ml"] = load_model(MODEL_PATH)
+if "modelo_ml" not in st.session_state:
+    st.session_state["modelo_ml"] = carregar_modelo()
 
 # ------------------------------
 # INTERFACE STREAMLIT
@@ -93,7 +93,6 @@ data_inicio = st.sidebar.date_input("Data de início", value=datetime.today() - 
 data_fim = st.sidebar.date_input("Data de fim", value=datetime.today())
 url_custom = st.sidebar.text_input("URL .m3u8 personalizada")
 
-# Filtro por streamer (usado nos DataFrames)
 streamers_filtrados = [s.strip().lower() for s in streamers_input.split(",") if s.strip()] if streamers_input else []
 
 # TESTE DE SEGUNDO EXATO
@@ -115,7 +114,7 @@ if st.sidebar.button("🎯 Capturar frame no tempo exato") and url_custom:
         st.error("⚠️ Não foi possível capturar o frame. Verifique a URL.")
 
 # ------------------------------
-# TREINAMENTO
+# TREINAR MODELO
 # ------------------------------
 if st.sidebar.button("🚀 Treinar modelo agora"):
     from tensorflow.keras.preprocessing.image import ImageDataGenerator
@@ -173,16 +172,88 @@ if st.sidebar.button("🚀 Treinar modelo agora"):
     if not os.path.exists(MODEL_DIR):
         os.makedirs(MODEL_DIR)
     model.save(MODEL_PATH)
-
-    if os.path.exists(MODEL_PATH):
-        st.sidebar.success("✅ Modelo treinado e salvo com sucesso!")
-        st.sidebar.write(f"📁 Caminho: {MODEL_PATH}")
-        st.rerun()
-    else:
-        st.sidebar.error("❌ Erro ao salvar modelo.")
+    st.sidebar.success("✅ Modelo treinado e salvo com sucesso!")
+    st.sidebar.write(f"📁 Caminho: {MODEL_PATH}")
+    st.rerun()
 
 # ------------------------------
-# FUNÇÃO: buscar novos streamers
+# AÇÕES PRINCIPAIS
+# ------------------------------
+col1, col2, col3, col4 = st.columns(4)
+
+with col1:
+    if st.button("🔍 Verificar lives agora"):
+        resultados = []
+        for streamer in STREAMERS_INTERESSE:
+            resultado = verificar_jogo_em_live(streamer, HEADERS_TWITCH, BASE_URL_TWITCH)
+            if resultado:
+                jogo, categoria = resultado
+                resultados.append({
+                    "streamer": streamer,
+                    "jogo_detectado": jogo,
+                    "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                    "fonte": "Live",
+                    "categoria": categoria
+                })
+        st.session_state['dados_lives'] = resultados
+
+with col2:
+    if st.button("📺 Verificar VODs no período"):
+        dt_inicio = datetime.combine(data_inicio, datetime.min.time())
+        dt_fim = datetime.combine(data_fim, datetime.max.time())
+        vod_resultados = buscar_vods_twitch_por_periodo(dt_inicio, dt_fim, HEADERS_TWITCH, BASE_URL_TWITCH, STREAMERS_INTERESSE)
+        st.session_state['dados_vods'] = vod_resultados
+
+with col3:
+    if st.button("🌐 Rodar varredura na URL personalizada") and url_custom:
+        resultado_url = varrer_url_customizada(url_custom, st, st.session_state, prever_jogo_em_frame)
+        st.session_state['dados_url'] = resultado_url
+
+with col4:
+    if st.button("🖼️ Varrer VODs com detecção de imagem"):
+        dt_inicio = datetime.combine(data_inicio, datetime.min.time())
+        dt_fim = datetime.combine(data_fim, datetime.max.time())
+        resultados = varrer_vods_com_template(dt_inicio, dt_fim, HEADERS_TWITCH, BASE_URL_TWITCH, STREAMERS_INTERESSE)
+        st.session_state['dados_vods_template'] = resultados
+
+# ------------------------------
+# TABELAS
+# ------------------------------
+def formatar_datas_br(df, coluna="timestamp"):
+    if coluna in df.columns:
+        df[coluna] = pd.to_datetime(df[coluna]).dt.strftime("%d/%m/%Y %H:%M:%S")
+    return df
+
+if 'dados_lives' in st.session_state:
+    df = pd.DataFrame(st.session_state['dados_lives'])
+    df = formatar_datas_br(df)
+    if streamers_filtrados:
+        df = df[df['streamer'].str.lower().isin(streamers_filtrados)]
+    st.markdown("### 📺 Detecções em Lives")
+    st.dataframe(df, use_container_width=True)
+
+if 'dados_vods' in st.session_state:
+    df = pd.DataFrame(st.session_state['dados_vods'])
+    df = formatar_datas_br(df)
+    if streamers_filtrados:
+        df = df[df['streamer'].str.lower().isin(streamers_filtrados)]
+    st.markdown("### 🎞️ Detecções em VODs")
+    st.dataframe(df, use_container_width=True)
+
+if 'dados_vods_template' in st.session_state:
+    df = pd.DataFrame(st.session_state['dados_vods_template'])
+    df = formatar_datas_br(df)
+    st.markdown("### 🖼️ Detecções por imagem nas VODs")
+    st.dataframe(df, use_container_width=True)
+
+if 'dados_url' in st.session_state:
+    df = pd.DataFrame(st.session_state['dados_url'])
+    df = formatar_datas_br(df)
+    st.markdown("### 🌐 Detecção em URL personalizada")
+    st.dataframe(df, use_container_width=True)
+
+# ------------------------------
+# BUSCAR NOVOS STREAMERS
 # ------------------------------
 def sugerir_novos_streamers(game_name="Slots"):
     sugestoes = []
@@ -198,30 +269,6 @@ def sugerir_novos_streamers(game_name="Slots"):
         logging.error(f"Erro ao buscar novos streamers: {e}")
     return sugestoes
 
-# ------------------------------
-# BOTÕES DE AÇÃO PRINCIPAIS
-# ------------------------------
-col1, col2, col3, col4 = st.columns(4)
-
-with col1:
-    if st.button("🔍 Verificar lives agora"):
-        st.warning("Função de verificação de lives não implementada neste trecho.")
-
-with col2:
-    if st.button("📺 Verificar VODs no período"):
-        st.warning("Função de busca de VODs não implementada neste trecho.")
-
-with col3:
-    if st.button("🌐 Rodar varredura na URL personalizada") and url_custom:
-        st.warning("Função de varredura de URL não implementada neste trecho.")
-
-with col4:
-    if st.button("🖼️ Varrer VODs com detecção de imagem"):
-        st.warning("Função de varredura de imagem não implementada neste trecho.")
-
-# ------------------------------
-# SUGESTÃO DE NOVOS STREAMERS
-# ------------------------------
 st.sidebar.markdown("---")
 if st.sidebar.button("🔎 Buscar novos streamers"):
     novos = sugerir_novos_streamers()
