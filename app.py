@@ -281,6 +281,41 @@ def exibir_timeline_jogos(dados):
 
 abas = st.tabs(["Resultados", "Ranking de Jogos", "Timeline"])
 
+import shutil
+
+def varrer_e_salvar_para_treinamento(url, modelo=None, intervalo=30, max_frames=100, skip_inicial=0):
+    st.markdown("### 📥 Coleta de dados para treino")
+
+    os.makedirs("dataset/pragmatic", exist_ok=True)
+    os.makedirs("dataset/outros", exist_ok=True)
+
+    tempo = skip_inicial
+    salvos = {"pragmatic": 0, "outros": 0}
+
+    for i in range(max_frames):
+        frame_path = f"frame_treino_{tempo}.jpg"
+        sucesso = capturar_frame_ffmpeg_imageio(url, frame_path, skip_seconds=tempo)
+
+        if not sucesso:
+            st.warning(f"❌ Falha ao capturar frame em {tempo}s")
+            break
+
+        jogo = prever_jogo_em_frame(frame_path, modelo)
+
+        if jogo:
+            destino = f"dataset/pragmatic/frame_{tempo}.jpg"
+            salvos["pragmatic"] += 1
+        else:
+            destino = f"dataset/outros/frame_{tempo}.jpg"
+            salvos["outros"] += 1
+
+        shutil.move(frame_path, destino)
+        st.write(f"✔️ Frame salvo em `{destino}`")
+
+        tempo += intervalo
+
+    st.success(f"✅ Coleta finalizada: {salvos['pragmatic']} frames positivos, {salvos['outros']} negativos.")
+
 with abas[0]:
     # Aqui você mostra resultados das varreduras (frames, tabelas, etc.)
     # Ex: dados_url, dados_vods, dados_lives...
@@ -356,3 +391,15 @@ def exibir_ranking_jogos(dados):
     fig = px.bar(ranking, x='Jogo', y='Aparições', text='Aparições', color='Jogo', title="Top Jogos")
     fig.update_layout(showlegend=False)
     st.plotly_chart(fig, use_container_width=True)
+if st.button("📥 Coletar dados para treino (da URL)"):
+    if url_custom:
+        tempo_inicial = extrair_segundos_da_url_vod(url_custom)
+        varrer_e_salvar_para_treinamento(
+            url=url_custom,
+            modelo=st.session_state.get("modelo_ml"),
+            intervalo=30,
+            max_frames=50,
+            skip_inicial=tempo_inicial
+        )
+    else:
+        st.warning("⚠️ Insira uma URL personalizada para iniciar a coleta.")
