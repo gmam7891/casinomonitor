@@ -19,7 +19,7 @@ from ml_utils import (
 )
 
 # ------------------ CONFIGURAÇÕES INICIAIS ------------------
-st.set_page_config(page_title="Monitor Cassino PP", layout="wide")
+
 logging.basicConfig(level=logging.INFO, format='[%(levelname)s] %(asctime)s - %(message)s')
 st.markdown("""
     <div style='background-color:white; padding:10px; display:flex; align-items:center;'>
