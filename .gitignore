@@ -4,3 +4,4 @@ __pycache__/
 modelo/
 *.keras
 tests/testdata/*.jpg
+tests/testdata/*.png
