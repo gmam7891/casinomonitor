@@ -154,10 +154,27 @@ if st.sidebar.button("🎯 Capturar frame no segundo exato") and url_custom:
         st.error("Erro ao capturar frame.")
 
 # ------------------ TREINAR MODELO ------------------
+from ml_training import treinar_modelo
+
 if st.sidebar.button("🚀 Treinar modelo agora"):
     sucesso = treinar_modelo(st)
     if sucesso:
         st.rerun()
+
+with col1:
+    if st.button("🔍 Verificar lives agora"):
+        resultados = []
+        for streamer in STREAMERS_INTERESSE:
+            res = verificar_jogo_em_live(streamer, HEADERS_TWITCH, BASE_URL_TWITCH)
+            if res:
+                jogo, categoria = res
+                resultados.append({
+                    "streamer": streamer,
+                    "jogo_detectado": jogo,
+                    "categoria": categoria,
+                    "timestamp": datetime.now()
+                })
+        st.session_state['dados_lives'] = resultados
 
 with col2:
     if st.button("📺 Verificar VODs no período"):
