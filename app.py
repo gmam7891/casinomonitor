@@ -7,7 +7,7 @@ import requests
 import tensorflow as tf
 import time
 import re
-from tensorflow.keras.models import load_model
+from tensorflow.keras.applications.mobilenet_v2 import preprocess_input
 
 from ml_utils import (
     match_template_from_image,
