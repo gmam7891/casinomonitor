@@ -116,7 +116,7 @@ def varrer_url_customizada(url, st, session_state, prever_func, skip_inicial=0, 
 def varrer_vods_com_template(dt_inicio, dt_fim, headers, base_url, streamers, intervalo=60):
     
     resultados = []
-    vods = buscar_vods_twitch_por_periodo(dt_inicio, dt_fim, streamers)
+    vods = buscar_vods_twitch_por_periodo(dt_inicio, dt_fim, headers, base_url, streamers)
     for vod in vods:
         dur = vod["duração_segundos"]
         url = vod["url"]
