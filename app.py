@@ -188,27 +188,93 @@ if st.sidebar.button("🚀 Treinar modelo agora"):
     from tensorflow.keras import layers, models
     from tensorflow.keras.layers import GlobalAveragePooling2D, Dropout, Dense
     from collections import Counter
+    import traceback
 
-    st.info("Iniciando treinamento...")
-    datagen = ImageDataGenerator(validation_split=0.2, preprocessing_function=tf.keras.applications.mobilenet_v2.preprocess_input)
-    train_gen = datagen.flow_from_directory("dataset", target_size=(224, 224), batch_size=32, class_mode='binary', subset='training')
-    val_gen = datagen.flow_from_directory("dataset", target_size=(224, 224), batch_size=32, class_mode='binary', subset='validation')
+    try:
+        st.markdown("### 🔄 Iniciando treinamento do modelo...")
 
-    base_model = MobileNetV2(weights='imagenet', include_top=False, input_shape=(224, 224, 3))
-    base_model.trainable = False
-    model = models.Sequential([
-        base_model,
-        GlobalAveragePooling2D(),
-        Dropout(0.3),
-        Dense(64, activation='relu'),
-        Dense(1, activation='sigmoid')
-    ])
-    model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
-    class_weight = {0: 1.0, 1: 1.0}
-    model.fit(train_gen, validation_data=val_gen, epochs=5, class_weight=class_weight)
-    model.save(MODEL_PATH)
-    st.success("Modelo treinado e salvo com sucesso!")
-    st.rerun()
+        # 🔍 Verificar estrutura do dataset
+        base_path = "dataset"
+        subdirs = os.listdir(base_path)
+        if not subdirs or len(subdirs) < 2:
+            st.error("❌ O diretório 'dataset/' deve conter pelo menos 2 subpastas com classes diferentes (ex: 'pragmatic', 'outros').")
+            st.stop()
+
+        st.info(f"📁 Classes detectadas: `{', '.join(subdirs)}`")
+
+        # 🔄 Pré-processamento e geração de dados
+        datagen = ImageDataGenerator(
+            validation_split=0.2,
+            preprocessing_function=tf.keras.applications.mobilenet_v2.preprocess_input
+        )
+
+        img_size = (224, 224)
+        batch_size = 32
+
+        train_gen = datagen.flow_from_directory(
+            base_path,
+            target_size=img_size,
+            batch_size=batch_size,
+            class_mode='binary',
+            subset='training',
+            shuffle=True
+        )
+
+        val_gen = datagen.flow_from_directory(
+            base_path,
+            target_size=img_size,
+            batch_size=batch_size,
+            class_mode='binary',
+            subset='validation',
+            shuffle=False
+        )
+
+        # 📊 Exibir proporção das classes
+        class_counts = Counter(train_gen.classes)
+        st.write("📊 Distribuição das classes no treino:", dict(class_counts))
+
+        # ⚙️ Construção do modelo
+        st.markdown("### 🧠 Compilando modelo MobileNetV2...")
+        base_model = MobileNetV2(weights='imagenet', include_top=False, input_shape=(224, 224, 3))
+        base_model.trainable = False  # Congela base convolucional
+
+        model = models.Sequential([
+            base_model,
+            GlobalAveragePooling2D(),
+            Dropout(0.3),
+            Dense(64, activation='relu'),
+            Dense(1, activation='sigmoid')  # Binário
+        ])
+
+        model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
+
+        # 📌 Balanceamento das classes
+        total = sum(class_counts.values())
+        class_weight = {
+            0: total / (2.0 * class_counts[0]),
+            1: total / (2.0 * class_counts[1])
+        }
+
+        st.write("⚖️ Pesos de classe aplicados:", class_weight)
+
+        # 🔁 Treinamento
+        st.markdown("### ⏳ Treinando modelo...")
+        history = model.fit(
+            train_gen,
+            validation_data=val_gen,
+            epochs=5,
+            class_weight=class_weight,
+            verbose=1
+        )
+
+        # 💾 Salvando
+        model.save(MODEL_PATH)
+        st.success("✅ Modelo treinado e salvo com sucesso!")
+        st.rerun()
+
+    except Exception as e:
+        st.error("❌ Erro durante o treinamento:")
+        st.code(traceback.format_exc())
 
 # ------------------ BOTÕES DE ANÁLISE ------------------
 col1, col2, col3, col4 = st.columns(4)
