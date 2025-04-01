@@ -158,8 +158,7 @@ if st.sidebar.button("🚀 Treinar modelo agora"):
     sucesso = treinar_modelo(st)
     if sucesso:
         st.rerun()
-
-    try:
+        
         st.markdown("### 🔄 Iniciando treinamento do modelo...")
 
         # 🔍 Verificar estrutura do dataset
