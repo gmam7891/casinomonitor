@@ -132,3 +132,42 @@ def varrer_vods_com_template(dt_inicio, dt_fim, headers, base_url, streamers, in
                         "url": url
                     })
     return resultados
+
+def buscar_vods_twitch_por_periodo(dt_inicio, dt_fim, headers, base_url, streamers):
+    todos_vods = []
+
+    for login in streamers:
+        user_id = obter_user_id(login, headers)
+        if not user_id:
+            logging.warning(f"❌ User ID não encontrado para streamer: {login}")
+            continue
+
+        url = f"{base_url}videos?user_id={user_id}&type=archive&first=100"
+        try:
+            resp = requests.get(url, headers=headers)
+            vods = resp.json().get("data", [])
+
+            for vod in vods:
+                created_at = vod.get("created_at")
+                if isinstance(created_at, str):
+                    created_at = datetime.fromisoformat(created_at.replace("Z", "+00:00"))
+
+                if not (dt_inicio <= created_at <= dt_fim):
+                    continue
+
+                dur = converter_duracao_para_segundos(vod["duration"])
+
+                todos_vods.append({
+                    "streamer": login,
+                    "titulo": vod["title"],
+                    "url": vod["url"],
+                    "data": created_at,
+                    "duração_segundos": dur,
+                    "duração_raw": vod["duration"],
+                    "id_vod": vod["id"]
+                })
+
+        except Exception as e:
+            logging.error(f"Erro ao buscar VODs para {login}: {e}")
+
+    return todos_vods
