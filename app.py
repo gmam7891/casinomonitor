@@ -316,9 +316,26 @@ with col2:
 with col3:
     if st.button("🌐 Varredura na URL personalizada") and url_custom:
         tempo_inicial = extrair_segundos_da_url_vod(url_custom)
-        st.info(f"Iniciando varredura a partir de {tempo_inicial}s")
+
+        # 🧠 NOVO: Configuração da varredura por tempo total
+        tempo_total = 180   # tempo total em segundos que deseja analisar
+        intervalo = 10      # intervalo entre capturas (em segundos)
+        max_frames = tempo_total // intervalo  # calcula automaticamente
+
+        st.info(f"📡 Iniciando varredura de {tempo_total}s a partir de {tempo_inicial}s (a cada {intervalo}s)")
+
         inicio = time.time()
-        resultado_url = varrer_url_customizada(url_custom, st, st.session_state, prever_jogo_em_frame, skip_inicial=tempo_inicial)
+
+        resultado_url = varrer_url_customizada(
+            url_custom,
+            st,
+            st.session_state,
+            prever_jogo_em_frame,
+            skip_inicial=tempo_inicial,
+            intervalo=intervalo,
+            max_frames=max_frames
+        )
+
         duracao = time.time() - inicio
         st.success(f"✅ Varredura concluída em {duracao:.2f}s")
         st.session_state['dados_url'] = resultado_url
