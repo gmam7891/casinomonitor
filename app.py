@@ -176,7 +176,9 @@ with col1:
                     "categoria": categoria,
                     "timestamp": datetime.now()
                 })
-        st.session_state['dados_lives'] = resultados
+        if "curva_fig" in st.session_state:
+    with st.expander("📈 Ver curva de aprendizado recente", expanded=True):
+        st.pyplot(st.session_state["curva_fig"])
 
 with col2:
     if st.button("📺 Verificar VODs no período"):
