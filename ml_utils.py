@@ -5,6 +5,7 @@ import imageio_ffmpeg as ffmpeg
 import os
 import requests
 from datetime import datetime
+import logging
 
 def capturar_frame_ffmpeg_imageio(url, output_path, skip_seconds=0):
     try:
