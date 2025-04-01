@@ -104,14 +104,6 @@ def obter_user_id(login):
     data = resp.json().get("data", [])
     return data[0]["id"] if data else None
 
-def obter_user_id(login, headers):
-    url = f"https://api.twitch.tv/helix/users?login={login}"
-    resp = requests.get(url, headers=headers)
-    data = resp.json()
-    if data.get("data"):
-        return data["data"][0]["id"]
-    return None
-
 def formatar_datas_br(df, coluna="timestamp"):
     if coluna in df.columns:
         df[coluna] = pd.to_datetime(df[coluna]).dt.strftime("%d/%m/%Y %H:%M:%S")
