@@ -1,11 +1,14 @@
+import os
 import cv2
+import requests
 import numpy as np
+import logging
+from datetime import datetime
 from PIL import Image
 import imageio_ffmpeg as ffmpeg
-import os
-import requests
-from datetime import datetime
-import logging
+import tensorflow as tf
+from tensorflow.keras.preprocessing import image as keras_image
+
 
 def capturar_frame_ffmpeg_imageio(url, output_path, skip_seconds=0):
     try:
@@ -29,6 +32,7 @@ def capturar_frame_ffmpeg_imageio(url, output_path, skip_seconds=0):
         print(f"[Erro] capturar_frame_ffmpeg_imageio: {e}")
         return False
 
+
 def match_template_from_image(image_path, templates_dir="templates/", threshold=0.8):
     try:
         img = cv2.imread(image_path)
@@ -51,22 +55,25 @@ def match_template_from_image(image_path, templates_dir="templates/", threshold=
         print(f"[Erro] match_template_from_image: {e}")
         return None
 
-def prever_jogo_em_frame(image_path, modelo=None):
+
+def prever_jogo_em_frame(image_path, modelo=None, threshold=0.5):
     try:
         if modelo is None:
             return match_template_from_image(image_path)
 
-        from tensorflow.keras.preprocessing import image as keras_image
         img = keras_image.load_img(image_path, target_size=(224, 224))
         x = keras_image.img_to_array(img)
         x = tf.keras.applications.mobilenet_v2.preprocess_input(x)
         x = np.expand_dims(x, axis=0)
 
         y_pred = modelo.predict(x)[0][0]
-        return "Pragmatic Play (ML)" if y_pred > 0.5 else None
+        print(f"🧠 Confiança da predição: {y_pred:.4f} | Frame: {image_path}")
+
+        return "Pragmatic Play (ML)" if y_pred > threshold else None
     except Exception as e:
         print(f"[Erro] prever_jogo_em_frame: {e}")
         return None
+
 
 def verificar_jogo_em_live(streamer, headers, base_url):
     try:
@@ -92,6 +99,7 @@ def verificar_jogo_em_live(streamer, headers, base_url):
         print(f"[Erro] verificar_jogo_em_live: {e}")
         return None
 
+
 def varrer_url_customizada(url, st, session_state, prever_func, skip_inicial=0, intervalo=1000, max_frames=10000):
     resultados = []
     tempo_atual = skip_inicial
@@ -114,8 +122,8 @@ def varrer_url_customizada(url, st, session_state, prever_func, skip_inicial=0, 
 
     return resultados
 
+
 def varrer_vods_com_template(dt_inicio, dt_fim, headers, base_url, streamers, intervalo=60):
-    
     resultados = []
     vods = buscar_vods_twitch_por_periodo(dt_inicio, dt_fim, headers, base_url, streamers)
     for vod in vods:
@@ -134,6 +142,7 @@ def varrer_vods_com_template(dt_inicio, dt_fim, headers, base_url, streamers, in
                         "url": url
                     })
     return resultados
+
 
 def buscar_vods_twitch_por_periodo(dt_inicio, dt_fim, headers, base_url, streamers):
     todos_vods = []
@@ -174,6 +183,7 @@ def buscar_vods_twitch_por_periodo(dt_inicio, dt_fim, headers, base_url, streame
 
     return todos_vods
 
+
 def obter_user_id(login, headers):
     url = f"https://api.twitch.tv/helix/users?login={login}"
     resp = requests.get(url, headers=headers)
@@ -181,3 +191,12 @@ def obter_user_id(login, headers):
     if data.get("data"):
         return data["data"][0]["id"]
     return None
+
+
+def converter_duracao_para_segundos(dur_str):
+    import re
+    match = re.match(r"(?:(\d+)h)?(?:(\d+)m)?(?:(\d+)s)?", dur_str)
+    if not match:
+        return 0
+    h, m, s = match.groups(default="0")
+    return int(h)*3600 + int(m)*60 + int(s)
