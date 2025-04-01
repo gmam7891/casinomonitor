@@ -51,5 +51,3 @@ model.fit(train_gen, validation_data=val_gen, epochs=5)
 model.save(MODEL_PATH)
 
 print(f"✅ Modelo salvo em: {MODEL_PATH}")
-Adiciona script de treinamento do modelo ML
-
