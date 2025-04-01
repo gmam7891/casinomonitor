@@ -238,17 +238,37 @@ if st.sidebar.button("🚀 Treinar modelo agora"):
             verbose=1
         )
 
-        # 💾 Salvando
+        # 💾 Salvando modelo treinado
         model.save(MODEL_PATH)
         st.success("✅ Modelo treinado e salvo com sucesso!")
+
+        # 📈 Exibindo curvas de aprendizado
+        import matplotlib.pyplot as plt
+
+        st.markdown("### 📊 Curvas de Aprendizado")
+
+        fig, axs = plt.subplots(1, 2, figsize=(14, 5))
+
+        # Loss
+        axs[0].plot(history.history['loss'], label='Treino')
+        axs[0].plot(history.history['val_loss'], label='Validação')
+        axs[0].set_title('Loss por Época')
+        axs[0].set_xlabel('Época')
+        axs[0].set_ylabel('Loss')
+        axs[0].legend()
+
+        # Acurácia
+        axs[1].plot(history.history['accuracy'], label='Treino')
+        axs[1].plot(history.history['val_accuracy'], label='Validação')
+        axs[1].set_title('Acurácia por Época')
+        axs[1].set_xlabel('Época')
+        axs[1].set_ylabel('Acurácia')
+        axs[1].legend()
+
+        st.pyplot(fig)
+
+        # 🔄 Recarregar app com modelo novo
         st.rerun()
-
-    except Exception as e:
-        st.error("❌ Erro durante o treinamento:")
-        st.code(traceback.format_exc())
-
-# ------------------ BOTÕES DE ANÁLISE ------------------
-col1, col2, col3, col4 = st.columns(4)
 
 with col1:
     if st.button("🔍 Verificar lives agora"):
