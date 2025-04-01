@@ -318,8 +318,8 @@ with col3:
         tempo_inicial = extrair_segundos_da_url_vod(url_custom)
 
         # 🧠 NOVO: Configuração da varredura por tempo total
-        tempo_total = 180   # tempo total em segundos que deseja analisar
-        intervalo = 10      # intervalo entre capturas (em segundos)
+        tempo_total = 1000   # tempo total em segundos que deseja analisar
+        intervalo = 01      # intervalo entre capturas (em segundos)
         max_frames = tempo_total // intervalo  # calcula automaticamente
 
         st.info(f"📡 Iniciando varredura de {tempo_total}s a partir de {tempo_inicial}s (a cada {intervalo}s)")
