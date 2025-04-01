@@ -9,6 +9,7 @@ import time
 import re
 import gdown
 from tensorflow.keras.models import load_model
+from ml_training import treinar_modelo
 
 from ml_utils import (
     match_template_from_image,
@@ -154,12 +155,9 @@ if st.sidebar.button("🎯 Capturar frame no segundo exato") and url_custom:
 
 # ------------------ TREINAR MODELO ------------------
 if st.sidebar.button("🚀 Treinar modelo agora"):
-    from tensorflow.keras.preprocessing.image import ImageDataGenerator
-    from tensorflow.keras.applications import MobileNetV2
-    from tensorflow.keras import layers, models
-    from tensorflow.keras.layers import GlobalAveragePooling2D, Dropout, Dense
-    from collections import Counter
-    import traceback
+    sucesso = treinar_modelo(st)
+    if sucesso:
+        st.rerun()
 
     try:
         st.markdown("### 🔄 Iniciando treinamento do modelo...")
