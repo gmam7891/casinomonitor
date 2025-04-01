@@ -90,7 +90,7 @@ def verificar_jogo_em_live(streamer, headers, base_url):
         print(f"[Erro] verificar_jogo_em_live: {e}")
         return None
 
-def varrer_url_customizada(url, st, session_state, prever_func, skip_inicial=0, intervalo=30, max_frames=300):
+def varrer_url_customizada(url, st, session_state, prever_func, skip_inicial=0, intervalo=1000, max_frames=10000):
     resultados = []
     tempo_atual = skip_inicial
 
