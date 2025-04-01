@@ -160,7 +160,8 @@ if st.sidebar.button("🚀 Treinar modelo agora"):
     sucesso = treinar_modelo(st)
     if sucesso:
         st.rerun()
-try:
+
+col1, col2, col3, col4 = st.columns(4)
 
 with col1:
     if st.button("🔍 Verificar lives agora"):
