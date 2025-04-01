@@ -9,3 +9,4 @@ matplotlib
 imageio
 imageio-ffmpeg
 plotly
+gdown
