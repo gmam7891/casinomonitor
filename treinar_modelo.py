@@ -50,5 +50,4 @@ model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy']
 model.fit(train_gen, validation_data=val_gen, epochs=5)
 model.save(MODEL_PATH)
 
-print(f"✅ Modelo salvo em:modelo/modelo_pragmatic.keras")
-
+print(f"✅ Modelo salvo em: {MODEL_PATH}")
