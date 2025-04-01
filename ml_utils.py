@@ -8,7 +8,10 @@ from PIL import Image
 import imageio_ffmpeg as ffmpeg
 import tensorflow as tf
 from tensorflow.keras.preprocessing import image as keras_image
-
+from collections import Counter
+import traceback
+from tensorflow.keras.layers import GlobalAveragePooling2D, Dropout, Dense
+from tensorflow.keras import models
 
 def capturar_frame_ffmpeg_imageio(url, output_path, skip_seconds=0):
     try:
@@ -200,3 +203,103 @@ def converter_duracao_para_segundos(dur_str):
         return 0
     h, m, s = match.groups(default="0")
     return int(h)*3600 + int(m)*60 + int(s)
+
+def treinar_modelo(st, base_path="dataset", model_path="modelo/modelo_pragmatic.keras", epochs=5):
+    try:
+        st.markdown("### 🔄 Iniciando treinamento do modelo...")
+
+        subdirs = os.listdir(base_path)
+        if not subdirs or len(subdirs) < 2:
+            st.error("❌ O diretório 'dataset/' deve conter pelo menos 2 subpastas com classes diferentes.")
+            return
+
+        st.info(f"📁 Classes detectadas: `{', '.join(subdirs)}`")
+
+        datagen = ImageDataGenerator(
+            validation_split=0.2,
+            preprocessing_function=tf.keras.applications.mobilenet_v2.preprocess_input
+        )
+
+        img_size = (224, 224)
+        batch_size = 32
+
+        train_gen = datagen.flow_from_directory(
+            base_path,
+            target_size=img_size,
+            batch_size=batch_size,
+            class_mode='binary',
+            subset='training',
+            shuffle=True
+        )
+
+        val_gen = datagen.flow_from_directory(
+            base_path,
+            target_size=img_size,
+            batch_size=batch_size,
+            class_mode='binary',
+            subset='validation',
+            shuffle=False
+        )
+
+        class_counts = Counter(train_gen.classes)
+        st.write("📊 Distribuição das classes no treino:", dict(class_counts))
+
+        base_model = MobileNetV2(weights='imagenet', include_top=False, input_shape=(224, 224, 3))
+        base_model.trainable = False
+
+        model = models.Sequential([
+            base_model,
+            GlobalAveragePooling2D(),
+            Dropout(0.3),
+            Dense(64, activation='relu'),
+            Dense(1, activation='sigmoid')
+        ])
+
+        model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
+
+        total = sum(class_counts.values())
+        class_weight = {
+            0: total / (2.0 * class_counts[0]),
+            1: total / (2.0 * class_counts[1])
+        }
+
+        st.write("⚖️ Pesos de classe aplicados:", class_weight)
+
+        st.markdown("### ⏳ Treinando modelo...")
+        history = model.fit(
+            train_gen,
+            validation_data=val_gen,
+            epochs=epochs,
+            class_weight=class_weight,
+            verbose=1
+        )
+
+        model.save(model_path)
+        st.success("✅ Modelo treinado e salvo com sucesso!")
+
+        st.markdown("### 📊 Curvas de Aprendizado")
+
+        fig, axs = plt.subplots(1, 2, figsize=(14, 5))
+
+        axs[0].plot(history.history['loss'], label='Treino')
+        axs[0].plot(history.history['val_loss'], label='Validação')
+        axs[0].set_title('Loss por Época')
+        axs[0].set_xlabel('Época')
+        axs[0].set_ylabel('Loss')
+        axs[0].legend()
+
+        axs[1].plot(history.history['accuracy'], label='Treino')
+        axs[1].plot(history.history['val_accuracy'], label='Validação')
+        axs[1].set_title('Acurácia por Época')
+        axs[1].set_xlabel('Época')
+        axs[1].set_ylabel('Acurácia')
+        axs[1].legend()
+
+        st.pyplot(fig)
+
+        return True
+
+    except Exception as e:
+        st.error("❌ Erro durante o treinamento:")
+        st.code(traceback.format_exc())
+        return False
