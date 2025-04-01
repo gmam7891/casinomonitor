@@ -7,7 +7,8 @@ import requests
 import tensorflow as tf
 import time
 import re
-from tensorflow.keras.applications.mobilenet_v2 import preprocess_input
+import gdown
+from tensorflow.keras.models import load_model
 
 from ml_utils import (
     match_template_from_image,
@@ -55,9 +56,25 @@ BASE_URL_TWITCH = 'https://api.twitch.tv/helix/'
 STREAMERS_FILE = "streamers.txt"
 TEMPLATES_DIR = "templates/"
 MODEL_PATH = "modelo/modelo_pragmatic.keras"
+MODEL_URL = "https://drive.google.com/uc?id=1i_zEMwUkTfu9L5HGNdrIs4OPCTN6Q8Zr"
 
-
-
+if "modelo_ml" not in st.session_state:
+    if not os.path.exists(MODEL_PATH):
+        st.info("🔄 Baixando modelo do Google Drive...")
+        os.makedirs("modelo", exist_ok=True)
+        try:
+            gdown.download(MODEL_URL, MODEL_PATH, quiet=False)
+            st.success("✅ Modelo baixado com sucesso!")
+        except Exception as e:
+            st.error(f"Erro ao baixar modelo: {e}")
+            st.warning("⚠️ Usando detecção por template.")
+    if os.path.exists(MODEL_PATH):
+        try:
+            st.session_state["modelo_ml"] = load_model(MODEL_PATH)
+            st.success("✅ Modelo carregado com sucesso!")
+        except Exception as e:
+            st.error(f"Erro ao carregar modelo: {e}")
+            st.warning("⚠️ Usando detecção por template.")
 
 # ------------------ FUNÇÕES AUXILIARES ------------------
 def carregar_streamers():
