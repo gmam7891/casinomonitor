@@ -319,7 +319,7 @@ with col3:
 
         # 🧠 NOVO: Configuração da varredura por tempo total
         tempo_total = 10000   # tempo total em segundos que deseja analisar
-        intervalo = 0.5      # intervalo entre capturas (em segundos)
+        intervalo = 1      # intervalo entre capturas (em segundos)
         max_frames = tempo_total // intervalo  # calcula automaticamente
 
         st.info(f"📡 Iniciando varredura de {tempo_total}s a partir de {tempo_inicial}s (a cada {intervalo}s)")
