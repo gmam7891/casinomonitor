@@ -10,11 +10,14 @@ import re
 import gdown
 from tensorflow.keras.models import load_model
 
-# 🔧 Instalar OpenCV (cv2) automaticamente, se necessário
+# ✅ Instalação segura do OpenCV em ambiente sem GUI
 try:
     import cv2
 except ImportError:
+    os.system("pip uninstall -y opencv-python opencv-python-headless")
+    os.system("pip install opencv-python-headless")
     import cv2
+
 from ml_training import treinar_modelo
 
 from ml_utils import (
@@ -26,6 +29,7 @@ from ml_utils import (
     varrer_vods_com_template,
     buscar_vods_twitch_por_periodo
 )
+
 
 # ------------------ CONFIGURAÇÕES INICIAIS ------------------
 
