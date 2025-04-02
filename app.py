@@ -279,7 +279,7 @@ def exibir_timeline_jogos(dados):
     st.plotly_chart(fig, use_container_width=True)
 
 
-abas = st.tabs(["Resultados", "Ranking de Jogos", "Timeline"])
+abas = st.tabs(["Resultados", "Ranking de Jogos", "Timeline", "VODs Completas"])
 
 import shutil
 
@@ -316,11 +316,8 @@ def varrer_e_salvar_para_treinamento(url, modelo=None, intervalo=30, max_frames=
 
     st.success(f"✅ Coleta finalizada: {salvos['pragmatic']} frames positivos, {salvos['outros']} negativos.")
 
-# 📌 Abas principais da interface
-abas = st.tabs(["Resultados", "Ranking de Jogos", "Timeline", "VODs Completas"])
 
 # ------------------ Aba: Resultados ------------------
-abas = st.tabs(["Resultados", "Ranking de Jogos", "Timeline", "VODs Completas"])
 with abas[0]:
     if 'dados_url' in st.session_state:
         st.markdown("### 🎰 Resultados da VOD personalizada")
