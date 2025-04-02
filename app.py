@@ -5,11 +5,12 @@ import pandas as pd
 import logging
 import requests
 import tensorflow as tf
+import time
 import re
 import gdown
 from tensorflow.keras.models import load_model
 
-# OpenCV seguro para ambiente sem GUI
+# OpenCV em ambiente headless
 try:
     import cv2
 except ImportError:
@@ -21,7 +22,6 @@ except ImportError:
         st.error(f"❌ Falha ao instalar OpenCV automaticamente: {e}")
         st.stop()
 
-# Importações internas
 from ml_training import treinar_modelo
 from ml_utils import (
     match_template_from_image,
@@ -33,11 +33,11 @@ from ml_utils import (
     buscar_vods_twitch_por_periodo
 )
 
-# Configuração geral
+# ---------------- CONFIGURAÇÃO GERAL ----------------
 st.set_page_config(page_title="Monitor Cassino PP", layout="wide")
 logging.basicConfig(level=logging.INFO, format='[%(levelname)s] %(asctime)s - %(message)s')
 
-# Cabeçalho
+# ---------------- CABEÇALHO ----------------
 st.markdown("""
 <div style='background-color:white; padding:10px; display:flex; align-items:center;'>
     <img src='https://findfaircasinos.com/gfx/uploads/620_620_kr/716_Pragmatic%20play%20logo.png' 
@@ -46,16 +46,19 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# Variáveis
+# ---------------- VARIÁVEIS ----------------
 CLIENT_ID = os.getenv("TWITCH_CLIENT_ID", "gp762nuuoqcoxypju8c569th9wz7q5")
 ACCESS_TOKEN = os.getenv("TWITCH_ACCESS_TOKEN", "moila7dw5ejlk3eja6ne08arw0oexs")
-HEADERS_TWITCH = {'Client-ID': CLIENT_ID, 'Authorization': f'Bearer {ACCESS_TOKEN}'}
+HEADERS_TWITCH = {
+    'Client-ID': CLIENT_ID,
+    'Authorization': f'Bearer {ACCESS_TOKEN}'
+}
 BASE_URL_TWITCH = 'https://api.twitch.tv/helix/'
 STREAMERS_FILE = "streamers.txt"
 MODEL_PATH = "modelo/modelo_pragmatic.keras"
 MODEL_URL = "https://drive.google.com/uc?id=1i_zEMwUkTfu9L5HGNdrIs4OPCTN6Q8Zr"
 
-# Carregar modelo
+# ---------------- MODELO ML ----------------
 if "modelo_ml" not in st.session_state:
     if not os.path.exists(MODEL_PATH):
         st.info("🔄 Baixando modelo...")
@@ -71,8 +74,8 @@ if "modelo_ml" not in st.session_state:
             st.success("✅ Modelo carregado com sucesso!")
         except Exception as e:
             st.error(f"Erro ao carregar modelo: {e}")
-# ------------------ Funções auxiliares ------------------
 
+# ---------------- FUNÇÕES AUXILIARES ----------------
 def carregar_streamers():
     if not os.path.exists(STREAMERS_FILE):
         with open(STREAMERS_FILE, "w") as f:
@@ -82,11 +85,10 @@ def carregar_streamers():
 
 def extrair_segundos_da_url_vod(url):
     match = re.search(r"[?&]t=(?:(\d+)h)?(?:(\d+)m)?(?:(\d+)s)?", url)
-    if not match: return 0
-    h = int(match.group(1) or 0)
-    m = int(match.group(2) or 0)
-    s = int(match.group(3) or 0)
-    return h * 3600 + m * 60 + int(s)
+    if not match:
+        return 0
+    h, m, s = int(match.group(1) or 0), int(match.group(2) or 0), int(match.group(3) or 0)
+    return h * 3600 + m * 60 + s
 
 def formatar_datas_br(df, coluna="timestamp"):
     if coluna in df.columns:
@@ -106,8 +108,21 @@ def buscar_resumo_vods(dt_inicio, dt_fim, headers, base_url, streamers):
         })
     return resumo
 
-# ------------------ Interface Streamlit ------------------
-
+def sugerir_novos_streamers(game_name="Slots"):
+    sugestoes = []
+    try:
+        response = requests.get(BASE_URL_TWITCH + f"streams?first=100", headers=HEADERS_TWITCH)
+        data = response.json().get("data", [])
+        atuais = set(STREAMERS_INTERESSE)
+        for stream in data:
+            if game_name.lower() in stream.get("game_name", "").lower():
+                login = stream.get("user_login")
+                if login and login not in atuais:
+                    sugestoes.append(login)
+    except Exception as e:
+        logging.error(f"Erro ao buscar streamers: {e}")
+    return sugestoes
+# ---------------- INTERFACE LATERAL ----------------
 STREAMERS_INTERESSE = carregar_streamers()
 
 st.sidebar.header("🎯 Filtros")
@@ -116,7 +131,7 @@ data_fim = st.sidebar.date_input("Data de fim", value=datetime.today())
 url_custom = st.sidebar.text_input("URL personalizada (VOD .m3u8 ou com ?t=...)")
 segundo_alvo = st.sidebar.number_input("Segundo para captura manual", min_value=0, max_value=99999, value=0)
 
-# Captura manual
+# ---------------- CAPTURAR FRAME EXATO ----------------
 if st.sidebar.button("🎯 Capturar frame no segundo exato") and url_custom:
     frame_path = "frame_manual.jpg"
     if capturar_frame_ffmpeg_imageio(url_custom, frame_path, skip_seconds=segundo_alvo):
@@ -129,13 +144,13 @@ if st.sidebar.button("🎯 Capturar frame no segundo exato") and url_custom:
     else:
         st.error("Erro ao capturar frame.")
 
-# Botão de treinar modelo
+# ---------------- TREINAMENTO DO MODELO ----------------
 if st.sidebar.button("🚀 Treinar modelo agora"):
     sucesso = treinar_modelo(st)
     if sucesso:
         st.rerun()
 
-# Botões principais
+# ---------------- BOTÕES PRINCIPAIS ----------------
 col1, col2, col3, col4 = st.columns(4)
 
 with col1:
@@ -160,13 +175,40 @@ with col2:
         resumo = buscar_resumo_vods(dt_ini, dt_fim, HEADERS_TWITCH, BASE_URL_TWITCH, STREAMERS_INTERESSE)
         st.session_state['vods_resumo'] = resumo
         st.success(f"✅ {len(resumo)} VODs encontradas no período.")
-# ------------------ Abas principais ------------------
 
+with col3:
+    if st.button("🌐 Varredura por URL") and url_custom:
+        tempo_inicial = extrair_segundos_da_url_vod(url_custom)
+        intervalo = 1
+        max_frames = 10000
+
+        st.info(f"📡 Iniciando varredura por {max_frames * intervalo}s a partir de {tempo_inicial}s...")
+
+        inicio = time.time()
+        resultado_url = varrer_url_customizada(
+            url_custom,
+            st,
+            st.session_state,
+            prever_jogo_em_frame,
+            skip_inicial=tempo_inicial,
+            intervalo=intervalo,
+            max_frames=max_frames
+        )
+        duracao = time.time() - inicio
+        st.success(f"✅ Varredura concluída em {duracao:.2f}s")
+        st.session_state['dados_url'] = resultado_url
+
+with col4:
+    if st.button("🖼️ Varrer VODs com imagem"):
+        dt_ini = datetime.combine(data_inicio, datetime.min.time())
+        dt_fim = datetime.combine(data_fim, datetime.max.time())
+        resultados = varrer_vods_com_template(dt_ini, dt_fim, HEADERS_TWITCH, BASE_URL_TWITCH, STREAMERS_INTERESSE)
+        st.session_state['dados_vods_template'] = resultados
+
+# ---------------- ABAS PRINCIPAIS ----------------
 import plotly.express as px
-
 abas = st.tabs(["Resultados", "Ranking de Jogos", "Timeline", "Resumo de VODs"])
-
-# Aba 1 - Resultados
+# ------------------ Aba 1: Resultados ------------------
 with abas[0]:
     if 'dados_url' in st.session_state:
         st.markdown("### 🎰 Resultados da VOD personalizada")
@@ -189,7 +231,7 @@ with abas[0]:
                 st.write(f"⏱ Tempo: {res['segundo']}s")
                 st.write(f"🔗 [Ver VOD]({res['url']})")
 
-# Aba 2 - Ranking de Jogos
+# ------------------ Aba 2: Ranking ------------------
 with abas[1]:
     def exibir_ranking_jogos(dados):
         if not dados:
@@ -216,10 +258,10 @@ with abas[1]:
         dados_para_ranking += st.session_state['dados_url']
     if 'dados_vods_template' in st.session_state:
         dados_para_ranking += st.session_state['dados_vods_template']
-    
+
     exibir_ranking_jogos(dados_para_ranking)
 
-# Aba 3 - Timeline
+# ------------------ Aba 3: Timeline ------------------
 with abas[2]:
     def exibir_timeline_jogos(dados):
         if not dados:
@@ -257,7 +299,7 @@ with abas[2]:
 
     exibir_timeline_jogos(dados_timeline)
 
-# Aba 4 - Resumo de VODs (sem varredura de frames)
+# ------------------ Aba 4: Resumo de VODs ------------------
 with abas[3]:
     st.markdown("### 📂 Resumo de VODs no período selecionado")
     if 'vods_resumo' in st.session_state and st.session_state['vods_resumo']:
@@ -268,3 +310,14 @@ with abas[3]:
         st.write(df.to_markdown(index=False), unsafe_allow_html=True)
     else:
         st.info("📭 Nenhum dado carregado. Clique em **'Verificar VODs (resumo)'**.")
+
+# ------------------ SUGERIR NOVOS STREAMERS ------------------
+st.sidebar.markdown("---")
+if st.sidebar.button("🔎 Buscar novos streamers"):
+    novos = sugerir_novos_streamers()
+    if novos:
+        st.success("Novos possíveis streamers:")
+        for s in novos:
+            st.write(f"- {s}")
+    else:
+        st.warning("Nenhum novo streamer encontrado.")
