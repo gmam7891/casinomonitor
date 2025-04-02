@@ -358,7 +358,7 @@ if 'dados_vods' in st.session_state:
     st.dataframe(df)
 
 if 'vods_completas' in st.session_state:
-    st.markdown("### 📂 Resultados da Varrredura de VODs Completas")
+    st.markdown("### 📂 Resultados da Varredura de VODs Completas")
     for res in st.session_state['vods_completas']:
         col1, col2 = st.columns([1, 3])
         with col1:
