@@ -31,7 +31,7 @@ from ml_utils import (
     verificar_jogo_em_live,
     varrer_url_customizada,
     varrer_vods_com_template,
-    buscar_vods_twitch_por_periodo
+    buscar_vods_twitch_por_periodo,
     varrer_vods_simples
 )
 
