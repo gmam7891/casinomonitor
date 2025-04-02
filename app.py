@@ -14,8 +14,8 @@ from tensorflow.keras.models import load_model
 try:
     import cv2
 except ImportError:
-    os.system("pip uninstall -y opencv-python opencv-python-headless")
-    os.system("pip install opencv-python-headless")
+    import subprocess
+    subprocess.check_call(["pip", "install", "opencv-python-headless"])
     import cv2
 
 from ml_training import treinar_modelo
