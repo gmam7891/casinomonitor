@@ -1,5 +1,3 @@
-# ml_training.py
-
 import os
 import traceback
 import matplotlib.pyplot as plt
@@ -9,8 +7,11 @@ from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from tensorflow.keras.applications import MobileNetV2
 from tensorflow.keras import models
 from tensorflow.keras.layers import GlobalAveragePooling2D, Dropout, Dense
+from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint
+from sklearn.metrics import classification_report
+import numpy as np
 
-def treinar_modelo(st, base_path="dataset", model_path="modelo/modelo_pragmatic.keras", epochs=5):
+def treinar_modelo(st, base_path="dataset", model_path="modelo/modelo_pragmatic.keras", epochs=10):
     try:
         st.markdown("### 🔄 Iniciando treinamento do modelo...")
 
@@ -23,7 +24,12 @@ def treinar_modelo(st, base_path="dataset", model_path="modelo/modelo_pragmatic.
 
         datagen = ImageDataGenerator(
             validation_split=0.2,
-            preprocessing_function=tf.keras.applications.mobilenet_v2.preprocess_input
+            preprocessing_function=tf.keras.applications.mobilenet_v2.preprocess_input,
+            rotation_range=10,
+            width_shift_range=0.1,
+            height_shift_range=0.1,
+            zoom_range=0.1,
+            horizontal_flip=True
         )
 
         img_size = (224, 224)
@@ -51,11 +57,17 @@ def treinar_modelo(st, base_path="dataset", model_path="modelo/modelo_pragmatic.
         st.write("📊 Distribuição das classes no treino:", dict(class_counts))
 
         base_model = MobileNetV2(weights='imagenet', include_top=False, input_shape=(224, 224, 3))
-        base_model.trainable = False
+        base_model.trainable = True
+
+        # Fine-tuning apenas nas últimas 20 camadas
+        for layer in base_model.layers[:-20]:
+            layer.trainable = False
 
         model = models.Sequential([
             base_model,
             GlobalAveragePooling2D(),
+            Dropout(0.3),
+            Dense(128, activation='relu'),
             Dropout(0.3),
             Dense(64, activation='relu'),
             Dense(1, activation='sigmoid')
@@ -71,19 +83,24 @@ def treinar_modelo(st, base_path="dataset", model_path="modelo/modelo_pragmatic.
 
         st.write("⚖️ Pesos de classe aplicados:", class_weight)
 
+        callbacks = [
+            EarlyStopping(patience=3, restore_best_weights=True),
+            ModelCheckpoint(model_path, save_best_only=True)
+        ]
+
         st.markdown("### ⏳ Treinando modelo...")
         history = model.fit(
             train_gen,
             validation_data=val_gen,
             epochs=epochs,
             class_weight=class_weight,
+            callbacks=callbacks,
             verbose=1
         )
 
-        model.save(model_path)
         st.success("✅ Modelo treinado e salvo com sucesso!")
 
-        # Curva de aprendizado
+        # Curvas de aprendizado
         fig, axs = plt.subplots(1, 2, figsize=(14, 5))
 
         axs[0].plot(history.history['loss'], label='Treino')
@@ -100,8 +117,16 @@ def treinar_modelo(st, base_path="dataset", model_path="modelo/modelo_pragmatic.
         axs[1].set_ylabel('Acurácia')
         axs[1].legend()
 
-        # Armazena o gráfico para mostrar no "popup"
         st.session_state["curva_fig"] = fig
+
+        # Avaliação final com métricas detalhadas
+        val_preds = model.predict(val_gen)
+        pred_labels = (val_preds > 0.5).astype(int).flatten()
+        true_labels = val_gen.classes
+
+        report = classification_report(true_labels, pred_labels, target_names=subdirs)
+        st.markdown("### 📋 Relatório de Classificação")
+        st.code(report)
 
         return True
 
