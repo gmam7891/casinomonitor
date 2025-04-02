@@ -346,8 +346,6 @@ with abas[1]:
     if 'dados_vods_template' in st.session_state:
         dados_para_ranking += st.session_state['dados_vods_template']
 
-    exibir_ranking_jogos(dados_para_ranking)
-
 # ------------------ Aba: Timeline ------------------
 with abas[2]:
     dados_timeline = []
