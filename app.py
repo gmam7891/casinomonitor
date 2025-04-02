@@ -175,7 +175,7 @@ if st.sidebar.button("🚀 Treinar modelo agora"):
     if sucesso:
         st.rerun()
 
-col1, col2, col3, col4, col5 = st.columns(4)
+col1, col2, col3, col4, col5 = st.columns(5)
 
 with col1:
     if st.button("🔍 Verificar lives agora"):
