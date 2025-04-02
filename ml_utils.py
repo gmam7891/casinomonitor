@@ -1,17 +1,24 @@
 import os
+import re
+import logging
+import traceback
+from datetime import datetime
+from collections import Counter
+
 import cv2
 import requests
 import numpy as np
-import logging
-from datetime import datetime
 from PIL import Image
 import imageio_ffmpeg as ffmpeg
 import tensorflow as tf
 from tensorflow.keras.preprocessing import image as keras_image
-from collections import Counter
-import traceback
+from tensorflow.keras.applications import mobilenet_v2
+from tensorflow.keras.applications.mobilenet_v2 import MobileNetV2
+from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from tensorflow.keras.layers import GlobalAveragePooling2D, Dropout, Dense
 from tensorflow.keras import models
+import matplotlib.pyplot as plt
+
 
 def capturar_frame_ffmpeg_imageio(url, output_path, skip_seconds=0):
     try:
@@ -27,7 +34,6 @@ def capturar_frame_ffmpeg_imageio(url, output_path, skip_seconds=0):
         ]
         process = ffmpeg.read_frames(cmd, size=(w, h))
         frame = next(process)
-
         image = Image.fromarray(frame)
         image.save(output_path)
         return True
@@ -41,6 +47,7 @@ def match_template_from_image(image_path, templates_dir="templates/", threshold=
         img = cv2.imread(image_path)
         if img is None:
             return None
+
         gray_img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
         for template_file in os.listdir(templates_dir):
@@ -51,8 +58,10 @@ def match_template_from_image(image_path, templates_dir="templates/", threshold=
 
             res = cv2.matchTemplate(gray_img, template, cv2.TM_CCOEFF_NORMED)
             _, max_val, _, _ = cv2.minMaxLoc(res)
+
             if max_val >= threshold:
                 return os.path.splitext(template_file)[0]
+
         return None
     except Exception as e:
         print(f"[Erro] match_template_from_image: {e}")
@@ -66,7 +75,7 @@ def prever_jogo_em_frame(image_path, modelo=None, threshold=0.4):
 
         img = keras_image.load_img(image_path, target_size=(224, 224))
         x = keras_image.img_to_array(img)
-        x = tf.keras.applications.mobilenet_v2.preprocess_input(x)
+        x = mobilenet_v2.preprocess_input(x)
         x = np.expand_dims(x, axis=0)
 
         y_pred = modelo.predict(x)[0][0]
@@ -93,10 +102,12 @@ def verificar_jogo_em_live(streamer, headers, base_url):
 
         m3u8_url = f"https://usher.ttvnw.net/api/channel/hls/{streamer}.m3u8"
         temp_path = f"live_frame_{streamer}.jpg"
+
         if capturar_frame_ffmpeg_imageio(m3u8_url, temp_path, skip_seconds=5):
             jogo = prever_jogo_em_frame(temp_path)
             categoria = stream_data[0].get("game_name", "")
-            return (jogo, categoria)
+            return jogo, categoria
+
         return None
     except Exception as e:
         print(f"[Erro] verificar_jogo_em_live: {e}")
@@ -109,8 +120,7 @@ def varrer_url_customizada(url, st, session_state, prever_func, skip_inicial=0, 
 
     for _ in range(max_frames):
         frame_path = f"frame_{tempo_atual}.jpg"
-        sucesso = capturar_frame_ffmpeg_imageio(url, frame_path, skip_seconds=tempo_atual)
-        if not sucesso:
+        if not capturar_frame_ffmpeg_imageio(url, frame_path, skip_seconds=tempo_atual):
             break
 
         jogo = prever_func(frame_path, session_state.get("modelo_ml"))
@@ -129,6 +139,7 @@ def varrer_url_customizada(url, st, session_state, prever_func, skip_inicial=0, 
 def varrer_vods_com_template(dt_inicio, dt_fim, headers, base_url, streamers, intervalo=60):
     resultados = []
     vods = buscar_vods_twitch_por_periodo(dt_inicio, dt_fim, headers, base_url, streamers)
+
     for vod in vods:
         dur = vod["duração_segundos"]
         url = vod["url"]
@@ -156,9 +167,8 @@ def buscar_vods_twitch_por_periodo(dt_inicio, dt_fim, headers, base_url, streame
             logging.warning(f"❌ User ID não encontrado para streamer: {login}")
             continue
 
-        url = f"{base_url}videos?user_id={user_id}&type=archive&first=100"
         try:
-            resp = requests.get(url, headers=headers)
+            resp = requests.get(f"{base_url}videos?user_id={user_id}&type=archive&first=100", headers=headers)
             vods = resp.json().get("data", [])
 
             for vod in vods:
@@ -191,18 +201,16 @@ def obter_user_id(login, headers):
     url = f"https://api.twitch.tv/helix/users?login={login}"
     resp = requests.get(url, headers=headers)
     data = resp.json()
-    if data.get("data"):
-        return data["data"][0]["id"]
-    return None
+    return data["data"][0]["id"] if data.get("data") else None
 
 
 def converter_duracao_para_segundos(dur_str):
-    import re
     match = re.match(r"(?:(\d+)h)?(?:(\d+)m)?(?:(\d+)s)?", dur_str)
     if not match:
         return 0
     h, m, s = match.groups(default="0")
-    return int(h)*3600 + int(m)*60 + int(s)
+    return int(h) * 3600 + int(m) * 60 + int(s)
+
 
 def treinar_modelo(st, base_path="dataset", model_path="modelo/modelo_pragmatic.keras", epochs=5):
     try:
@@ -217,28 +225,17 @@ def treinar_modelo(st, base_path="dataset", model_path="modelo/modelo_pragmatic.
 
         datagen = ImageDataGenerator(
             validation_split=0.2,
-            preprocessing_function=tf.keras.applications.mobilenet_v2.preprocess_input
+            preprocessing_function=mobilenet_v2.preprocess_input
         )
 
-        img_size = (224, 224)
-        batch_size = 32
-
         train_gen = datagen.flow_from_directory(
-            base_path,
-            target_size=img_size,
-            batch_size=batch_size,
-            class_mode='binary',
-            subset='training',
-            shuffle=True
+            base_path, target_size=(224, 224), batch_size=32,
+            class_mode='binary', subset='training', shuffle=True
         )
 
         val_gen = datagen.flow_from_directory(
-            base_path,
-            target_size=img_size,
-            batch_size=batch_size,
-            class_mode='binary',
-            subset='validation',
-            shuffle=False
+            base_path, target_size=(224, 224), batch_size=32,
+            class_mode='binary', subset='validation', shuffle=False
         )
 
         class_counts = Counter(train_gen.classes)
@@ -278,7 +275,6 @@ def treinar_modelo(st, base_path="dataset", model_path="modelo/modelo_pragmatic.
         st.success("✅ Modelo treinado e salvo com sucesso!")
 
         st.markdown("### 📊 Curvas de Aprendizado")
-
         fig, axs = plt.subplots(1, 2, figsize=(14, 5))
 
         axs[0].plot(history.history['loss'], label='Treino')
@@ -296,10 +292,9 @@ def treinar_modelo(st, base_path="dataset", model_path="modelo/modelo_pragmatic.
         axs[1].legend()
 
         st.pyplot(fig)
-
         return True
 
-    except Exception as e:
+    except Exception:
         st.error("❌ Erro durante o treinamento:")
         st.code(traceback.format_exc())
         return False
