@@ -59,7 +59,7 @@ def match_template_from_image(image_path, templates_dir="templates/", threshold=
         return None
 
 
-def prever_jogo_em_frame(image_path, modelo=None, threshold=0.5):
+def prever_jogo_em_frame(image_path, modelo=None, threshold=0.4):
     try:
         if modelo is None:
             return match_template_from_image(image_path)
