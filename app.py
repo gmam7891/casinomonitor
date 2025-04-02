@@ -94,6 +94,14 @@ def obter_id_categoria(nome_categoria):
     except Exception as e:
         logging.error(f"Erro ao buscar ID da categoria: {e}")
     return None
+
+def converter_duracao_para_segundos(dur_str):
+    match = re.match(r"(?:(\d+)h)?(?:(\d+)m)?(?:(\d+)s)?", dur_str)
+    if not match:
+        return 0
+    h, m, s = match.groups(default="0")
+    return int(h) * 3600 + int(m) * 60 + int(s)
+
 def extrair_segundos_da_url_vod(url):
     match = re.search(r"[?&]t=(?:(\d+)h)?(?:(\d+)m)?(?:(\d+)s)?", url)
     if not match:
@@ -102,6 +110,47 @@ def extrair_segundos_da_url_vod(url):
     m = int(match.group(2) or 0)
     s = int(match.group(3) or 0)
     return h * 3600 + m * 60 + s
+
+def formatar_datas_br(df, coluna="timestamp"):
+    if coluna in df.columns:
+        df[coluna] = pd.to_datetime(df[coluna]).dt.strftime("%d/%m/%Y %H:%M:%S")
+    return df
+
+
+def sugerir_novos_streamers():
+    sugestoes = []
+    categorias_alvo = ["Slots", "Virtual Casino"]  # ✅ Agora considera as duas categorias
+
+    try:
+        response = requests.get(BASE_URL_TWITCH + "streams?first=100", headers=HEADERS_TWITCH)
+        data = response.json().get("data", [])
+        atuais = set(STREAMERS_INTERESSE)
+
+        for stream in data:
+            game_name = stream.get("game_name", "").lower()
+            if any(cat.lower() in game_name for cat in categorias_alvo):
+                login = stream.get("user_login")
+                if login and login not in atuais:
+                    sugestoes.append(login)
+    except Exception as e:
+        logging.error(f"Erro ao buscar streamers: {e}")
+
+    return sugestoes
+
+
+def buscar_resumo_vods(dt_inicio, dt_fim, headers, base_url, streamers):
+    """Retorna lista com metadados simples das VODs sem fazer varredura."""
+    resumo = []
+    vods = buscar_vods_twitch_por_periodo(dt_inicio, dt_fim, headers, base_url, streamers)
+    for vod in vods:
+        resumo.append({
+            "streamer": vod["streamer"],
+            "data": vod["data"],
+            "duração (min)": round(vod["duração_segundos"] / 60, 1),
+            "visualizações": vod.get("view_count", "N/A"),
+            "url": vod["url"]
+        })
+    return resumo
 
 def buscar_streamers_por_categoria(nome_categoria="Virtual Casino"):
     sugestoes = []
