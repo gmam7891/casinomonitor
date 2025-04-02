@@ -320,6 +320,7 @@ def varrer_e_salvar_para_treinamento(url, modelo=None, intervalo=30, max_frames=
 abas = st.tabs(["Resultados", "Ranking de Jogos", "Timeline", "VODs Completas"])
 
 # ------------------ Aba: Resultados ------------------
+abas = st.tabs(["Resultados", "Ranking de Jogos", "Timeline", "VODs Completas"])
 with abas[0]:
     if 'dados_url' in st.session_state:
         st.markdown("### 🎰 Resultados da VOD personalizada")
