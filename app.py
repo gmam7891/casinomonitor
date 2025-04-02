@@ -432,7 +432,7 @@ def exibir_ranking_jogos(dados):
     st.markdown("### 🏆 Ranking de Jogos Detectados")
     st.dataframe(ranking, use_container_width=True)
 
-    # Gráfico de barras (opcional)
+    # Gráfico de barras
     import plotly.express as px
     fig = px.bar(ranking, x='Jogo', y='Aparições', text='Aparições', color='Jogo', title="Top Jogos")
     fig.update_layout(showlegend=False)
