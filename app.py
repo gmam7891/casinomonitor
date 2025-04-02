@@ -175,7 +175,7 @@ if st.sidebar.button("🚀 Treinar modelo agora"):
     if sucesso:
         st.rerun()
 
-col1, col2, col3, col4 = st.columns(4)
+col1, col2, col3, col4, col5 = st.columns(4)
 
 with col1:
     if st.button("🔍 Verificar lives agora"):
@@ -237,6 +237,14 @@ with col4:
         dt_fim = datetime.combine(data_fim, datetime.max.time())
         resultados = varrer_vods_com_template(dt_ini, dt_fim, HEADERS_TWITCH, BASE_URL_TWITCH, STREAMERS_INTERESSE)
         st.session_state['dados_vods_template'] = resultados
+
+with col5:
+    if st.button("🧾 Verificar VODs completas"):
+        dt_ini = datetime.combine(data_inicio, datetime.min.time())
+        dt_fim = datetime.combine(data_fim, datetime.max.time())
+        resultados = varrer_vods_simples(dt_ini, dt_fim, HEADERS_TWITCH, BASE_URL_TWITCH, STREAMERS_INTERESSE)
+        st.session_state['vods_completas'] = resultados
+        st.success("✅ VODs completas varridas com sucesso.")
 
 import plotly.express as px
 import pandas as pd
