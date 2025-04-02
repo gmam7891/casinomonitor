@@ -15,8 +15,12 @@ try:
     import cv2
 except ImportError:
     import subprocess
-    subprocess.check_call(["pip", "install", "opencv-python-headless"])
-    import cv2
+    try:
+        subprocess.check_call(["pip", "install", "opencv-python-headless"])
+        import cv2
+    except Exception as e:
+        st.error(f"❌ Falha ao instalar OpenCV automaticamente: {e}")
+        st.stop()
 
 from ml_training import treinar_modelo
 
