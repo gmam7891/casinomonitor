@@ -76,6 +76,7 @@ if "modelo_ml" not in st.session_state:
             st.error(f"Erro ao carregar modelo: {e}")
 
 # ---------------- FUNÇÕES AUXILIARES ----------------
+# ------------------ STREAMLIT UI ------------------
 def carregar_streamers():
     if not os.path.exists(STREAMERS_FILE):
         with open(STREAMERS_FILE, "w") as f:
@@ -83,55 +84,49 @@ def carregar_streamers():
     with open(STREAMERS_FILE, "r") as f:
         return [l.strip() for l in f if l.strip()]
 
-def extrair_segundos_da_url_vod(url):
-    match = re.search(r"[?&]t=(?:(\d+)h)?(?:(\d+)m)?(?:(\d+)s)?", url)
-    if not match:
-        return 0
-    h, m, s = int(match.group(1) or 0), int(match.group(2) or 0), int(match.group(3) or 0)
-    return h * 3600 + m * 60 + s
+def obter_id_categoria(nome_categoria):
+    try:
+        url = f"{BASE_URL_TWITCH}games?name={nome_categoria}"
+        resp = requests.get(url, headers=HEADERS_TWITCH)
+        data = resp.json().get("data", [])
+        if data:
+            return data[0]["id"]
+    except Exception as e:
+        logging.error(f"Erro ao buscar ID da categoria: {e}")
+    return None
 
-def formatar_datas_br(df, coluna="timestamp"):
-    if coluna in df.columns:
-        df[coluna] = pd.to_datetime(df[coluna]).dt.strftime("%d/%m/%Y %H:%M:%S")
-    return df
-
-def buscar_resumo_vods(dt_inicio, dt_fim, headers, base_url, streamers):
-    resumo = []
-    vods = buscar_vods_twitch_por_periodo(dt_inicio, dt_fim, headers, base_url, streamers)
-    for vod in vods:
-        resumo.append({
-            "streamer": vod["streamer"],
-            "data": vod["data"],
-            "duração (min)": round(vod["duração_segundos"] / 60, 1),
-            "visualizações": vod.get("view_count", "N/A"),
-            "url": vod["url"]
-        })
-    return resumo
-
-def sugerir_novos_streamers(game_name="Slots"):
+def buscar_streamers_por_categoria(nome_categoria="Virtual Casino"):
     sugestoes = []
     try:
-        response = requests.get(BASE_URL_TWITCH + f"streams?first=100", headers=HEADERS_TWITCH)
-        data = response.json().get("data", [])
-        atuais = set(STREAMERS_INTERESSE)
-        for stream in data:
-            if game_name.lower() in stream.get("game_name", "").lower():
-                login = stream.get("user_login")
-                if login and login not in atuais:
-                    sugestoes.append(login)
-    except Exception as e:
-        logging.error(f"Erro ao buscar streamers: {e}")
-    return sugestoes
-# ---------------- INTERFACE LATERAL ----------------
-STREAMERS_INTERESSE = carregar_streamers()
+        categoria_id = obter_id_categoria(nome_categoria)
+        if not categoria_id:
+            return []
 
+        url = f"{BASE_URL_TWITCH}streams?first=100&game_id={categoria_id}"
+        resp = requests.get(url, headers=HEADERS_TWITCH)
+        data = resp.json().get("data", [])
+
+        for stream in data:
+            login = stream.get("user_login")
+            if login:
+                sugestoes.append(login)
+    except Exception as e:
+        logging.error(f"Erro ao buscar streamers por categoria: {e}")
+    return sugestoes
+
+# 🚀 Carregar e unir streamers fixos + da categoria Virtual Casino
+STREAMERS_INTERESSE = carregar_streamers()
+STREAMERS_CATEGORIA = buscar_streamers_por_categoria("Virtual Casino")
+TODOS_STREAMERS = list(set(STREAMERS_INTERESSE + STREAMERS_CATEGORIA))
+
+# 🧭 Sidebar
 st.sidebar.header("🎯 Filtros")
 data_inicio = st.sidebar.date_input("Data de início", value=datetime.today() - timedelta(days=7))
 data_fim = st.sidebar.date_input("Data de fim", value=datetime.today())
 url_custom = st.sidebar.text_input("URL personalizada (VOD .m3u8 ou com ?t=...)")
 segundo_alvo = st.sidebar.number_input("Segundo para captura manual", min_value=0, max_value=99999, value=0)
 
-# ---------------- CAPTURAR FRAME EXATO ----------------
+# 🎯 Captura manual
 if st.sidebar.button("🎯 Capturar frame no segundo exato") and url_custom:
     frame_path = "frame_manual.jpg"
     if capturar_frame_ffmpeg_imageio(url_custom, frame_path, skip_seconds=segundo_alvo):
@@ -144,19 +139,19 @@ if st.sidebar.button("🎯 Capturar frame no segundo exato") and url_custom:
     else:
         st.error("Erro ao capturar frame.")
 
-# ---------------- TREINAMENTO DO MODELO ----------------
+# 🚀 Treinar modelo
 if st.sidebar.button("🚀 Treinar modelo agora"):
     sucesso = treinar_modelo(st)
     if sucesso:
         st.rerun()
 
-# ---------------- BOTÕES PRINCIPAIS ----------------
+# ------------------ BOTÕES PRINCIPAIS ------------------
 col1, col2, col3, col4 = st.columns(4)
 
 with col1:
     if st.button("🔍 Verificar lives agora"):
         resultados = []
-        for streamer in STREAMERS_INTERESSE:
+        for streamer in TODOS_STREAMERS:
             res = verificar_jogo_em_live(streamer, HEADERS_TWITCH, BASE_URL_TWITCH)
             if res:
                 jogo, categoria = res
@@ -169,20 +164,26 @@ with col1:
         st.session_state['dados_lives'] = resultados
 
 with col2:
-    if st.button("📅 Verificar VODs (resumo)"):
+    if st.button("📺 Verificar VODs no período"):
         dt_ini = datetime.combine(data_inicio, datetime.min.time())
         dt_fim = datetime.combine(data_fim, datetime.max.time())
-        resumo = buscar_resumo_vods(dt_ini, dt_fim, HEADERS_TWITCH, BASE_URL_TWITCH, STREAMERS_INTERESSE)
-        st.session_state['vods_resumo'] = resumo
-        st.success(f"✅ {len(resumo)} VODs encontradas no período.")
+        vods = buscar_vods_twitch_por_periodo(dt_ini, dt_fim, HEADERS_TWITCH, BASE_URL_TWITCH, TODOS_STREAMERS)
+        st.session_state['dados_vods'] = vods
 
 with col3:
-    if st.button("🌐 Varredura por URL") and url_custom:
-        tempo_inicial = extrair_segundos_da_url_vod(url_custom)
-        intervalo = 1
-        max_frames = 10000
+    if st.button("🖼️ Varrer VODs com imagem"):
+        dt_ini = datetime.combine(data_inicio, datetime.min.time())
+        dt_fim = datetime.combine(data_fim, datetime.max.time())
+        resultados = varrer_vods_com_template(dt_ini, dt_fim, HEADERS_TWITCH, BASE_URL_TWITCH, TODOS_STREAMERS)
+        st.session_state['dados_vods_template'] = resultados
 
-        st.info(f"📡 Iniciando varredura por {max_frames * intervalo}s a partir de {tempo_inicial}s...")
+with col4:
+    if st.button("🌐 Varredura na URL personalizada") and url_custom:
+        tempo_inicial = extrair_segundos_da_url_vod(url_custom)
+        tempo_total = 10000
+        intervalo = 1
+        max_frames = tempo_total // intervalo
+        st.info(f"📡 Iniciando varredura de {tempo_total}s a partir de {tempo_inicial}s")
 
         inicio = time.time()
         resultado_url = varrer_url_customizada(
@@ -197,13 +198,6 @@ with col3:
         duracao = time.time() - inicio
         st.success(f"✅ Varredura concluída em {duracao:.2f}s")
         st.session_state['dados_url'] = resultado_url
-
-with col4:
-    if st.button("🖼️ Varrer VODs com imagem"):
-        dt_ini = datetime.combine(data_inicio, datetime.min.time())
-        dt_fim = datetime.combine(data_fim, datetime.max.time())
-        resultados = varrer_vods_com_template(dt_ini, dt_fim, HEADERS_TWITCH, BASE_URL_TWITCH, STREAMERS_INTERESSE)
-        st.session_state['dados_vods_template'] = resultados
 
 # ---------------- ABAS PRINCIPAIS ----------------
 import plotly.express as px
