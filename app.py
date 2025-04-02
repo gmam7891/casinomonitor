@@ -316,11 +316,27 @@ def varrer_e_salvar_para_treinamento(url, modelo=None, intervalo=30, max_frames=
 
     st.success(f"✅ Coleta finalizada: {salvos['pragmatic']} frames positivos, {salvos['outros']} negativos.")
 
-with abas[0]:
-    # Aqui você mostra resultados das varreduras (frames, tabelas, etc.)
-    # Ex: dados_url, dados_vods, dados_lives...
-    ...
+# 📌 Abas principais da interface
+abas = st.tabs(["Resultados", "Ranking de Jogos", "Timeline", "VODs Completas"])
 
+# ------------------ Aba: Resultados ------------------
+with abas[0]:
+    if 'dados_url' in st.session_state:
+        st.markdown("### 🎰 Resultados da VOD personalizada")
+        for res in st.session_state['dados_url']:
+            col1, col2 = st.columns([1, 3])
+            with col1:
+                st.image(res["frame"], caption=f"{res['segundo']}s", use_column_width=True)
+            with col2:
+                st.success(f"🎯 Jogo detectado: `{res['jogo_detectado']}`")
+
+    if 'dados_vods' in st.session_state:
+        df = pd.DataFrame(st.session_state['dados_vods'])
+        df = formatar_datas_br(df, "data")
+        st.markdown("### 🎞️ VODs encontrados")
+        st.dataframe(df)
+
+# ------------------ Aba: Ranking ------------------
 with abas[1]:
     dados_para_ranking = []
     
@@ -329,6 +345,9 @@ with abas[1]:
     if 'dados_vods_template' in st.session_state:
         dados_para_ranking += st.session_state['dados_vods_template']
 
+    exibir_ranking_jogos(dados_para_ranking)
+
+# ------------------ Aba: Timeline ------------------
 with abas[2]:
     dados_timeline = []
     if 'dados_url' in st.session_state:
@@ -339,6 +358,22 @@ with abas[2]:
         dados_timeline += st.session_state['dados_lives']
 
     exibir_timeline_jogos(dados_timeline)
+
+# ------------------ Aba: VODs Completas ------------------
+with abas[3]:
+    st.markdown("### 📂 Resultados da Varredura de VODs Completas")
+    if 'vods_completas' in st.session_state and st.session_state['vods_completas']:
+        for res in st.session_state['vods_completas']:
+            col1, col2 = st.columns([1, 3])
+            with col1:
+                st.image(res["frame"], caption=f"{res['segundo']}s", use_column_width=True)
+            with col2:
+                st.write(f"🎥 **Streamer:** `{res['streamer']}`")
+                st.write(f"⏱ **Tempo:** `{res['segundo']}s`")
+                st.write(f"🔗 [Ver VOD]({res['url']})")
+    else:
+        st.info("📭 Nenhum dado ainda. Clique no botão **'Verificar VODs completas'** para iniciar a varredura.")
+
 
 
 # ------------------ RESULTADOS ------------------
