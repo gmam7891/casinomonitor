@@ -14,7 +14,6 @@ from tensorflow.keras.models import load_model
 try:
     import cv2
 except ImportError:
-    os.system("pip install opencv-python")
     import cv2
 
 from ml_training import treinar_modelo
