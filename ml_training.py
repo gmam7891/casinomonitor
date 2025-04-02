@@ -59,7 +59,6 @@ def treinar_modelo(st, base_path="dataset", model_path="modelo/modelo_pragmatic.
         base_model = MobileNetV2(weights='imagenet', include_top=False, input_shape=(224, 224, 3))
         base_model.trainable = True
 
-        # Fine-tuning apenas nas últimas 20 camadas
         for layer in base_model.layers[:-20]:
             layer.trainable = False
 
@@ -119,12 +118,25 @@ def treinar_modelo(st, base_path="dataset", model_path="modelo/modelo_pragmatic.
 
         st.session_state["curva_fig"] = fig
 
-        # Avaliação final com métricas detalhadas
+        # Avaliação com relatório de classificação
         val_preds = model.predict(val_gen)
         pred_labels = (val_preds > 0.5).astype(int).flatten()
         true_labels = val_gen.classes
 
-        report = classification_report(true_labels, pred_labels, target_names=subdirs)
+        # Verificação se só uma classe está presente
+        if len(np.unique(true_labels)) < 2:
+            st.warning("⚠️ Apenas uma classe presente na validação. O relatório será limitado.")
+
+        # Garante que o relatório sempre inclua ambas as classes
+        labels_ordenadas = sorted(train_gen.class_indices.values())
+        report = classification_report(
+            true_labels,
+            pred_labels,
+            labels=labels_ordenadas,
+            target_names=subdirs,
+            zero_division=0
+        )
+
         st.markdown("### 📋 Relatório de Classificação")
         st.code(report)
 
