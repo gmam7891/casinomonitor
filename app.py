@@ -413,6 +413,7 @@ if st.sidebar.button("🔎 Buscar novos streamers"):
             st.write(f"- {s}")
     else:
         st.warning("Nenhum novo streamer encontrado.")
+
 def exibir_ranking_jogos(dados):
     if not dados:
         st.info("Nenhum jogo detectado ainda.")
