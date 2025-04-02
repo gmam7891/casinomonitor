@@ -94,6 +94,14 @@ def obter_id_categoria(nome_categoria):
     except Exception as e:
         logging.error(f"Erro ao buscar ID da categoria: {e}")
     return None
+def extrair_segundos_da_url_vod(url):
+    match = re.search(r"[?&]t=(?:(\d+)h)?(?:(\d+)m)?(?:(\d+)s)?", url)
+    if not match:
+        return 0
+    h = int(match.group(1) or 0)
+    m = int(match.group(2) or 0)
+    s = int(match.group(3) or 0)
+    return h * 3600 + m * 60 + s
 
 def buscar_streamers_por_categoria(nome_categoria="Virtual Casino"):
     sugestoes = []
