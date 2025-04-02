@@ -196,6 +196,26 @@ def buscar_vods_twitch_por_periodo(dt_inicio, dt_fim, headers, base_url, streame
 
     return todos_vods
 
+# Dentro do arquivo ml_utils.py (ou outro que já tenha buscar_vods_twitch_por_periodo)
+def varrer_vods_simples(dt_inicio, dt_fim, headers, base_url, streamers, intervalo=60):
+    resultados = []
+    vods = buscar_vods_twitch_por_periodo(dt_inicio, dt_fim, headers, base_url, streamers)
+
+    for vod in vods:
+        dur = vod["duração_segundos"]
+        url = vod["url"]
+        for segundo in range(0, dur, intervalo):
+            frame_path = f"vod_completo_{vod['id_vod']}_{segundo}.jpg"
+            sucesso = capturar_frame_ffmpeg_imageio(url, frame_path, skip_seconds=segundo)
+            if sucesso:
+                resultados.append({
+                    "streamer": vod["streamer"],
+                    "segundo": segundo,
+                    "frame": frame_path,
+                    "url": url
+                })
+    return resultados
+
 def obter_user_id(login, headers):
     url = f"https://api.twitch.tv/helix/users?login={login}"
     resp = requests.get(url, headers=headers)
