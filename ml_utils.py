@@ -18,25 +18,23 @@ from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from tensorflow.keras.layers import GlobalAveragePooling2D, Dropout, Dense
 from tensorflow.keras import models
 import matplotlib.pyplot as plt
+import subprocess
 
 
 def capturar_frame_ffmpeg_imageio(url, output_path, skip_seconds=0):
     try:
-        w, h = 1280, 720
+        # Usa ffmpeg para extrair 1 frame em PNG ou JPG
         cmd = [
+            "ffmpeg",
             "-ss", str(skip_seconds),
             "-i", url,
             "-frames:v", "1",
-            "-vf", f"scale={w}:{h}",
-            "-f", "image2pipe",
-            "-pix_fmt", "rgb24",
-            "-vcodec", "rawvideo", "-"
+            "-q:v", "2",
+            output_path,
+            "-y"
         ]
-        process = ffmpeg.read_frames(cmd, size=(w, h))
-        frame = next(process)
-        image = Image.fromarray(frame)
-        image.save(output_path)
-        return True
+        subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        return os.path.exists(output_path)
     except Exception as e:
         print(f"[Erro] capturar_frame_ffmpeg_imageio: {e}")
         return False
