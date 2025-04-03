@@ -10,4 +10,4 @@ imageio-ffmpeg>=0.4.8
 plotly>=5.18.0
 requests>=2.31.0
 opencv-python-headless>=4.9.0.80
-install python-dotenv
+python-dotenv
