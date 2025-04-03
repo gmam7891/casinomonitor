@@ -1,6 +1,8 @@
 from datetime import datetime, timedelta
 import streamlit as st
 import os
+from dotenv import load_dotenv
+load_dotenv()
 import pandas as pd
 import logging
 import requests
