@@ -115,22 +115,33 @@ def varrer_url_customizada(url, st, session_state, prever_func, skip_inicial=0, 
     resultados = []
     tempo_atual = skip_inicial
 
-    for _ in range(max_frames):
+    st.write(f"🎬 Iniciando varredura personalizada em: {url}")
+    st.write(f"🔁 Intervalo: {intervalo}s | Máximo de frames: {max_frames}")
+
+    for i in range(max_frames):
         frame_path = f"frame_{tempo_atual}.jpg"
+        st.write(f"📸 Tentando capturar frame no segundo {tempo_atual}...")
+
         if not capturar_frame_ffmpeg_imageio(url, frame_path, skip_seconds=tempo_atual):
+            st.warning(f"❌ Falha ao capturar frame no segundo {tempo_atual}. Interrompendo varredura.")
             break
 
         jogo = prever_func(frame_path, session_state.get("modelo_ml"))
         if jogo:
+            st.success(f"🎯 Jogo detectado: {jogo} no segundo {tempo_atual}")
             resultados.append({
                 "segundo": tempo_atual,
                 "frame": frame_path,
                 "jogo_detectado": jogo
             })
+        else:
+            st.info(f"⏭️ Nenhum jogo detectado no segundo {tempo_atual}")
 
         tempo_atual += intervalo
 
+    st.write(f"✅ Varredura finalizada. Total de jogos detectados: {len(resultados)}")
     return resultados
+
 
 
 def varrer_vods_com_template(dt_inicio, dt_fim, headers, base_url, streamers, intervalo=60):
