@@ -2,7 +2,7 @@ import os
 import re
 import logging
 import traceback
-from datetime import datetime
+from datetime import datetime, timezone
 from collections import Counter
 
 import cv2
@@ -47,7 +47,6 @@ def match_template_from_image(image_path, templates_dir="templates/", threshold=
         img = cv2.imread(image_path)
         if img is None:
             return None
-
         gray_img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
         for template_file in os.listdir(templates_dir):
@@ -161,6 +160,12 @@ def varrer_vods_com_template(dt_inicio, dt_fim, headers, base_url, streamers, in
 def buscar_vods_twitch_por_periodo(dt_inicio, dt_fim, headers, base_url, streamers):
     todos_vods = []
 
+    # Certificar-se de que as datas têm timezone
+    if dt_inicio.tzinfo is None:
+        dt_inicio = dt_inicio.replace(tzinfo=timezone.utc)
+    if dt_fim.tzinfo is None:
+        dt_fim = dt_fim.replace(tzinfo=timezone.utc)
+
     for login in streamers:
         user_id = obter_user_id(login, headers)
         if not user_id:
@@ -188,7 +193,8 @@ def buscar_vods_twitch_por_periodo(dt_inicio, dt_fim, headers, base_url, streame
                     "data": created_at,
                     "duração_segundos": dur,
                     "duração_raw": vod["duration"],
-                    "id_vod": vod["id"]
+                    "id_vod": vod["id"],
+                    "view_count": vod.get("view_count", 0)
                 })
 
         except Exception as e:
@@ -196,7 +202,7 @@ def buscar_vods_twitch_por_periodo(dt_inicio, dt_fim, headers, base_url, streame
 
     return todos_vods
 
-# Dentro do arquivo ml_utils.py (ou outro que já tenha buscar_vods_twitch_por_periodo)
+
 def varrer_vods_simples(dt_inicio, dt_fim, headers, base_url, streamers, intervalo=60):
     resultados = []
     vods = buscar_vods_twitch_por_periodo(dt_inicio, dt_fim, headers, base_url, streamers)
@@ -215,6 +221,7 @@ def varrer_vods_simples(dt_inicio, dt_fim, headers, base_url, streamers, interva
                     "url": url
                 })
     return resultados
+
 
 def obter_user_id(login, headers):
     url = f"https://api.twitch.tv/helix/users?login={login}"
