@@ -47,8 +47,8 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ---------------- VARIÁVEIS ----------------
-CLIENT_ID = os.getenv("TWITCH_CLIENT_ID", "gp762nuuoqcoxypju8c569th9wz7q5")
-ACCESS_TOKEN = os.getenv("TWITCH_ACCESS_TOKEN", "xvjkv2mdiftl9nii4cqsqd43xany3mxu6kia6s6fsx2dvdgw5m")
+CLIENT_ID = os.getenv("TWITCH_CLIENT_ID", "tyi97jgeg2j9r6pvakldbmdd2aie3m")
+ACCESS_TOKEN = os.getenv("TWITCH_ACCESS_TOKEN", "f1rbrkecc7qwiizcro58ncacgyfap0")
 HEADERS_TWITCH = {
     'Client-ID': CLIENT_ID,
     'Authorization': f'Bearer {ACCESS_TOKEN}'
