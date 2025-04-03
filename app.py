@@ -1,11 +1,11 @@
 from datetime import datetime, timedelta
 import streamlit as st
 import os
-from dotenv import load_dotenv
-load_dotenv()
 import pandas as pd
 import logging
 import requests
+from dotenv import load_dotenv
+load_dotenv()
 import tensorflow as tf
 import time
 import re
