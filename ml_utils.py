@@ -333,3 +333,23 @@ def treinar_modelo(st, base_path="dataset", model_path="modelo/modelo_pragmatic.
         st.error("❌ Erro durante o treinamento:")
         st.code(traceback.format_exc())
         return False
+
+def prever_jogo_em_frame(path, modelo):
+    from tensorflow.keras.preprocessing import image
+    import numpy as np
+
+    img = image.load_img(path, target_size=(224, 224))
+    img_array = image.img_to_array(img)
+    img_array = tf.keras.applications.mobilenet_v2.preprocess_input(img_array)
+    img_array = np.expand_dims(img_array, axis=0)
+
+    prediction = modelo.predict(img_array)[0][0]  # valor entre 0 e 1
+
+    if prediction >= 0.5:
+        classe = "Classe 1"  # ajuste para o nome real, ex: SweetBonanza
+    else:
+        classe = "Classe 0"  # ajuste para a outra classe
+
+    confianca = prediction if prediction >= 0.5 else 1 - prediction
+    return classe, float(confianca)
+
