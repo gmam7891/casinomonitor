@@ -1,3 +1,4 @@
+
 import os
 import traceback
 import matplotlib.pyplot as plt
@@ -6,7 +7,8 @@ import tensorflow as tf
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from tensorflow.keras.applications import MobileNetV2
 from tensorflow.keras import models
-from tensorflow.keras.layers import Dense, GlobalAveragePooling2D, Input
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense, GlobalAveragePooling2D, Input, Dropout
 from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint
 from sklearn.metrics import classification_report
 from tensorflow.keras.optimizers import Adam
@@ -129,11 +131,9 @@ def treinar_modelo(st, base_path="dataset", model_path="modelo/modelo_pragmatic.
         pred_labels = (val_preds > 0.5).astype(int).flatten()
         true_labels = val_gen.classes
 
-        # Verificação se só uma classe está presente
         if len(np.unique(true_labels)) < 2:
             st.warning("⚠️ Apenas uma classe presente na validação. O relatório será limitado.")
 
-        # Garante que o relatório sempre inclua ambas as classes
         labels_ordenadas = sorted(train_gen.class_indices.values())
         report = classification_report(
             true_labels,
@@ -152,4 +152,3 @@ def treinar_modelo(st, base_path="dataset", model_path="modelo/modelo_pragmatic.
         st.error("❌ Erro durante o treinamento:")
         st.code(traceback.format_exc())
         return False
-
