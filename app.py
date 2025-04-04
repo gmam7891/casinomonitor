@@ -230,9 +230,9 @@ if st.sidebar.button("🎯 Capturar frame no segundo exato") and url_custom:
     frame_path = "frame_manual.jpg"
     if capturar_frame_ffmpeg_imageio(url_custom, frame_path, skip_seconds=segundo_alvo):
         st.image(frame_path, caption=f"Frame em {segundo_alvo}s", use_column_width=True)
-        resultado, confianca = prever_jogo_em_frame(frame_path, modelo)
+        resultado, confianca = prever_jogo_em_frame(frame_path, st.session_state.get("modelo_ml"))
         if resultado:
-            st.success(f"🧠 Jogo detectado: {resultado} (confiança: {confianca:.2%})")
+            st.success(f"🧠 Jogo detectado: `{resultado}` (confiança: {confianca:.2%})")
         else:
             st.warning("❌ Nenhum jogo detectado.")
     else:
