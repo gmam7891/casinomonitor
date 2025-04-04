@@ -4,8 +4,8 @@ from dotenv import load_dotenv
 
 load_dotenv()  # Certifique-se de que seu .env está no mesmo diretório
 
-CLIENT_ID = os.getenv("TWITCH_CLIENT_ID")
-ACCESS_TOKEN = os.getenv("TWITCH_ACCESS_TOKEN")
+CLIENT_ID = os.getenv("tyi97jgeg2j9r6pvakldbmdd2aie3m")
+ACCESS_TOKEN = os.getenv("2806bhs736qdnj2fdm2nfc1u6e7oyt")
 
 HEADERS_TWITCH = {
     "Client-ID": CLIENT_ID,
