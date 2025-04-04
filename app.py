@@ -154,7 +154,7 @@ def buscar_resumo_vods(dt_inicio, dt_fim, headers, base_url, streamers):
         })
     return resumo
 
-def buscar_streamers_por_categoria(nome_categoria="Virtual Casino"):
+def buscar_streamers_por_categoria(nome_categoria="Virtual Casino", idioma="pt"):
     sugestoes = []
     try:
         categoria_id = obter_id_categoria(nome_categoria)
@@ -166,12 +166,14 @@ def buscar_streamers_por_categoria(nome_categoria="Virtual Casino"):
         data = resp.json().get("data", [])
 
         for stream in data:
-            login = stream.get("user_login")
-            if login:
-                sugestoes.append(login)
+            if stream.get("language") == idioma:
+                login = stream.get("user_login")
+                if login:
+                    sugestoes.append(login)
     except Exception as e:
         logging.error(f"Erro ao buscar streamers por categoria: {e}")
     return sugestoes
+
 
 # 🚀 Carregar e unir streamers fixos + da categoria Virtual Casino
 STREAMERS_INTERESSE = carregar_streamers()
