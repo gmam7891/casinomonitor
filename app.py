@@ -378,27 +378,30 @@ with abas[2]:
 # ------------------ Aba 4: Resumo de VODs ------------------
 with abas[3]:
     st.markdown("### 📂 Resumo de VODs no período selecionado")
+
     if 'vods_resumo' in st.session_state and st.session_state['vods_resumo']:
         df = pd.DataFrame(st.session_state['vods_resumo'])
         df["data"] = pd.to_datetime(df["data"]).dt.strftime("%d/%m/%Y %H:%M")
         df["link"] = df["url"].apply(lambda x: f"[Abrir VOD]({x})")
         df = df.drop(columns=["url"])
-# Ordenar pela duração, por exemplo
-df = df.sort_values(by="duração (min)", ascending=False)
 
-# Mostrar tabela interativa
-st.dataframe(df, use_container_width=True)
+        # Ordenar pela duração
+        df = df.sort_values(by="duração (min)", ascending=False)
 
-# Botão para baixar como CSV
-csv = df.to_csv(index=False).encode("utf-8")
-st.download_button(
-    label="⬇️ Baixar como CSV",
-    data=csv,
-    file_name="resumo_vods.csv",
-    mime="text/csv"
-)
+        # Mostrar tabela interativa
+        st.dataframe(df, use_container_width=True)
+
+        # Botão para baixar como CSV
+        csv = df.to_csv(index=False).encode("utf-8")
+        st.download_button(
+            label="⬇️ Baixar como CSV",
+            data=csv,
+            file_name="resumo_vods.csv",
+            mime="text/csv"
+        )
     else:
         st.info("📭 Nenhum dado carregado. Clique em **'Verificar VODs (resumo)'**.")
+
 
 # ------------------ SUGERIR NOVOS STREAMERS ------------------
 st.sidebar.markdown("---")
