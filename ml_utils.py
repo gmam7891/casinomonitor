@@ -126,21 +126,20 @@ def varrer_url_customizada(url, st, session_state, prever_func, skip_inicial=0, 
             st.warning(f"❌ Falha ao capturar frame no segundo {tempo_atual}. Interrompendo varredura.")
             break
 
-        jogo = prever_func(frame_path, session_state.get("modelo_ml"))
-        if jogo:
-            st.success(f"🎯 Jogo detectado: {jogo} no segundo {tempo_atual}")
+        jogo, confianca = prever_func(frame_path, session_state.get("modelo_ml"))
+
+        st.write(f"🧠 {tempo_atual}s → {jogo} (confiança: {confianca:.2%})")
+
+        if confianca > 0.5:
+            st.success(f"🎯 Jogo detectado: {jogo} no segundo {tempo_atual} (confiança: {confianca:.2%})")
             resultados.append({
                 "segundo": tempo_atual,
                 "frame": frame_path,
                 "jogo_detectado": jogo
-            })
-        else:
-            st.info(f"⏭️ Nenhum jogo detectado no segundo {tempo_atual}")
+    })
+else:
+    st.info(f"⏭️ Nenhum jogo com confiança suficiente ({confianca:.2%}) no segundo {tempo_atual}")
 
-        tempo_atual += intervalo
-
-    st.write(f"✅ Varredura finalizada. Total de jogos detectados: {len(resultados)}")
-    return resultados
 
 
 
