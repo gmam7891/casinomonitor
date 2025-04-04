@@ -35,8 +35,6 @@ from ml_utils import (
     buscar_vods_twitch_por_periodo
 )
 
-
-
 # ---------------- CONFIGURAÇÃO GERAL ----------------
 st.set_page_config(page_title="Monitor Cassino PP", layout="wide")
 logging.basicConfig(level=logging.INFO, format='[%(levelname)s] %(asctime)s - %(message)s')
