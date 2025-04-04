@@ -383,7 +383,20 @@ with abas[3]:
         df["data"] = pd.to_datetime(df["data"]).dt.strftime("%d/%m/%Y %H:%M")
         df["link"] = df["url"].apply(lambda x: f"[Abrir VOD]({x})")
         df = df.drop(columns=["url"])
-        st.write(df.to_markdown(index=False), unsafe_allow_html=True)
+# Ordenar pela duração, por exemplo
+df = df.sort_values(by="duração (min)", ascending=False)
+
+# Mostrar tabela interativa
+st.dataframe(df, use_container_width=True)
+
+# Botão para baixar como CSV
+csv = df.to_csv(index=False).encode("utf-8")
+st.download_button(
+    label="⬇️ Baixar como CSV",
+    data=csv,
+    file_name="resumo_vods.csv",
+    mime="text/csv"
+)
     else:
         st.info("📭 Nenhum dado carregado. Clique em **'Verificar VODs (resumo)'**.")
 
