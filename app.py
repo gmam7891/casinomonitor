@@ -26,7 +26,6 @@ except ImportError:
 
 from ml_training import treinar_modelo
 from ml_utils import (
-    match_template_from_image,
     capturar_frame_ffmpeg_imageio,
     prever_jogo_em_frame,
     verificar_jogo_em_live,
@@ -34,6 +33,7 @@ from ml_utils import (
     varrer_vods_com_template,
     buscar_vods_twitch_por_periodo
 )
+
 
 # ---------------- CONFIGURAÇÃO GERAL ----------------
 st.set_page_config(page_title="Monitor Cassino PP", layout="wide")
