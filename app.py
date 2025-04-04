@@ -23,7 +23,8 @@ except ImportError:
     except Exception as e:
         st.error(f"❌ Falha ao instalar OpenCV automaticamente: {e}")
         st.stop()
-
+        
+from ml_training import treinar_modelo
 from ml_utils import (
     match_template_from_image,
     capturar_frame_ffmpeg_imageio,
