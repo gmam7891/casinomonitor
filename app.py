@@ -194,6 +194,13 @@ if st.sidebar.button("🔍 Testar conexão com Twitch"):
     except Exception as e:
         st.sidebar.error(f"Erro ao converter resposta: {e}")
 
+if st.sidebar.button("🎲 Testar nome da categoria"):
+    nome_categoria = "Virtual Casino"  # Você pode tentar trocar por "Slots" também
+    url = f"{BASE_URL_TWITCH}games?name={nome_categoria}"
+    resp = requests.get(url, headers=HEADERS_TWITCH)
+    st.sidebar.write("🔁 Status:", resp.status_code)
+    st.sidebar.json(resp.json())
+
 # 🎯 Captura manual
 if st.sidebar.button("🎯 Capturar frame no segundo exato") and url_custom:
     frame_path = "frame_manual.jpg"
