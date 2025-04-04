@@ -65,25 +65,6 @@ def match_template_from_image(image_path, templates_dir="templates/", threshold=
         return None
 
 
-def prever_jogo_em_frame(image_path, modelo=None, threshold=0.4):
-    try:
-        if modelo is None:
-            return match_template_from_image(image_path)
-
-        img = keras_image.load_img(image_path, target_size=(224, 224))
-        x = keras_image.img_to_array(img)
-        x = mobilenet_v2.preprocess_input(x)
-        x = np.expand_dims(x, axis=0)
-
-        y_pred = modelo.predict(x)[0][0]
-        print(f"🧠 Confiança da predição: {y_pred:.4f} | Frame: {image_path}")
-
-        return "Pragmatic Play (ML)" if y_pred > threshold else None
-    except Exception as e:
-        print(f"[Erro] prever_jogo_em_frame: {e}")
-        return None
-
-
 def verificar_jogo_em_live(streamer, headers, base_url):
     try:
         user_resp = requests.get(f"{base_url}users?login={streamer}", headers=headers)
@@ -139,8 +120,6 @@ def varrer_url_customizada(url, st, session_state, prever_func, skip_inicial=0, 
     })
 else:
     st.info(f"⏭️ Nenhum jogo com confiança suficiente ({confianca:.2%}) no segundo {tempo_atual}")
-
-
 
 
 def varrer_vods_com_template(dt_inicio, dt_fim, headers, base_url, streamers, intervalo=60):
