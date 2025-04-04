@@ -111,7 +111,7 @@ def verificar_jogo_em_live(streamer, headers, base_url):
         return None
 
 
-def varrer_url_customizada(url, st, session_state, prever_func, skip_inicial=0, intervalo=1000, max_frames=10000):
+def varrer_url_customizada(url, st, session_state, prever_func, skip_inicial=0, intervalo=1000, max_frames=100000):
     resultados = []
     tempo_atual = skip_inicial
 
