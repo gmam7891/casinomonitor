@@ -175,7 +175,6 @@ def buscar_streamers_por_categoria(nome_categoria="Virtual Casino"):
 
 # 🚀 Carregar e unir streamers fixos + da categoria Virtual Casino
 STREAMERS_INTERESSE = carregar_streamers()
-st.sidebar.write("🧾 Streamers fixos:", STREAMERS_INTERESSE)
 STREAMERS_CATEGORIA = buscar_streamers_por_categoria("Virtual Casino")
 TODOS_STREAMERS = list(set(STREAMERS_INTERESSE + STREAMERS_CATEGORIA))
 
@@ -384,3 +383,11 @@ if st.sidebar.button("🔎 Buscar novos streamers"):
             st.write(f"- {s}")
     else:
         st.warning("Nenhum novo streamer encontrado.")
+
+# ------------------ Teste manual de resposta da Twitch ------------------
+if st.sidebar.button("🔬 Testar busca de streams"):
+    test_url = "https://api.twitch.tv/helix/streams?first=20"
+    resp = requests.get(test_url, headers=HEADERS_TWITCH)
+    st.sidebar.write("🔁 Status:", resp.status_code)
+    st.sidebar.json(resp.json())
+
