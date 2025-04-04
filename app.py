@@ -49,7 +49,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ---------------- VARIÁVEIS ----------------
-CLIENT_ID = os.getenv("TWITCH_CLIENT_ID", "gp762nuuoqcoxypju8c569th9wz7q5")
+CLIENT_ID = os.getenv("TWITCH_CLIENT_ID", "tyi97jgeg2j9r6pvakldbmdd2aie3m")
 ACCESS_TOKEN = os.getenv("TWITCH_ACCESS_TOKEN", "yd6vulkilaailzhr1r8zw8jio1w4ig")
 HEADERS_TWITCH = {
     'Client-ID': CLIENT_ID,
