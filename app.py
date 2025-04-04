@@ -246,7 +246,7 @@ if st.sidebar.button("🎯 Capturar frame no segundo exato") and url_custom:
 if st.sidebar.button("🚀 Treinar modelo agora"):
     sucesso = treinar_modelo(st)
     if sucesso:
-        st.success("✅ Modelo treinado! Você pode agora usá-lo para prever jogos.")
+        st.rerun()
 
 # ------------------ BOTÕES PRINCIPAIS ------------------
 col1, col2, col3, col4 = st.columns(4)
