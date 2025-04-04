@@ -9,7 +9,7 @@ import cv2
 import requests
 import numpy as np
 from PIL import Image
-import imageio_ffmpeg as ffmpeg
+import subprocess
 import tensorflow as tf
 from tensorflow.keras.preprocessing import image as keras_image
 from tensorflow.keras.applications import mobilenet_v2
@@ -18,12 +18,10 @@ from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from tensorflow.keras.layers import GlobalAveragePooling2D, Dropout, Dense
 from tensorflow.keras import models
 import matplotlib.pyplot as plt
-import subprocess
 
 
 def capturar_frame_ffmpeg_imageio(url, output_path, skip_seconds=0):
     try:
-        # Usa ffmpeg para extrair 1 frame em PNG ou JPG
         cmd = [
             "ffmpeg",
             "-ss", str(skip_seconds),
@@ -37,32 +35,23 @@ def capturar_frame_ffmpeg_imageio(url, output_path, skip_seconds=0):
         if result.returncode != 0:
             print(f"[ffmpeg erro] {result.stderr}")
             return False
-
         return os.path.exists(output_path)
-
-def match_template_from_image(image_path, templates_dir="templates/", threshold=0.8):
-    try:
-        img = cv2.imread(image_path)
-        if img is None:
-            return None
-        gray_img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-
-        for template_file in os.listdir(templates_dir):
-            template_path = os.path.join(templates_dir, template_file)
-            template = cv2.imread(template_path, 0)
-            if template is None:
-                continue
-
-            res = cv2.matchTemplate(gray_img, template, cv2.TM_CCOEFF_NORMED)
-            _, max_val, _, _ = cv2.minMaxLoc(res)
-
-            if max_val >= threshold:
-                return os.path.splitext(template_file)[0]
-
-        return None
     except Exception as e:
-        print(f"[Erro] match_template_from_image: {e}")
-        return None
+        print(f"[Erro] capturar_frame_ffmpeg_imageio: {e}")
+        return False
+
+
+def prever_jogo_em_frame(path, modelo):
+    img = keras_image.load_img(path, target_size=(224, 224))
+    img_array = keras_image.img_to_array(img)
+    img_array = mobilenet_v2.preprocess_input(img_array)
+    img_array = np.expand_dims(img_array, axis=0)
+
+    prediction = modelo.predict(img_array)[0][0]
+    classe = "Classe 1" if prediction >= 0.5 else "Classe 0"
+    confianca = prediction if prediction >= 0.5 else 1 - prediction
+
+    return classe, float(confianca)
 
 
 def verificar_jogo_em_live(streamer, headers, base_url):
@@ -82,9 +71,9 @@ def verificar_jogo_em_live(streamer, headers, base_url):
         temp_path = f"live_frame_{streamer}.jpg"
 
         if capturar_frame_ffmpeg_imageio(m3u8_url, temp_path, skip_seconds=5):
-            jogo = prever_jogo_em_frame(temp_path)
+            classe, confianca = prever_jogo_em_frame(temp_path, modelo=None)
             categoria = stream_data[0].get("game_name", "")
-            return jogo, categoria
+            return f"{classe} ({confianca:.2%})", categoria
 
         return None
     except Exception as e:
@@ -107,47 +96,28 @@ def varrer_url_customizada(url, st, session_state, prever_func, skip_inicial=0, 
             st.warning(f"❌ Falha ao capturar frame no segundo {tempo_atual}. Interrompendo varredura.")
             break
 
-        jogo, confianca = prever_func(frame_path, session_state.get("modelo_ml"))
-
-        st.write(f"🧠 {tempo_atual}s → {jogo} (confiança: {confianca:.2%})")
+        classe, confianca = prever_func(frame_path, session_state.get("modelo_ml"))
+        st.write(f"🧠 {tempo_atual}s → {classe} (confiança: {confianca:.2%})")
 
         if confianca > 0.5:
-            st.success(f"🎯 Jogo detectado: {jogo} no segundo {tempo_atual} (confiança: {confianca:.2%})")
+            st.success(f"🎯 Jogo detectado: {classe} no segundo {tempo_atual} (confiança: {confianca:.2%})")
             resultados.append({
                 "segundo": tempo_atual,
                 "frame": frame_path,
-                "jogo_detectado": jogo
-    })
-else:
-    st.info(f"⏭️ Nenhum jogo com confiança suficiente ({confianca:.2%}) no segundo {tempo_atual}")
+                "jogo_detectado": classe
+            })
+        else:
+            st.info(f"⏭️ Nenhum jogo com confiança suficiente ({confianca:.2%}) no segundo {tempo_atual}")
 
+        tempo_atual += intervalo
 
-def varrer_vods_com_template(dt_inicio, dt_fim, headers, base_url, streamers, intervalo=60):
-    resultados = []
-    vods = buscar_vods_twitch_por_periodo(dt_inicio, dt_fim, headers, base_url, streamers)
-
-    for vod in vods:
-        dur = vod["duração_segundos"]
-        url = vod["url"]
-        for segundo in range(0, dur, intervalo):
-            frame_path = f"vod_{vod['id_vod']}_{segundo}.jpg"
-            if capturar_frame_ffmpeg_imageio(url, frame_path, skip_seconds=segundo):
-                jogo = match_template_from_image(frame_path)
-                if jogo:
-                    resultados.append({
-                        "streamer": vod["streamer"],
-                        "segundo": segundo,
-                        "frame": frame_path,
-                        "jogo_detectado": jogo,
-                        "url": url
-                    })
+    st.write(f"✅ Varredura finalizada. Total de jogos detectados: {len(resultados)}")
     return resultados
 
 
 def buscar_vods_twitch_por_periodo(dt_inicio, dt_fim, headers, base_url, streamers):
     todos_vods = []
 
-    # Certificar-se de que as datas têm timezone
     if dt_inicio.tzinfo is None:
         dt_inicio = dt_inicio.replace(tzinfo=timezone.utc)
     if dt_fim.tzinfo is None:
@@ -190,26 +160,6 @@ def buscar_vods_twitch_por_periodo(dt_inicio, dt_fim, headers, base_url, streame
     return todos_vods
 
 
-def varrer_vods_simples(dt_inicio, dt_fim, headers, base_url, streamers, intervalo=60):
-    resultados = []
-    vods = buscar_vods_twitch_por_periodo(dt_inicio, dt_fim, headers, base_url, streamers)
-
-    for vod in vods:
-        dur = vod["duração_segundos"]
-        url = vod["url"]
-        for segundo in range(0, dur, intervalo):
-            frame_path = f"vod_completo_{vod['id_vod']}_{segundo}.jpg"
-            sucesso = capturar_frame_ffmpeg_imageio(url, frame_path, skip_seconds=segundo)
-            if sucesso:
-                resultados.append({
-                    "streamer": vod["streamer"],
-                    "segundo": segundo,
-                    "frame": frame_path,
-                    "url": url
-                })
-    return resultados
-
-
 def obter_user_id(login, headers):
     url = f"https://api.twitch.tv/helix/users?login={login}"
     resp = requests.get(url, headers=headers)
@@ -223,105 +173,3 @@ def converter_duracao_para_segundos(dur_str):
         return 0
     h, m, s = match.groups(default="0")
     return int(h) * 3600 + int(m) * 60 + int(s)
-
-
-def treinar_modelo(st, base_path="dataset", model_path="modelo/modelo_pragmatic.keras", epochs=5):
-    try:
-        st.markdown("### 🔄 Iniciando treinamento do modelo...")
-
-        subdirs = os.listdir(base_path)
-        if not subdirs or len(subdirs) < 2:
-            st.error("❌ O diretório 'dataset/' deve conter pelo menos 2 subpastas com classes diferentes.")
-            return
-
-        st.info(f"📁 Classes detectadas: `{', '.join(subdirs)}`")
-
-        datagen = ImageDataGenerator(
-            validation_split=0.2,
-            preprocessing_function=mobilenet_v2.preprocess_input
-        )
-
-        train_gen = datagen.flow_from_directory(
-            base_path, target_size=(224, 224), batch_size=32,
-            class_mode='binary', subset='training', shuffle=True
-        )
-
-        val_gen = datagen.flow_from_directory(
-            base_path, target_size=(224, 224), batch_size=32,
-            class_mode='binary', subset='validation', shuffle=False
-        )
-
-        class_counts = Counter(train_gen.classes)
-        st.write("📊 Distribuição das classes no treino:", dict(class_counts))
-
-        base_model = MobileNetV2(weights='imagenet', include_top=False, input_shape=(224, 224, 3))
-        base_model.trainable = False
-
-        model = models.Sequential([
-            base_model,
-            GlobalAveragePooling2D(),
-            Dropout(0.3),
-            Dense(64, activation='relu'),
-            Dense(1, activation='sigmoid')
-        ])
-
-        model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
-
-        total = sum(class_counts.values())
-        class_weight = {
-            0: total / (2.0 * class_counts[0]),
-            1: total / (2.0 * class_counts[1])
-        }
-
-        st.write("⚖️ Pesos de classe aplicados:", class_weight)
-
-        st.markdown("### ⏳ Treinando modelo...")
-        history = model.fit(
-            train_gen,
-            validation_data=val_gen,
-            epochs=epochs,
-            class_weight=class_weight,
-            verbose=1
-        )
-
-        model.save(model_path)
-        st.success("✅ Modelo treinado e salvo com sucesso!")
-
-        st.markdown("### 📊 Curvas de Aprendizado")
-        fig, axs = plt.subplots(1, 2, figsize=(14, 5))
-
-        axs[0].plot(history.history['loss'], label='Treino')
-        axs[0].plot(history.history['val_loss'], label='Validação')
-        axs[0].set_title('Loss por Época')
-        axs[0].set_xlabel('Época')
-        axs[0].set_ylabel('Loss')
-        axs[0].legend()
-
-        axs[1].plot(history.history['accuracy'], label='Treino')
-        axs[1].plot(history.history['val_accuracy'], label='Validação')
-        axs[1].set_title('Acurácia por Época')
-        axs[1].set_xlabel('Época')
-        axs[1].set_ylabel('Acurácia')
-        axs[1].legend()
-
-        st.pyplot(fig)
-        return True
-
-    except Exception:
-        st.error("❌ Erro durante o treinamento:")
-        st.code(traceback.format_exc())
-        return False
-
-def prever_jogo_em_frame(path, modelo):
-    from tensorflow.keras.preprocessing import image
-    import numpy as np
-
-    img = image.load_img(path, target_size=(224, 224))
-    img_array = image.img_to_array(img)
-    img_array = tf.keras.applications.mobilenet_v2.preprocess_input(img_array)
-    img_array = np.expand_dims(img_array, axis=0)
-
-    prediction = modelo.predict(img_array)[0][0]
-    classe = "Classe 1" if prediction >= 0.5 else "Classe 0"
-    confianca = prediction if prediction >= 0.5 else 1 - prediction
-    return classe, float(confianca)
