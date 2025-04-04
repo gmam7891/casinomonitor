@@ -40,7 +40,6 @@ def capturar_frame_ffmpeg_imageio(url, output_path, skip_seconds=0):
         print(f"[Erro] capturar_frame_ffmpeg_imageio: {e}")
         return False
 
-
 def prever_jogo_em_frame(path, modelo):
     img = keras_image.load_img(path, target_size=(224, 224))
     img_array = keras_image.img_to_array(img)
