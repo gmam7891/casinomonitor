@@ -33,12 +33,12 @@ def capturar_frame_ffmpeg_imageio(url, output_path, skip_seconds=0):
             output_path,
             "-y"
         ]
-        subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        return os.path.exists(output_path)
-    except Exception as e:
-        print(f"[Erro] capturar_frame_ffmpeg_imageio: {e}")
-        return False
+        result = subprocess.run(cmd, capture_output=True, text=True)
+        if result.returncode != 0:
+            print(f"[ffmpeg erro] {result.stderr}")
+            return False
 
+        return os.path.exists(output_path)
 
 def match_template_from_image(image_path, templates_dir="templates/", threshold=0.8):
     try:
@@ -344,12 +344,9 @@ def prever_jogo_em_frame(path, modelo):
     img_array = np.expand_dims(img_array, axis=0)
 
     prediction = modelo.predict(img_array)[0][0]  # valor entre 0 e 1
-
-    if prediction >= 0.5:
-        classe = "Classe 1"  # ajuste para o nome real, ex: SweetBonanza
-    else:
-        classe = "Classe 0"  # ajuste para a outra classe
-
+    classe = "Classe 1" if prediction >= 0.5 else "Classe 0"
     confianca = prediction if prediction >= 0.5 else 1 - prediction
+
     return classe, float(confianca)
+
 
