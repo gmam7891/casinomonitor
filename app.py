@@ -247,6 +247,12 @@ with col2:
         vods = buscar_vods_twitch_por_periodo(dt_ini, dt_fim, HEADERS_TWITCH, BASE_URL_TWITCH, TODOS_STREAMERS)
         st.session_state['dados_vods'] = vods
 
+st.sidebar.markdown("---")
+streamer_escolhido = st.sidebar.selectbox(
+    "🎯 Escolher um streamer específico (ou 'Todos')",
+    options=["Todos"] + TODOS_STREAMERS
+)
+
 if st.sidebar.button("📊 Verificar VODs (resumo)"):
     dt_ini = datetime.combine(data_inicio, datetime.min.time())
     dt_fim = datetime.combine(data_fim, datetime.max.time())
