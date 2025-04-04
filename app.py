@@ -245,6 +245,13 @@ with col2:
         vods = buscar_vods_twitch_por_periodo(dt_ini, dt_fim, HEADERS_TWITCH, BASE_URL_TWITCH, TODOS_STREAMERS)
         st.session_state['dados_vods'] = vods
 
+if st.sidebar.button("📊 Verificar VODs (resumo)"):
+    dt_ini = datetime.combine(data_inicio, datetime.min.time())
+    dt_fim = datetime.combine(data_fim, datetime.max.time())
+    resumo = buscar_resumo_vods(dt_ini, dt_fim, HEADERS_TWITCH, BASE_URL_TWITCH, TODOS_STREAMERS)
+    st.session_state["vods_resumo"] = resumo
+    st.success(f"{len(resumo)} VOD(s) resumidos com sucesso!")
+
 with col3:
     if st.button("🖼️ Varrer VODs com imagem"):
         dt_ini = datetime.combine(data_inicio, datetime.min.time())
