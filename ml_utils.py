@@ -321,10 +321,7 @@ def prever_jogo_em_frame(path, modelo):
     img_array = tf.keras.applications.mobilenet_v2.preprocess_input(img_array)
     img_array = np.expand_dims(img_array, axis=0)
 
-    prediction = modelo.predict(img_array)[0][0]  # valor entre 0 e 1
+    prediction = modelo.predict(img_array)[0][0]
     classe = "Classe 1" if prediction >= 0.5 else "Classe 0"
     confianca = prediction if prediction >= 0.5 else 1 - prediction
-
     return classe, float(confianca)
-
-
