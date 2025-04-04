@@ -6,10 +6,24 @@ import tensorflow as tf
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from tensorflow.keras.applications import MobileNetV2
 from tensorflow.keras import models
-from tensorflow.keras.layers import GlobalAveragePooling2D, Dropout, Dense
+from tensorflow.keras.layers import Dense, GlobalAveragePooling2D, Input
 from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint
 from sklearn.metrics import classification_report
+from tensorflow.keras.optimizers import Adam
 import numpy as np
+
+def criar_modelo_mobilenet(num_classes):
+    base_model = MobileNetV2(weights='imagenet', include_top=False, input_tensor=Input(shape=(224, 224, 3)))
+    base_model.trainable = False  # congela o backbone inicialmente
+
+    x = base_model.output
+    x = GlobalAveragePooling2D()(x)
+    x = Dense(128, activation='relu')(x)
+    output = Dense(num_classes, activation='softmax')(x)
+
+    model = Model(inputs=base_model.input, outputs=output)
+    model.compile(optimizer=Adam(learning_rate=1e-4), loss='categorical_crossentropy', metrics=['accuracy'])
+    return model
 
 def treinar_modelo(st, base_path="dataset", model_path="modelo/modelo_pragmatic.keras", epochs=10):
     try:
@@ -62,14 +76,7 @@ def treinar_modelo(st, base_path="dataset", model_path="modelo/modelo_pragmatic.
         for layer in base_model.layers[:-20]:
             layer.trainable = False
 
-        model = models.Sequential([
-            base_model,
-            GlobalAveragePooling2D(),
-            Dropout(0.3),
-            Dense(128, activation='relu'),
-            Dropout(0.3),
-            Dense(64, activation='relu'),
-            Dense(1, activation='sigmoid')
+      model = criar_modelo_mobilenet_binario()
         ])
 
         model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
@@ -146,3 +153,4 @@ def treinar_modelo(st, base_path="dataset", model_path="modelo/modelo_pragmatic.
         st.error("❌ Erro durante o treinamento:")
         st.code(traceback.format_exc())
         return False
+
