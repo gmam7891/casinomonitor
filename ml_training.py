@@ -76,14 +76,7 @@ def treinar_modelo(st, base_path="dataset", model_path="modelo/modelo_pragmatic.
         class_counts = Counter(train_gen.classes)
         st.write("📊 Distribuição das classes no treino:", dict(class_counts))
 
-        base_model = MobileNetV2(weights='imagenet', include_top=False, input_shape=(224, 224, 3))
-        base_model.trainable = True
-
-        for layer in base_model.layers[:-20]:
-            layer.trainable = False
-
-      model = criar_modelo_mobilenet_binario()
-        ])
+        model = criar_modelo_mobilenet_binario()
 
         model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
 
