@@ -78,6 +78,28 @@ if "modelo_ml" not in st.session_state:
             st.error(f"Erro ao carregar modelo: {e}")
 
 # ---------------- FUNÇÕES AUXILIARES ----------------
+
+def filtrar_streamers_em_portugues(lista_streamers):
+    streamers_pt = []
+    for streamer in lista_streamers:
+        try:
+            url = f"{BASE_URL_TWITCH}users?login={streamer}"
+            resp = requests.get(url, headers=HEADERS_TWITCH)
+            user_data = resp.json().get("data", [])
+            if not user_data:
+                continue
+
+            user_id = user_data[0]["id"]
+            stream_url = f"{BASE_URL_TWITCH}streams?user_id={user_id}"
+            stream_resp = requests.get(stream_url, headers=HEADERS_TWITCH)
+            stream_data = stream_resp.json().get("data", [])
+            if stream_data and stream_data[0].get("language") == "pt":
+                streamers_pt.append(streamer)
+        except Exception as e:
+            logging.warning(f"Erro ao verificar idioma do streamer {streamer}: {e}")
+    return streamers_pt
+
+
 # ------------------ STREAMLIT UI ------------------
 def carregar_streamers():
     if not os.path.exists(STREAMERS_FILE):
