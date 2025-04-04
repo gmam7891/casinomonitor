@@ -1,3 +1,4 @@
+
 import os
 import re
 import logging
@@ -8,7 +9,6 @@ from collections import Counter
 import cv2
 import requests
 import numpy as np
-from PIL import Image
 import subprocess
 import tensorflow as tf
 from tensorflow.keras.preprocessing import image as keras_image
@@ -18,7 +18,6 @@ from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from tensorflow.keras.layers import GlobalAveragePooling2D, Dropout, Dense
 from tensorflow.keras import models
 import matplotlib.pyplot as plt
-
 
 def capturar_frame_ffmpeg_imageio(url, output_path, skip_seconds=0):
     try:
@@ -52,7 +51,6 @@ def prever_jogo_em_frame(path, modelo):
 
     return classe, float(confianca)
 
-
 def verificar_jogo_em_live(streamer, headers, base_url):
     try:
         user_resp = requests.get(f"{base_url}users?login={streamer}", headers=headers)
@@ -78,7 +76,6 @@ def verificar_jogo_em_live(streamer, headers, base_url):
     except Exception as e:
         print(f"[Erro] verificar_jogo_em_live: {e}")
         return None
-
 
 def varrer_url_customizada(url, st, session_state, prever_func, skip_inicial=0, intervalo=1000, max_frames=100000):
     resultados = []
@@ -112,7 +109,6 @@ def varrer_url_customizada(url, st, session_state, prever_func, skip_inicial=0, 
 
     st.write(f"✅ Varredura finalizada. Total de jogos detectados: {len(resultados)}")
     return resultados
-
 
 def buscar_vods_twitch_por_periodo(dt_inicio, dt_fim, headers, base_url, streamers):
     todos_vods = []
@@ -158,13 +154,11 @@ def buscar_vods_twitch_por_periodo(dt_inicio, dt_fim, headers, base_url, streame
 
     return todos_vods
 
-
 def obter_user_id(login, headers):
     url = f"https://api.twitch.tv/helix/users?login={login}"
     resp = requests.get(url, headers=headers)
     data = resp.json()
     return data["data"][0]["id"] if data.get("data") else None
-
 
 def converter_duracao_para_segundos(dur_str):
     match = re.match(r"(?:(\d+)h)?(?:(\d+)m)?(?:(\d+)s)?", dur_str)
