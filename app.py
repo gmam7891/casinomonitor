@@ -328,7 +328,7 @@ abas = st.tabs([
     "Ranking de Jogos", 
     "Timeline", 
     "Resumo de VODs", 
-    "📚 Histórico"
+    "Histórico"
 ])
 # ------------------ Aba 1: Resultados ------------------
 with abas[0]:
