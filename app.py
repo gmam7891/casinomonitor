@@ -15,6 +15,7 @@ import time
 import re
 import gdown
 from tensorflow.keras.models import load_model
+from storage import salvar_deteccao, carregar_historico, limpar_historico, limpar_todos_historicos
 
 # OpenCV em ambiente headless
 try:
