@@ -323,7 +323,13 @@ with col4:
 
 # ---------------- ABAS PRINCIPAIS ----------------
 import plotly.express as px
-abas = st.tabs(["Resultados", "Ranking de Jogos", "Timeline", "Resumo de VODs", "Histórico"])
+abas = st.tabs([
+    "Resultados", 
+    "Ranking de Jogos", 
+    "Timeline", 
+    "Resumo de VODs", 
+    "📚 Histórico"
+])
 # ------------------ Aba 1: Resultados ------------------
 with abas[0]:
     if 'dados_url' in st.session_state:
