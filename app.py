@@ -442,6 +442,35 @@ with abas[3]:
     else:
         st.info("📭 Nenhum dado carregado. Clique em **'Verificar VODs (resumo)'**.")
 
+# ------------------ Aba 5: Histórico ------------------
+from storage import carregar_historico, limpar_historico
+
+with abas[4]:  # 📚 Histórico
+    st.markdown("## 📦 Histórico de Detecções Salvas")
+
+    tipos = ["lives", "vods", "template", "url"]
+
+    for tipo in tipos:
+        st.subheader(f"🗂 Histórico de: {tipo.upper()}")
+        df = carregar_historico(tipo)
+        if not df.empty:
+            st.dataframe(df, use_container_width=True)
+            col1, col2 = st.columns(2)
+            with col1:
+                st.download_button(
+                    f"⬇️ Baixar CSV ({tipo})",
+                    data=df.to_csv(index=False).encode("utf-8"),
+                    file_name=f"{tipo}_historico.csv",
+                    mime="text/csv"
+                )
+            with col2:
+                if st.button(f"🗑 Limpar {tipo.upper()}", key=f"limpar_{tipo}"):
+                    limpar_historico(tipo)
+                    st.warning(f"Histórico de {tipo} apagado.")
+        else:
+            st.info(f"Nenhum dado salvo para {tipo}.")
+
+
 
 # ------------------ SUGERIR NOVOS STREAMERS ------------------
 st.sidebar.markdown("---")
