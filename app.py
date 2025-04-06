@@ -566,27 +566,29 @@ with abas[5]:
             )
             st.plotly_chart(fig4, use_container_width=True)
 
-# --- Gráfico 5: Top Streamers por Jogo ---
-st.markdown("### 🧍‍♂️🎮 Streamers com mais detecções por Jogo")
 
-if "jogo_detectado" in df_geral.columns and "streamer" in df_geral.columns:
-    top_streamers_jogo = (
-        df_geral.groupby(["jogo_detectado", "streamer"])
-        .size()
-        .reset_index(name="Detecções")
-    )
+        # --- Gráfico 5: Top Streamers por Jogo ---
+        st.markdown("### 🧍‍♂️🎮 Streamers com mais detecções por Jogo")
 
-    fig5 = px.bar(
-        top_streamers_jogo,
-        x="jogo_detectado",
-        y="Detecções",
-        color="streamer",
-        title="Top Streamers por Jogo Detectado",
-        barmode="group"
-    )
-    st.plotly_chart(fig5, use_container_width=True)
-else:
-    st.info("Não há dados suficientes para exibir Top Streamers por Jogo.")
+        if "jogo_detectado" in df_geral.columns and "streamer" in df_geral.columns:
+            top_streamers_jogo = (
+            df_geral.groupby(["jogo_detectado", "streamer"])
+            .size()
+            .reset_index(name="Detecções")
+            )
+
+            fig5 = px.bar(
+            top_streamers_jogo,
+            x="jogo_detectado",
+            y="Detecções",
+            color="streamer",
+            title="Top Streamers por Jogo Detectado",
+            barmode="group"
+            )
+            st.plotly_chart(fig5, use_container_width=True)
+            else:
+            st.info("Não há dados suficientes para exibir Top Streamers por Jogo.")
+
 
 # ------------------ SUGERIR NOVOS STREAMERS ------------------
 st.sidebar.markdown("---")
