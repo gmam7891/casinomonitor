@@ -257,23 +257,25 @@ col1, col2, col3, col4 = st.columns(4)
 with col1:
     if st.button("🔍 Verificar lives agora"):
         resultados = []
+
         for streamer in TODOS_STREAMERS:
             res = verificar_jogo_em_live(streamer, HEADERS_TWITCH, BASE_URL_TWITCH)
-    if res and len(res) == 3:
-        jogo, categoria, viewers = res
-        resultados.append({
-            "streamer": streamer,
-            "jogo_detectado": jogo,
-            "categoria": categoria,
-            "viewers": viewers,
-            "timestamp": datetime.now()
-        })
+            if res and len(res) == 3:
+                jogo, categoria, viewers = res
+                resultados.append({
+                    "streamer": streamer,
+                    "jogo_detectado": jogo,
+                    "categoria": categoria,
+                    "viewers": viewers,
+                    "timestamp": datetime.now()
+                })
 
         if resultados:
             salvar_deteccao("lives", resultados)
             st.success(f"{len(resultados)} detecções salvas com sucesso!")
         else:
             st.info("Nenhum jogo detectado ao vivo.")
+
 
 with col2:
     if st.button("📺 Verificar VODs no período"):
