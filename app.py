@@ -259,14 +259,15 @@ with col1:
         resultados = []
         for streamer in TODOS_STREAMERS:
             res = verificar_jogo_em_live(streamer, HEADERS_TWITCH, BASE_URL_TWITCH)
-            if res:
-                jogo, categoria = res
-                resultados.append({
-                    "streamer": streamer,
-                    "jogo_detectado": jogo,
-                    "categoria": categoria,
-                    "timestamp": datetime.now()
-                })
+    if res:
+        jogo, categoria, viewer_count = res  # ← Ajuste aqui
+        resultados.append({
+            "streamer": streamer,
+            "jogo_detectado": jogo,
+            "categoria": categoria,
+            "viewers": viewer_count,
+            "timestamp": datetime.now()
+        })
         if resultados:
             salvar_deteccao("lives", resultados)
             st.success(f"{len(resultados)} detecções salvas com sucesso!")
