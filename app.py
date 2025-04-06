@@ -627,7 +627,7 @@ with abas[5]:
                 "segunda-feira", "terça-feira", "quarta-feira",
                 "quinta-feira", "sexta-feira", "sábado", "domingo"
             ], fill_value=0)
-        )
+            )
 
             fig7 = px.imshow(
                 matriz,
@@ -635,11 +635,11 @@ with abas[5]:
             aspect="auto",
             color_continuous_scale="Oranges",
             title="🔥 Frequência de Jogos por Dia da Semana"
-        )
-        st.plotly_chart(fig7, use_container_width=True)
-    else:
-        st.info("Dados temporais insuficientes para gerar mapa de calor.")
-
+            )
+            st.plotly_chart(fig7, use_container_width=True)
+        else:
+            st.info("Dados temporais insuficientes para gerar mapa de calor.")
+    
 
 # ------------------ SUGERIR NOVOS STREAMERS ------------------
 st.sidebar.markdown("---")
