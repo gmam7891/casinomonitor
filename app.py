@@ -55,7 +55,7 @@ st.markdown("""
 
 # ---------------- VARIÁVEIS ----------------
 CLIENT_ID = os.getenv("tyi97jgeg2j9r6pvakldbmdd2aie3m")
-ACCESS_TOKEN = os.getenv("tyi97jgeg2j9r6pvakldbmdd2aie3m")
+ACCESS_TOKEN = os.getenv("yd6vulkilaailzhr1r8zw8jio1w4ig")
 HEADERS_TWITCH = {
     'Client-ID': CLIENT_ID,
     'Authorization': f'Bearer {ACCESS_TOKEN}'
