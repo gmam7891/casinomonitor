@@ -586,7 +586,7 @@ with abas[5]:
             barmode="group"
             )
             st.plotly_chart(fig5, use_container_width=True)
-            else:
+        else:
             st.info("Não há dados suficientes para exibir Top Streamers por Jogo.")
 
 
