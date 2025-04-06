@@ -482,14 +482,15 @@ with abas[4]:  # 📚 Histórico
 
 # ------------------ SUGERIR NOVOS STREAMERS ------------------
 st.sidebar.markdown("---")
-if st.sidebar.button("🔎 Buscar novos streamers"):
+if st.sidebar.button("🔎 Sugerir novos streamers PT-BR"):
     novos = sugerir_novos_streamers()
     if novos:
-        st.success("Novos possíveis streamers:")
+        st.success("Sugestões de novos streamers (idioma PT):")
         for s in novos:
             st.write(f"- {s}")
     else:
         st.warning("Nenhum novo streamer encontrado.")
+
 
 # ------------------ Teste manual de resposta da Twitch ------------------
 if st.sidebar.button("🔬 Testar busca de streams"):
