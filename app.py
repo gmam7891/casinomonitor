@@ -705,6 +705,26 @@ with abas[6]:  # "📂 Visualizar Dataset"
         else:
             st.info("Dados temporais insuficientes para gerar tendência.")
 
+    # --- Gráfico 9: Média de Viewers por Jogo ---
+            st.markdown("### 👀 Média de Viewers por Jogo Detectado")
+            
+            if "jogo_detectado" in df_geral.columns and "viewers" in df_geral.columns:
+                media_viewers = df_geral.groupby("jogo_detectado")["viewers"].mean().reset_index()
+                media_viewers.columns = ["Jogo", "Viewers Médios"]
+                media_viewers = media_viewers.sort_values(by="Viewers Médios", ascending=False)
+            
+                fig9 = px.bar(
+                    media_viewers,
+                    x="Jogo",
+                    y="Viewers Médios",
+                    text_auto=".0f",
+                    title="👀 Audiência Média por Jogo Detectado"
+                )
+                st.plotly_chart(fig9, use_container_width=True)
+            else:
+                st.info("Nenhum dado com número de viewers disponível ainda.")
+
+
 
 # ------------------ SUGERIR NOVOS STREAMERS ------------------
 st.sidebar.markdown("---")
