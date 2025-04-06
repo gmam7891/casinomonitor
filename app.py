@@ -62,6 +62,9 @@ HEADERS_TWITCH = {
 }
 BASE_URL_TWITCH = 'https://api.twitch.tv/helix/'
 
+MODEL_PATH = "modelo/modelo_pragmatic.keras"
+MODEL_URL = "https://drive.google.com/uc?id=1i_zEMwUkTfu9L5HGNdrIs4OPCTN6Q8Zr"
+
 # ---------------- FILTRO DE STREAMERS PT ----------------
 def filtrar_streamers_pt(streamers):
     """Filtra a lista mantendo apenas streamers com idioma 'pt' (português)."""
