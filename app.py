@@ -723,7 +723,86 @@ with abas[6]:  # "📂 Visualizar Dataset"
                 st.plotly_chart(fig9, use_container_width=True)
             else:
                 st.info("Nenhum dado com número de viewers disponível ainda.")
+        # --- Gráfico 9: Média de Viewers por Jogo ---
 
+            st.markdown("### 👀 Média de Viewers por Jogo Detectado")
+
+            if "jogo_detectado" in df_geral.columns and "viewers" in df_geral.columns:
+                media_viewers = df_geral.groupby("jogo_detectado")["viewers"].mean().reset_index()
+                media_viewers.columns = ["Jogo", "Viewers Médios"]
+                media_viewers = media_viewers.sort_values(by="Viewers Médios", ascending=False)
+            
+                fig9 = px.bar(
+                    media_viewers,
+                    x="Jogo",
+                    y="Viewers Médios",
+                    text_auto=".0f",
+                    title="👀 Audiência Média por Jogo Detectado"
+                )
+                st.plotly_chart(fig9, use_container_width=True)
+            else:
+                st.info("Nenhum dado com número de viewers disponível ainda.")
+
+
+        # --- Gráfico 10: Média de Viewers por Jogo ---            
+st.markdown("### 🎥 Streamers com Maior Audiência Média")
+
+if "streamer" in df_geral.columns and "viewers" in df_geral.columns:
+    media_streamers = df_geral.groupby("streamer")["viewers"].mean().reset_index()
+    media_streamers.columns = ["Streamer", "Viewers Médios"]
+    media_streamers = media_streamers.sort_values(by="Viewers Médios", ascending=False)
+
+    fig10 = px.bar(
+        media_streamers,
+        x="Streamer",
+        y="Viewers Médios",
+        text_auto=".0f",
+        title="🎥 Audiência Média por Streamer"
+    )
+    st.plotly_chart(fig10, use_container_width=True)
+else:
+    st.info("Nenhum dado de viewers por streamer disponível.")
+
+        
+        # --- Gráfico 11: Média de Viewers por Jogo ---
+    st.markdown("### ⏱️ Evolução dos Viewers nas Detecções")
+
+if "data_hora" in df_geral.columns and "viewers" in df_geral.columns:
+    df_viewers = df_geral.copy()
+    df_viewers["data_hora"] = pd.to_datetime(df_viewers["data_hora"])
+    evolucao_viewers = (
+        df_viewers.groupby(pd.Grouper(key="data_hora", freq="D"))["viewers"].mean().reset_index()
+    )
+
+    fig11 = px.line(
+        evolucao_viewers,
+        x="data_hora",
+        y="viewers",
+        title="⏱️ Audiência Média ao Longo do Tempo"
+    )
+    st.plotly_chart(fig11, use_container_width=True)
+else:
+    st.info("Sem dados temporais suficientes para mostrar evolução de viewers.")
+
+
+        # --- Gráfico 12: Média de Viewers por Jogo ---
+st.markdown("### 🔝 Pico de Audiência por Streamer")
+
+if "streamer" in df_geral.columns and "viewers" in df_geral.columns:
+    pico_streamers = df_geral.groupby("streamer")["viewers"].max().reset_index()
+    pico_streamers.columns = ["Streamer", "Pico de Viewers"]
+    pico_streamers = pico_streamers.sort_values(by="Pico de Viewers", ascending=False)
+
+    fig12 = px.bar(
+        pico_streamers,
+        x="Streamer",
+        y="Pico de Viewers",
+        text_auto=True,
+        title="🔝 Maior Número de Viewers por Streamer"
+    )
+    st.plotly_chart(fig12, use_container_width=True)
+else:
+    st.info("Não há dados de pico de audiência.")
 
 
 # ------------------ SUGERIR NOVOS STREAMERS ------------------
