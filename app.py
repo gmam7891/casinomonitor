@@ -538,7 +538,7 @@ with abas[6]:  # "📂 Visualizar Dataset"
             caminho_img = os.path.join(caminho_classe, img_nome)
             imagem = Image.open(caminho_img)
             with colunas[i % 4]:
-                st.image(imagem, caption=img_nome, use_column_width=True)
+                st.image(imagem, caption=img_nome, use_container_width=True)
 
         
         # --- Gráfico 1: Share of Voice ---
