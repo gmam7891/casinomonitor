@@ -65,6 +65,21 @@ STREAMERS_FILE = "streamers.txt"
 MODEL_PATH = "modelo/modelo_pragmatic.keras"
 MODEL_URL = "https://drive.google.com/uc?id=1i_zEMwUkTfu9L5HGNdrIs4OPCTN6Q8Zr"
 
+def filtrar_streamers_pt(streamers):
+    """Filtra a lista mantendo apenas streamers com idioma 'pt' (português)."""
+    streamers_pt = []
+    for s in streamers:
+        try:
+            url = f"{BASE_URL_TWITCH}users?login={s}"
+            resp = requests.get(url, headers=HEADERS_TWITCH)
+            data = resp.json().get("data", [])
+            if data and data[0].get("broadcaster_language") == "pt":
+                streamers_pt.append(s)
+        except Exception as e:
+            logging.warning(f"Erro ao verificar idioma de {s}: {e}")
+    return streamers_pt
+
+
 # ---------------- MODELO ML ----------------
 if "modelo_ml" not in st.session_state:
     if not os.path.exists(MODEL_PATH):
