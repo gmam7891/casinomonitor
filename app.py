@@ -167,9 +167,7 @@ def filtrar_streamers_pt(streamers):
 
 # ---------------- CARREGAR E FILTRAR STREAMERS FIXOS ----------------
 STREAMERS_INTERESSE = carregar_streamers()
-STREAMERS_PT = filtrar_streamers_pt(STREAMERS_INTERESSE)
-TODOS_STREAMERS = STREAMERS_PT
-
+TODOS_STREAMERS = STREAMERS_INTERESSE
 
 # ------------------ STREAMLIT UI ------------------
 def carregar_streamers():
