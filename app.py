@@ -330,7 +330,8 @@ abas = st.tabs([
     "Ranking de Jogos", 
     "Timeline", 
     "Resumo de VODs", 
-    "Histórico"
+    "Histórico", 
+    "Dashboards"
 ])
 # ------------------ Aba 1: Resultados ------------------
 with abas[0]:
@@ -478,6 +479,92 @@ with abas[4]:  # 📚 Histórico
         else:
             st.info(f"Nenhum dado salvo para {tipo}.")
 
+# ------------------ Aba 6: Dashboards Interativos ------------------
+from storage import carregar_historico
+import plotly.express as px
+import pandas as pd
+
+with abas[5]:
+    st.markdown("## 📈 Dashboards Interativos de Detecção")
+
+    # Carrega dados salvos
+    dados_template = carregar_historico("template")
+    dados_url = carregar_historico("url")
+    dados_lives = carregar_historico("lives")
+
+    # Junta tudo
+    df_geral = pd.concat([dados_template, dados_url, dados_lives], ignore_index=True)
+
+    if df_geral.empty:
+        st.info("📭 Nenhum dado disponível para análise. Execute uma varredura primeiro.")
+    else:
+        # Garantir formatação da coluna temporal
+        if "data_hora" in df_geral.columns:
+            df_geral["data_hora"] = pd.to_datetime(df_geral["data_hora"], errors="coerce")
+
+        # --- Gráfico 1: Share of Voice ---
+        st.markdown("### 🥧 Share of Voice (Distribuição dos Jogos Detectados)")
+
+        if "jogo_detectado" in df_geral.columns:
+            ranking = df_geral["jogo_detectado"].value_counts().reset_index()
+            ranking.columns = ["Jogo", "Aparições"]
+
+            fig1 = px.pie(
+                ranking,
+                names="Jogo",
+                values="Aparições",
+                title="Distribuição dos Jogos Detectados"
+            )
+            st.plotly_chart(fig1, use_container_width=True)
+
+        # --- Gráfico 2: Detecções por Streamer ---
+        st.markdown("### 🧍‍♂️ Comparativo: Total de Detecções por Streamer")
+
+        if "streamer" in df_geral.columns and "jogo_detectado" in df_geral.columns:
+            comparativo = df_geral.groupby("streamer")["jogo_detectado"].count().reset_index()
+            comparativo.columns = ["Streamer", "Total de Detecções"]
+            comparativo = comparativo.sort_values(by="Total de Detecções", ascending=False)
+
+            fig2 = px.bar(
+                comparativo,
+                x="Streamer",
+                y="Total de Detecções",
+                title="🎯 Total de Jogos Detectados por Streamer",
+                text_auto=True
+            )
+            st.plotly_chart(fig2, use_container_width=True)
+
+        # --- Gráfico 3: Evolução Temporal ---
+        st.markdown("### 📈 Evolução Temporal das Detecções")
+
+        if "data_hora" in df_geral.columns and "jogo_detectado" in df_geral.columns:
+            evolucao = df_geral.groupby([pd.Grouper(key="data_hora", freq="D"), "jogo_detectado"]).size().reset_index(name="Detecções")
+
+            fig3 = px.line(
+                evolucao,
+                x="data_hora",
+                y="Detecções",
+                color="jogo_detectado",
+                title="📅 Detecções por Jogo ao Longo do Tempo"
+            )
+            st.plotly_chart(fig3, use_container_width=True)
+
+        # --- Gráfico 4: Tempo Médio por Jogo ---
+        st.markdown("### ⏱ Tempo Médio de Detecção por Jogo")
+
+        if "jogo_detectado" in df_geral.columns and "segundo" in df_geral.columns:
+            media_tempo = df_geral.groupby("jogo_detectado")["segundo"].mean().reset_index()
+            media_tempo.columns = ["Jogo", "Tempo Médio (s)"]
+            media_tempo = media_tempo.sort_values(by="Tempo Médio (s)", ascending=False)
+
+            fig4 = px.bar(
+                media_tempo,
+                x="Jogo",
+                y="Tempo Médio (s)",
+                text_auto=".2f",
+                title="⏱ Tempo Médio de Detecção por Jogo"
+            )
+            st.plotly_chart(fig4, use_container_width=True)
 
 
 # ------------------ SUGERIR NOVOS STREAMERS ------------------
