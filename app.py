@@ -87,11 +87,6 @@ def filtrar_streamers_pt(streamers):
 
     return streamers_pt
 
-# ---------------- LISTA FINAL DE STREAMERS ----------------
-STREAMERS_INTERESSE = carregar_streamers()
-STREAMERS_PT = filtrar_streamers_pt(STREAMERS_INTERESSE)
-TODOS_STREAMERS = STREAMERS_PT
-
 
 # ---------------- MODELO ML ----------------
 if "modelo_ml" not in st.session_state:
