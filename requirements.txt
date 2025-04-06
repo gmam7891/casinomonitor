@@ -1,21 +1,12 @@
-# --- Streamlit e base ---
 streamlit
-pandas
 requests
 python-dotenv
-
-# --- Machine Learning ---
-tensorflow
-gdown
-
-# --- Processamento de imagem e vídeo ---
-opencv-python-headless
-imageio
-imageio-ffmpeg
-
-# --- Visualização ---
-plotly
-
-# --- Outros utilitários ---
-retries
+pandas
+numpy
 matplotlib
+scikit-learn
+tensorflow
+opencv-python-headless
+plotly
+gdown
+Pillow
