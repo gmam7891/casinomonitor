@@ -677,7 +677,6 @@ with abas[6]:  # "📂 Visualizar Dataset"
 
             # --- Gráfico 8: Tendência de Crescimento por Jogo ---
 st.markdown("### 📈 Tendência de Crescimento por Jogo (Média Móvel 3 dias)")
-
         if "data_hora" in df_geral.columns and "jogo_detectado" in df_geral.columns:
             tendencia = (
             df_geral.groupby([pd.Grouper(key="data_hora", freq="D"), "jogo_detectado"])
