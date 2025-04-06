@@ -54,20 +54,19 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ---------------- VARIÁVEIS ----------------
-CLIENT_ID = os.getenv("TWITCH_CLIENT_ID", "tyi97jgeg2j9r6pvakldbmdd2aie3m")
-ACCESS_TOKEN = os.getenv("TWITCH_ACCESS_TOKEN", "yd6vulkilaailzhr1r8zw8jio1w4ig")
+CLIENT_ID = os.getenv("TWITCH_CLIENT_ID", "...")
+ACCESS_TOKEN = os.getenv("TWITCH_ACCESS_TOKEN", "...")
 HEADERS_TWITCH = {
     'Client-ID': CLIENT_ID,
     'Authorization': f'Bearer {ACCESS_TOKEN}'
 }
 BASE_URL_TWITCH = 'https://api.twitch.tv/helix/'
-STREAMERS_FILE = "streamers.txt"
-MODEL_PATH = "modelo/modelo_pragmatic.keras"
-MODEL_URL = "https://drive.google.com/uc?id=1i_zEMwUkTfu9L5HGNdrIs4OPCTN6Q8Zr"
 
+# ---------------- FILTRO DE STREAMERS PT ----------------
 def filtrar_streamers_pt(streamers):
     """Filtra a lista mantendo apenas streamers com idioma 'pt' (português)."""
     streamers_pt = []
+    ignorados = []
     for s in streamers:
         try:
             url = f"{BASE_URL_TWITCH}users?login={s}"
@@ -75,9 +74,24 @@ def filtrar_streamers_pt(streamers):
             data = resp.json().get("data", [])
             if data and data[0].get("broadcaster_language") == "pt":
                 streamers_pt.append(s)
+            else:
+                ignorados.append(s)
         except Exception as e:
             logging.warning(f"Erro ao verificar idioma de {s}: {e}")
+            ignorados.append(s)
+
+    if ignorados:
+        st.sidebar.warning("Alguns streamers foram ignorados por não estarem em PT:")
+        for i in ignorados:
+            st.sidebar.text(f"❌ {i}")
+
     return streamers_pt
+
+# ---------------- LISTA FINAL DE STREAMERS ----------------
+STREAMERS_INTERESSE = carregar_streamers()
+STREAMERS_PT = filtrar_streamers_pt(STREAMERS_INTERESSE)
+TODOS_STREAMERS = STREAMERS_PT
+
 
 # ---------------- MODELO ML ----------------
 if "modelo_ml" not in st.session_state:
