@@ -331,8 +331,10 @@ abas = st.tabs([
     "Timeline", 
     "Resumo de VODs", 
     "Histórico", 
-    "Dashboards"
+    "Dashboards",
+    "Visualizar Dataset"
 ])
+
 # ------------------ Aba 1: Resultados ------------------
 with abas[0]:
     if 'dados_url' in st.session_state:
