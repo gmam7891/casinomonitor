@@ -111,26 +111,66 @@ if "modelo_ml" not in st.session_state:
             st.error(f"Erro ao carregar modelo: {e}")
 
 # ---------------- FUNÇÕES AUXILIARES ----------------
+import os
 
-def filtrar_streamers_em_portugues(lista_streamers):
+STREAMERS_FILE = "streamers.txt"
+DADOS_DIR = "dados"
+os.makedirs(DADOS_DIR, exist_ok=True)
+
+def carregar_streamers():
+    """Lê os streamers fixos do arquivo streamers.txt"""
+    if not os.path.exists(STREAMERS_FILE):
+        with open(STREAMERS_FILE, "w") as f:
+            f.write("jukes\n")  # streamer padrão inicial
+    with open(STREAMERS_FILE, "r") as f:
+        return [l.strip() for l in f if l.strip()]
+
+def salvar_deteccao(tipo, dados):
+    """Salva dados detectados no diretório /dados como CSV"""
+    nome_arquivo = f"{DADOS_DIR}/{tipo}.csv"
+    import pandas as pd
+    from datetime import datetime
+
+    df_novo = pd.DataFrame(dados)
+    df_novo["data_hora"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+    if os.path.exists(nome_arquivo):
+        df_existente = pd.read_csv(nome_arquivo)
+        df = pd.concat([df_existente, df_novo], ignore_index=True)
+    else:
+        df = df_novo
+
+    df.to_csv(nome_arquivo, index=False)
+
+def filtrar_streamers_pt(streamers):
+    """Filtra a lista mantendo apenas streamers com idioma 'pt' (português)."""
     streamers_pt = []
-    for streamer in lista_streamers:
-        try:
-            url = f"{BASE_URL_TWITCH}users?login={streamer}"
-            resp = requests.get(url, headers=HEADERS_TWITCH)
-            user_data = resp.json().get("data", [])
-            if not user_data:
-                continue
+    ignorados = []
 
-            user_id = user_data[0]["id"]
-            stream_url = f"{BASE_URL_TWITCH}streams?user_id={user_id}"
-            stream_resp = requests.get(stream_url, headers=HEADERS_TWITCH)
-            stream_data = stream_resp.json().get("data", [])
-            if stream_data and stream_data[0].get("language") == "pt":
-                streamers_pt.append(streamer)
+    for s in streamers:
+        try:
+            url = f"{BASE_URL_TWITCH}users?login={s}"
+            resp = requests.get(url, headers=HEADERS_TWITCH)
+            data = resp.json().get("data", [])
+            if data and data[0].get("broadcaster_language") == "pt":
+                streamers_pt.append(s)
+            else:
+                ignorados.append(s)
         except Exception as e:
-            logging.warning(f"Erro ao verificar idioma do streamer {streamer}: {e}")
+            logging.warning(f"Erro ao verificar idioma de {s}: {e}")
+            ignorados.append(s)
+
+    if ignorados:
+        st.sidebar.warning("Alguns streamers foram ignorados por não estarem em PT:")
+        for i in ignorados:
+            st.sidebar.text(f"❌ {i}")
+
     return streamers_pt
+
+# ---------------- CARREGAR E FILTRAR STREAMERS FIXOS ----------------
+STREAMERS_INTERESSE = carregar_streamers()
+STREAMERS_PT = filtrar_streamers_pt(STREAMERS_INTERESSE)
+TODOS_STREAMERS = STREAMERS_PT
 
 
 # ------------------ STREAMLIT UI ------------------
