@@ -97,13 +97,15 @@ def verificar_jogo_em_live(streamer, headers, base_url):
         if not stream_data:
             return None
 
+        stream_info = stream_data[0]  # <- separa pra facilitar
         m3u8_url = f"https://usher.ttvnw.net/api/channel/hls/{streamer}.m3u8"
         temp_path = f"live_frame_{streamer}.jpg"
 
         if capturar_frame_ffmpeg_imageio(m3u8_url, temp_path, skip_seconds=5):
             jogo = prever_jogo_em_frame(temp_path)
-            categoria = stream_data[0].get("game_name", "")
-            return jogo, categoria
+            categoria = stream_info.get("game_name", "")
+            viewers = stream_info.get("viewer_count", 0)
+            return jogo, categoria, viewers
 
         return None
     except Exception as e:
