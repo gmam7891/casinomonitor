@@ -265,31 +265,22 @@ with col1:
                     "categoria": categoria,
                     "timestamp": datetime.now()
                 })
-        st.session_state['dados_lives'] = resultados
+        if resultados:
+            salvar_deteccao("lives", resultados)
+            st.success(f"{len(resultados)} detecções salvas com sucesso!")
+        else:
+            st.info("Nenhum jogo detectado ao vivo.")
 
 with col2:
     if st.button("📺 Verificar VODs no período"):
         dt_ini = datetime.combine(data_inicio, datetime.min.time())
         dt_fim = datetime.combine(data_fim, datetime.max.time())
         vods = buscar_vods_twitch_por_periodo(dt_ini, dt_fim, HEADERS_TWITCH, BASE_URL_TWITCH, TODOS_STREAMERS)
-        st.session_state['dados_vods'] = vods
-
-st.sidebar.markdown("---")
-streamer_escolhido = st.sidebar.selectbox(
-    "🎯 Escolher um streamer específico (ou 'Todos')",
-    options=["Todos"] + TODOS_STREAMERS
-)
-
-if st.sidebar.button("📊 Verificar VODs (resumo)"):
-    dt_ini = datetime.combine(data_inicio, datetime.min.time())
-    dt_fim = datetime.combine(data_fim, datetime.max.time())
-
-    # Se for "Todos", usa toda a lista
-    streamers_para_buscar = TODOS_STREAMERS if streamer_escolhido == "Todos" else [streamer_escolhido]
-
-    resumo = buscar_resumo_vods(dt_ini, dt_fim, HEADERS_TWITCH, BASE_URL_TWITCH, streamers_para_buscar)
-    st.session_state["vods_resumo"] = resumo
-    st.success(f"{len(resumo)} VOD(s) resumidos com sucesso!")
+        if vods:
+            salvar_deteccao("vods", vods)
+            st.success(f"{len(vods)} VODs salvos com sucesso!")
+        else:
+            st.info("Nenhuma VOD encontrada no período.")
 
 
 with col3:
@@ -297,12 +288,17 @@ with col3:
         dt_ini = datetime.combine(data_inicio, datetime.min.time())
         dt_fim = datetime.combine(data_fim, datetime.max.time())
         resultados = varrer_vods_com_template(dt_ini, dt_fim, HEADERS_TWITCH, BASE_URL_TWITCH, TODOS_STREAMERS)
-        st.session_state['dados_vods_template'] = resultados
+        if resultados:
+            salvar_deteccao("template", resultados)
+            st.success(f"{len(resultados)} jogos detectados via template.")
+        else:
+            st.info("Nenhum jogo detectado via template.")
+
 
 with col4:
     if st.button("🌐 Varredura na URL personalizada") and url_custom:
         tempo_inicial = extrair_segundos_da_url_vod(url_custom)
-        tempo_total = 100000
+        tempo_total = 10000
         intervalo = 1
         max_frames = tempo_total // intervalo
         st.info(f"📡 Iniciando varredura de {tempo_total}s a partir de {tempo_inicial}s")
@@ -318,8 +314,12 @@ with col4:
             max_frames=max_frames
         )
         duracao = time.time() - inicio
-        st.success(f"✅ Varredura concluída em {duracao:.2f}s")
-        st.session_state['dados_url'] = resultado_url
+
+        if resultado_url:
+            salvar_deteccao("url", resultado_url)
+            st.success(f"✅ Varredura concluída e salva em {duracao:.2f}s")
+        else:
+            st.warning("Nenhum jogo detectado na URL.")
 
 # ---------------- ABAS PRINCIPAIS ----------------
 import plotly.express as px
