@@ -79,6 +79,9 @@ def filtrar_streamers_pt(streamers):
             logging.warning(f"Erro ao verificar idioma de {s}: {e}")
     return streamers_pt
 
+STREAMERS_INTERESSE = carregar_streamers()
+STREAMERS_PT = filtrar_streamers_pt(STREAMERS_INTERESSE)
+TODOS_STREAMERS = STREAMERS_PT
 
 # ---------------- MODELO ML ----------------
 if "modelo_ml" not in st.session_state:
