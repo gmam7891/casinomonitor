@@ -216,9 +216,10 @@ def sugerir_novos_streamers():
 
     try:
         response = requests.get(
-            f"{BASE_URL_TWITCH}streams?first=100&language=pt",
-            headers=HEADERS_TWITCH
-        )
+    f"{BASE_URL_TWITCH}streams?first=250",
+    headers=HEADERS_TWITCH
+)
+
         data = response.json().get("data", [])
         atuais = set(STREAMERS_INTERESSE)
 
