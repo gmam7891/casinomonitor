@@ -504,6 +504,39 @@ with abas[5]:
         if "data_hora" in df_geral.columns:
             df_geral["data_hora"] = pd.to_datetime(df_geral["data_hora"], errors="coerce")
 
+        # ------------------ Aba 7: Visualização de Dataset ------------------
+import os
+from PIL import Image
+
+with abas[6]:  # "📂 Visualizar Dataset"
+    st.markdown("## 🖼️ Visualização das Imagens do Dataset")
+
+    dataset_dir = "dataset"
+    classes_disponiveis = sorted([d for d in os.listdir(dataset_dir) if os.path.isdir(os.path.join(dataset_dir, d))])
+
+    if not classes_disponiveis:
+        st.error("❌ Nenhuma classe encontrada na pasta /dataset/")
+    else:
+        classe = st.selectbox("📁 Escolha a classe", classes_disponiveis)
+        caminho_classe = os.path.join(dataset_dir, classe)
+        imagens = sorted([f for f in os.listdir(caminho_classe) if f.lower().endswith((".jpg", ".jpeg", ".png"))])
+
+        total = len(imagens)
+        st.write(f"📸 {total} imagens encontradas na classe **{classe}**")
+
+        imagens_por_pagina = st.slider("🧮 Imagens por página", 4, 24, 12)
+        pagina = st.number_input("📄 Página", min_value=1, max_value=(len(imagens) // imagens_por_pagina) + 1, step=1)
+        inicio = (pagina - 1) * imagens_por_pagina
+        fim = inicio + imagens_por_pagina
+
+        colunas = st.columns(4)
+        for i, img_nome in enumerate(imagens[inicio:fim]):
+            caminho_img = os.path.join(caminho_classe, img_nome)
+            imagem = Image.open(caminho_img)
+            with colunas[i % 4]:
+                st.image(imagem, caption=img_nome, use_column_width=True)
+
+        
         # --- Gráfico 1: Share of Voice ---
         st.markdown("### 🥧 Share of Voice (Distribuição dos Jogos Detectados)")
 
