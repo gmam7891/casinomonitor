@@ -593,52 +593,52 @@ with abas[5]:
         st.markdown("### 📆 Detecções por Dia da Semana")
 
         if "data_hora" in df_geral.columns and "jogo_detectado" in df_geral.columns:
-        df_geral["dia_semana"] = df_geral["data_hora"].dt.day_name(locale='pt_BR')
+            df_geral["dia_semana"] = df_geral["data_hora"].dt.day_name(locale='pt_BR')
 
-        distrib_dia = df_geral["dia_semana"].value_counts().reindex([
-        "segunda-feira", "terça-feira", "quarta-feira",
-        "quinta-feira", "sexta-feira", "sábado", "domingo"
-        ]).fillna(0).reset_index()
-
-        distrib_dia.columns = ["Dia", "Detecções"]
-
-        fig6 = px.bar(
-            distrib_dia,
-            x="Dia",
-            y="Detecções",
-            title="📆 Total de Detecções por Dia da Semana",
-            text_auto=True
-        )
-        st.plotly_chart(fig6, use_container_width=True)
-    else:
-        st.info("Dados temporais insuficientes para gerar distribuição semanal.")
-
-# --- Gráfico 7: Mapa de Calor Jogo x Dia da Semana ---
-st.markdown("### 🔥 Mapa de Calor: Jogos por Dia da Semana")
-
-if "data_hora" in df_geral.columns and "jogo_detectado" in df_geral.columns:
-    df_geral["dia_semana"] = df_geral["data_hora"].dt.day_name(locale='pt_BR')
-
-    matriz = (
-        df_geral.groupby(["jogo_detectado", "dia_semana"])
-        .size()
-        .unstack(fill_value=0)
-        .reindex(columns=[
+            distrib_dia = df_geral["dia_semana"].value_counts().reindex([
             "segunda-feira", "terça-feira", "quarta-feira",
             "quinta-feira", "sexta-feira", "sábado", "domingo"
-        ], fill_value=0)
-    )
+            ]).fillna(0).reset_index()
 
-    fig7 = px.imshow(
-        matriz,
-        labels=dict(x="Dia da Semana", y="Jogo", color="Detecções"),
-        aspect="auto",
-        color_continuous_scale="Oranges",
-        title="🔥 Frequência de Jogos por Dia da Semana"
-    )
-    st.plotly_chart(fig7, use_container_width=True)
-else:
-    st.info("Dados temporais insuficientes para gerar mapa de calor.")
+            distrib_dia.columns = ["Dia", "Detecções"]
+
+            fig6 = px.bar(
+                distrib_dia,
+                x="Dia",
+                y="Detecções",
+                title="📆 Total de Detecções por Dia da Semana",
+                text_auto=True
+            )
+            st.plotly_chart(fig6, use_container_width=True)
+        else:
+            st.info("Dados temporais insuficientes para gerar distribuição semanal.")
+
+# --- Gráfico 7: Mapa de Calor Jogo x Dia da Semana ---
+        st.markdown("### 🔥 Mapa de Calor: Jogos por Dia da Semana")
+
+        if "data_hora" in df_geral.columns and "jogo_detectado" in df_geral.columns:
+            df_geral["dia_semana"] = df_geral["data_hora"].dt.day_name(locale='pt_BR')
+
+            matriz = (
+            df_geral.groupby(["jogo_detectado", "dia_semana"])
+            .size()
+            .unstack(fill_value=0)
+            .reindex(columns=[
+                "segunda-feira", "terça-feira", "quarta-feira",
+                "quinta-feira", "sexta-feira", "sábado", "domingo"
+            ], fill_value=0)
+        )
+
+            fig7 = px.imshow(
+                matriz,
+            labels=dict(x="Dia da Semana", y="Jogo", color="Detecções"),
+            aspect="auto",
+            color_continuous_scale="Oranges",
+            title="🔥 Frequência de Jogos por Dia da Semana"
+        )
+        st.plotly_chart(fig7, use_container_width=True)
+    else:
+        st.info("Dados temporais insuficientes para gerar mapa de calor.")
 
 
 # ------------------ SUGERIR NOVOS STREAMERS ------------------
