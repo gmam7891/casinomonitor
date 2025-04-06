@@ -270,8 +270,7 @@ def buscar_streamers_por_categoria(nome_categoria="Virtual Casino", idioma="pt")
 
 # 🚀 Carregar e unir streamers fixos + da categoria Virtual Casino
 STREAMERS_INTERESSE = carregar_streamers()
-STREAMERS_PT = filtrar_streamers_pt(STREAMERS_INTERESSE)
-TODOS_STREAMERS = STREAMERS_PT
+TODOS_STREAMERS = STREAMERS_INTERESSE
 
 # 🧭 Sidebar
 st.sidebar.header("🎯 Filtros")
