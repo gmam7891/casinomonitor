@@ -151,18 +151,17 @@ def sugerir_novos_streamers():
     categorias_alvo = ["Slots", "Virtual Casino"]
 
     try:
-        response = requests.get(BASE_URL_TWITCH + "streams?first=100", headers=HEADERS_TWITCH)
+        response = requests.get(
+            f"{BASE_URL_TWITCH}streams?first=100&language=pt",
+            headers=HEADERS_TWITCH
+        )
         data = response.json().get("data", [])
         atuais = set(STREAMERS_INTERESSE)
 
         for stream in data:
             game_name = stream.get("game_name", "").lower()
-            idioma = stream.get("language", "")
-            if idioma != "pt":
-                continue  # Ignora quem não fala português
-
+            login = stream.get("user_login")
             if any(cat.lower() in game_name for cat in categorias_alvo):
-                login = stream.get("user_login")
                 if login and login not in atuais:
                     sugestoes.append(login)
     except Exception as e:
