@@ -128,8 +128,6 @@ def treinar_modelo(st, base_path="dataset", model_path="modelo/modelo_pragmatic.
 
         st.session_state["curva_fig"] = fig
 
-               st.session_state["curva_fig"] = fig
-
         # Avaliação com relatório de classificação
         val_preds = model.predict(val_gen)
         pred_labels = (val_preds > 0.5).astype(int).flatten()
