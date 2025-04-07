@@ -245,8 +245,6 @@ def filtrar_streamers_pt(streamers):
 # ---------------- CARREGAR E FILTRAR STREAMERS FIXOS ----------------
 STREAMERS_INTERESSE = carregar_streamers()
 
-# 👇 Filtro baseado no nome digitado
-streamer_filtro = st.sidebar.text_input("🔎 Nome do streamer (opcional)").strip().lower()
 if streamer_filtro:
     TODOS_STREAMERS = [streamer_filtro]
 else:
