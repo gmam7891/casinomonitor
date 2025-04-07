@@ -691,6 +691,23 @@ with abas[5]:
         if "data_hora" in df_geral.columns:
             df_geral["data_hora"] = pd.to_datetime(df_geral["data_hora"], errors="coerce")
 
+        # --- Tabela de minutos com Pragmatic Play por streamer ---
+        st.markdown("### ⏱️ Total de minutos com Pragmatic Play por Streamer")
+
+        minutos_dict = calcular_minutos_por_streamer(df_geral.to_dict(orient="records"), nome_jogo="pragmatic")
+
+        if minutos_dict:
+            df_minutos = pd.DataFrame(list(minutos_dict.items()), columns=["Streamer", "Minutos com Pragmatic"])
+            df_minutos = df_minutos.sort_values(by="Minutos com Pragmatic", ascending=False)
+
+            st.dataframe(df_minutos, use_container_width=True)
+
+            csv = df_minutos.to_csv(index=False).encode("utf-8")
+            st.download_button("⬇️ Baixar CSV de Minutos com Pragmatic", csv, "minutos_pragmatic.csv", "text/csv")
+        else:
+            st.info("Nenhum jogo Pragmatic Play detectado nos dados.")
+
+
         # ------------------ Aba 7: Visualização de Dataset ------------------
 import os
 from PIL import Image
