@@ -29,14 +29,17 @@ def obter_access_token(client_id, client_secret):
         "grant_type": "client_credentials"
     }
     try:
-        resp = requests.post(url, data=data)  # <-- Aqui está o "data=" correto
+        resp = requests.post(url, data=data)
         resp.raise_for_status()
         return resp.json().get("access_token")
+    except requests.exceptions.HTTPError as e:
+        st.error("❌ Erro HTTP ao obter access_token:")
+        st.code(resp.text)  # mostra a resposta da API da Twitch
+        st.stop()
     except Exception as e:
         st.error("❌ Erro ao obter access_token:")
         st.code(str(e))
         st.stop()
-
 
 # ---------------- OpenCV em ambiente headless ----------------
 try:
