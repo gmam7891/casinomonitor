@@ -133,7 +133,6 @@ if "modelo_ml" not in st.session_state:
             st.success("✅ Modelo carregado com sucesso!")
         except Exception as e:
             st.error(f"Erro ao carregar modelo: {e}")
-
 # ---------------- FUNÇÕES AUXILIARES ----------------
 import os
 
