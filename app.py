@@ -251,7 +251,7 @@ def sugerir_novos_streamers():
 
     try:
         response = requests.get(
-    f"{BASE_URL_TWITCH}streams?first=250",
+    f"{BASE_URL_TWITCH}streams?first=350",
     headers=HEADERS_TWITCH
 )
 
