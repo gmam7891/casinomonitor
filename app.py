@@ -17,6 +17,7 @@ import tensorflow as tf
 import time
 import re
 import gdown
+import subprocess
 from tensorflow.keras.models import load_model
 from storage import salvar_deteccao, carregar_historico, limpar_historico, limpar_todos_historicos
 
@@ -145,6 +146,28 @@ if "modelo_ml" not in st.session_state:
 
 # ---------------- FUNÇÕES AUXILIARES ----------------
 import os
+import subprocess
+
+def obter_url_m3u8_twitch(vod_url):
+    """
+    Usa o streamlink para extrair a URL .m3u8 de um VOD da Twitch.
+    Ex: https://www.twitch.tv/videos/2426101798
+    """
+    try:
+        result = subprocess.run(
+            ["streamlink", "--stream-url", vod_url, "best"],
+            capture_output=True,
+            text=True
+        )
+        if result.returncode == 0:
+            return result.stdout.strip()
+        else:
+            st.error(f"❌ Erro ao rodar streamlink:\n{result.stderr}")
+            return None
+    except Exception as e:
+        st.error(f"❌ Erro ao obter URL m3u8: {e}")
+        return None
+
 
 STREAMERS_FILE = "streamers.txt"
 DADOS_DIR = "dados"
@@ -333,16 +356,22 @@ if st.sidebar.button("🎲 Testar nome da categoria"):
 
 # 🎯 Captura manual
 if st.sidebar.button("🎯 Capturar frame no segundo exato") and url_custom:
-    frame_path = "frame_manual.jpg"
-    if capturar_frame_ffmpeg_imageio(url_custom, frame_path, skip_seconds=segundo_alvo):
-        st.image(frame_path, caption=f"Frame em {segundo_alvo}s", use_column_width=True)
-        resultado, confianca = prever_jogo_em_frame(frame_path, st.session_state.get("modelo_ml"))
-        if resultado:
-            st.success(f"🧠 Jogo detectado: `{resultado}` (confiança: {confianca:.2%})")
-        else:
-            st.warning("❌ Nenhum jogo detectado.")
+    m3u8_url = obter_url_m3u8_twitch(url_custom)
+    
+    if not m3u8_url:
+        st.error("❌ Não foi possível obter a URL .m3u8 do VOD.")
     else:
-        st.error("Erro ao capturar frame.")
+        frame_path = "frame_manual.jpg"
+        if capturar_frame_ffmpeg_imageio(m3u8_url, frame_path, skip_seconds=segundo_alvo):
+            st.image(frame_path, caption=f"Frame em {segundo_alvo}s", use_column_width=True)
+            resultado, confianca = prever_jogo_em_frame(frame_path, st.session_state.get("modelo_ml"))
+            if resultado:
+                st.success(f"🧠 Jogo detectado: `{resultado}` (confiança: {confianca:.2%})")
+            else:
+                st.warning("❌ Nenhum jogo detectado.")
+        else:
+            st.error("❌ Erro ao capturar frame.")
+
 
 # 🚀 Treinar modelo
 if st.sidebar.button("🚀 Treinar modelo agora"):
