@@ -356,6 +356,7 @@ data_inicio = st.sidebar.date_input("Data de início", value=datetime.today() - 
 data_fim = st.sidebar.date_input("Data de fim", value=datetime.today())
 url_custom = st.sidebar.text_input("URL personalizada (VOD .m3u8 ou com ?t=...)")
 segundo_alvo = st.sidebar.number_input("Segundo para captura manual", min_value=0, max_value=99999, value=0)
+streamer_filtro = st.sidebar.text_input("🎥 Filtrar por streamer específico (opcional)").strip().lower()
 
 if st.sidebar.button("🔍 Testar conexão com Twitch"):
     test_url = "https://api.twitch.tv/helix/streams?first=1"
