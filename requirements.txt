@@ -11,3 +11,4 @@ gdown
 plotly
 Pillow
 matplotlib
+streamlink
