@@ -243,21 +243,13 @@ def filtrar_streamers_pt(streamers):
     return streamers_pt
 
 # ---------------- CARREGAR E FILTRAR STREAMERS FIXOS ----------------
+# ------------------ STREAMERS ------------------
 STREAMERS_INTERESSE = carregar_streamers()
 
+# ✅ Atualiza a variável global de streamers com base no input (se tiver)
 if streamer_filtro:
     TODOS_STREAMERS = [streamer_filtro]
 else:
-    TODOS_STREAMERS = STREAMERS_INTERESSE
-
-# ------------------ STREAMLIT UI ------------------
-def carregar_streamers():
-    if not os.path.exists(STREAMERS_FILE):
-        with open(STREAMERS_FILE, "w") as f:
-            f.write("jukes\n")
-    with open(STREAMERS_FILE, "r") as f:
-        return [l.strip() for l in f if l.strip()]
-
 def obter_id_categoria(nome_categoria):
     try:
         url = f"{BASE_URL_TWITCH}games?name={nome_categoria}"
@@ -356,12 +348,14 @@ TODOS_STREAMERS = STREAMERS_INTERESSE
 
 st.sidebar.header("🎯 Filtros")
 
-# Defina aqui o campo de input para streamer
+# 🔎 Campo de input para streamer (agora com key e ordenado corretamente)
 streamer_filtro = st.sidebar.text_input("🔎 Nome do streamer (opcional)", key="streamer_filtro").strip().lower()
 
+# 📅 Datas
 data_inicio = st.sidebar.date_input("Data de início", value=datetime.today() - timedelta(days=7))
 data_fim = st.sidebar.date_input("Data de fim", value=datetime.today())
 
+# 🌐 URL customizada e segundo manual
 url_custom = st.sidebar.text_input("URL personalizada (VOD .m3u8 ou com ?t=...)")
 segundo_alvo = st.sidebar.number_input("Segundo para captura manual", min_value=0, max_value=99999, value=0)
 
