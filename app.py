@@ -337,9 +337,18 @@ if st.sidebar.button("🎯 Capturar frame no segundo exato") and url_custom:
 
 # 🚀 Treinar modelo
 if st.sidebar.button("🚀 Treinar modelo agora"):
-    sucesso = treinar_modelo(st)
+    sucesso, modelo = treinar_modelo(st)  # ← precisa retornar o modelo treinado também
+
     if sucesso:
-        st.success("✅ Modelo treinado! Você pode agora usá-lo para prever jogos.")
+        # Salvar modelo no caminho padrão
+        modelo.save(MODEL_PATH)
+
+        # Substituir o modelo atual no session_state
+        st.session_state["modelo_ml"] = modelo
+
+        st.success("✅ Modelo treinado, salvo e carregado com sucesso!")
+    else:
+        st.error("❌ Falha no treinamento do modelo.")
 
 # ------------------ BOTÕES PRINCIPAIS ------------------
 col1, col2, col3, col4 = st.columns(4)
