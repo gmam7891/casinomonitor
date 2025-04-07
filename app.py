@@ -350,12 +350,10 @@ def buscar_streamers_por_categoria(nome_categoria="Virtual Casino", idioma="pt")
 STREAMERS_INTERESSE = carregar_streamers()
 TODOS_STREAMERS = STREAMERS_INTERESSE
 
-# 🧭 Sidebar
 st.sidebar.header("🎯 Filtros")
 
-if streamer_filtro:
-    df = df[df["streamer"].str.lower() == streamer_filtro]
-
+# Defina aqui o campo de input para streamer
+streamer_filtro = st.sidebar.text_input("🔎 Nome do streamer (opcional)").strip().lower()
 
 data_inicio = st.sidebar.date_input("Data de início", value=datetime.today() - timedelta(days=7))
 data_fim = st.sidebar.date_input("Data de fim", value=datetime.today())
