@@ -10,6 +10,9 @@ import requests
 from dotenv import load_dotenv
 load_dotenv()
 
+print("TWITCH_CLIENT_ID:", os.getenv("TWITCH_CLIENT_ID"))
+print("TWITCH_CLIENT_SECRET:", os.getenv("TWITCH_CLIENT_SECRET"))
+
 import tensorflow as tf
 import time
 import re
