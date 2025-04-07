@@ -242,19 +242,15 @@ def filtrar_streamers_pt(streamers):
 
     return streamers_pt
 
-# ---------------- CARREGAR E FILTRAR STREAMERS FIXOS ----------------
 # ------------------ STREAMERS ------------------
-STREAMERS_INTERESSE = carregar_streamers()
 
-# ✅ Atualiza a variável global de streamers com base no input (se tiver)
-if streamer_filtro:
-    # Sidebar input (antes de tudo)
+# Campo de input no sidebar (antes de tudo)
 streamer_filtro = st.sidebar.text_input("🔎 Nome do streamer (opcional)", key="streamer_filtro").strip().lower()
 
-# Carregar streamers
+# Carrega a lista base de streamers
 STREAMERS_INTERESSE = carregar_streamers()
 
-# Aplicar filtro se houver input
+# Define a lista final de streamers com ou sem filtro
 if streamer_filtro:
     TODOS_STREAMERS = [streamer_filtro]
 else:
