@@ -29,7 +29,7 @@ def obter_access_token(client_id, client_secret):
         "grant_type": "client_credentials"
     }
     try:
-        resp = requests.post(url, params=params)
+        resp = requests.post(url, data=params)  # <- trocado para `data=`
         resp.raise_for_status()
         return resp.json().get("access_token")
     except Exception as e:
