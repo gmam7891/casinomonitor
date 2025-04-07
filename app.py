@@ -248,6 +248,14 @@ STREAMERS_INTERESSE = carregar_streamers()
 
 # ✅ Atualiza a variável global de streamers com base no input (se tiver)
 if streamer_filtro:
+    # Sidebar input (antes de tudo)
+streamer_filtro = st.sidebar.text_input("🔎 Nome do streamer (opcional)", key="streamer_filtro").strip().lower()
+
+# Carregar streamers
+STREAMERS_INTERESSE = carregar_streamers()
+
+# Aplicar filtro se houver input
+if streamer_filtro:
     TODOS_STREAMERS = [streamer_filtro]
 else:
     TODOS_STREAMERS = STREAMERS_INTERESSE
