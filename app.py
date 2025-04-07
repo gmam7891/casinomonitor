@@ -252,16 +252,7 @@ if streamer_filtro:
 else:
     TODOS_STREAMERS = STREAMERS_INTERESSE
 
-    try:
-        url = f"{BASE_URL_TWITCH}games?name={nome_categoria}"
-        resp = requests.get(url, headers=HEADERS_TWITCH)
-        data = resp.json().get("data", [])
-        if data:
-            return data[0]["id"]
-    except Exception as e:
-        logging.error(f"Erro ao buscar ID da categoria: {e}")
-    return None
-
+# ✅ Agora sim, fora do bloco if/else, defina a função
 def obter_id_categoria(nome_categoria):
     try:
         url = f"{BASE_URL_TWITCH}games?name={nome_categoria}"
