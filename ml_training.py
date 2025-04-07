@@ -1,8 +1,10 @@
-
 import os
 import traceback
+import matplotlib
+matplotlib.use("Agg")  # <- ESSA LINHA AQUI é essencial para ambientes headless
 import matplotlib.pyplot as plt
 from collections import Counter
+
 import tensorflow as tf
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from tensorflow.keras.applications import MobileNetV2
