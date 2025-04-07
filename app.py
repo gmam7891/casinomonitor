@@ -352,8 +352,12 @@ TODOS_STREAMERS = STREAMERS_INTERESSE
 
 # 🧭 Sidebar
 st.sidebar.header("🎯 Filtros")
+
+streamer_filtro = st.sidebar.text_input("🔎 Nome do streamer (opcional)").strip().lower()
+
 data_inicio = st.sidebar.date_input("Data de início", value=datetime.today() - timedelta(days=7))
 data_fim = st.sidebar.date_input("Data de fim", value=datetime.today())
+
 url_custom = st.sidebar.text_input("URL personalizada (VOD .m3u8 ou com ?t=...)")
 segundo_alvo = st.sidebar.number_input("Segundo para captura manual", min_value=0, max_value=99999, value=0)
 
