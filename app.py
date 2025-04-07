@@ -118,10 +118,19 @@ def filtrar_streamers_pt(streamers):
 
 
 # ---------------- MODELO ML ----------------
+import os
+from tensorflow.keras.models import load_model
+import gdown
+
+# Caminho absoluto para o modelo na pasta raiz
+MODEL_DIR = os.path.join(os.path.dirname(__file__), "modelo")
+MODEL_PATH = os.path.join(MODEL_DIR, "modelo_pragmatic.keras")
+MODEL_URL = "https://drive.google.com/uc?id=1i_zEMwUkTfu9L5HGNdrIs4OPCTN6Q8Zr"
+
 if "modelo_ml" not in st.session_state:
     if not os.path.exists(MODEL_PATH):
         st.info("🔄 Baixando modelo...")
-        os.makedirs("modelo", exist_ok=True)
+        os.makedirs(MODEL_DIR, exist_ok=True)
         try:
             gdown.download(MODEL_URL, MODEL_PATH, quiet=False)
             st.success("✅ Modelo baixado com sucesso!")
@@ -133,6 +142,7 @@ if "modelo_ml" not in st.session_state:
             st.success("✅ Modelo carregado com sucesso!")
         except Exception as e:
             st.error(f"Erro ao carregar modelo: {e}")
+
 # ---------------- FUNÇÕES AUXILIARES ----------------
 import os
 
