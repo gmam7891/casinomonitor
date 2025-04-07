@@ -23,18 +23,28 @@ import subprocess
 
 def capturar_frame_ffmpeg_imageio(url, output_path, skip_seconds=0):
     try:
-        # Usa ffmpeg para extrair 1 frame em PNG ou JPG
         cmd = [
             "ffmpeg",
-            "-ss", str(skip_seconds),
-            "-i", url,
+            "-i", url,              # <- primeiro o input
+            "-ss", str(skip_seconds),  # <- depois o seek (para .m3u8 é mais seguro)
             "-frames:v", "1",
             "-q:v", "2",
-            output_path,
-            "-y"
+            "-y",
+            output_path
         ]
-        subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        return os.path.exists(output_path)
+
+        print(f"[FFMPEG] Rodando: {' '.join(cmd)}")
+        result = subprocess.run(cmd, capture_output=True, text=True)
+
+        if result.returncode != 0:
+            print("❌ ffmpeg erro:", result.stderr)
+            return False
+
+        if not os.path.exists(output_path):
+            print("❌ Frame não foi salvo.")
+            return False
+
+        return True
     except Exception as e:
         print(f"[Erro] capturar_frame_ffmpeg_imageio: {e}")
         return False
