@@ -145,12 +145,12 @@ def treinar_modelo(st, base_path="dataset", model_path="modelo/modelo_pragmatic.
             zero_division=0
         )
 
-        st.markdown("### 📋 Relatório de Classificação")
+               st.markdown("### 📋 Relatório de Classificação")
         st.code(report)
 
-        return True
+        return True, model
 
     except Exception as e:
         st.error("❌ Erro durante o treinamento:")
         st.code(traceback.format_exc())
-        return False
+        return False, None
