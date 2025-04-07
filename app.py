@@ -242,6 +242,27 @@ def filtrar_streamers_pt(streamers):
 
     return streamers_pt
 
+# ---------------- FUNÇÃO: calcular minutos únicos com jogo por streamer ----------------
+def calcular_minutos_por_streamer(dados, nome_jogo="pragmatic"):
+    """
+    Retorna um dicionário com {streamer: minutos únicos com jogo detectado}
+    """
+    minutos_por_streamer = {}
+
+    for d in dados:
+        if "jogo_detectado" not in d or "segundo" not in d or "streamer" not in d:
+            continue
+        if nome_jogo.lower() in d["jogo_detectado"].lower():
+            minuto = d["segundo"] // 60
+            streamer = d["streamer"]
+            if streamer not in minutos_por_streamer:
+                minutos_por_streamer[streamer] = set()
+            minutos_por_streamer[streamer].add(minuto)
+
+    return {s: len(mins) for s, mins in minutos_por_streamer.items()}
+
+
+
 # ---------------- CARREGAR E FILTRAR STREAMERS FIXOS ----------------
 STREAMERS_INTERESSE = carregar_streamers()
 TODOS_STREAMERS = STREAMERS_INTERESSE
