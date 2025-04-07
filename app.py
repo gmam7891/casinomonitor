@@ -485,7 +485,7 @@ with col4:
             m3u8_url = url_custom  # já é .m3u8
 
         tempo_inicial = extrair_segundos_da_url_vod(url_custom)
-        tempo_total = 10000
+        tempo_total = 360
         intervalo = 60
         max_frames = tempo_total // intervalo
 
