@@ -349,7 +349,7 @@ if st.sidebar.button("🚀 Treinar modelo agora"):
     sucesso, modelo = treinar_modelo(st)
     if sucesso:
         modelo.save(MODEL_PATH)
-        st.session_state["modelo_ml"] = model
+        st.session_state["modelo_ml"] = modelo
         st.success("✅ Modelo treinado, salvo e carregado com sucesso!")
     else:
         st.warning("⚠️ Falha no treinamento do modelo.")
