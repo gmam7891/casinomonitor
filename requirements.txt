@@ -10,3 +10,4 @@ imageio-ffmpeg
 gdown
 plotly
 Pillow
+matplotlib
