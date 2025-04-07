@@ -408,7 +408,7 @@ with col4:
     if st.button("🌐 Varredura na URL personalizada") and url_custom:
         tempo_inicial = extrair_segundos_da_url_vod(url_custom)
         tempo_total = 10000
-        intervalo = 60
+        intervalo = 5
         max_frames = tempo_total // intervalo
         st.info(f"📡 Iniciando varredura de {tempo_total}s a partir de {tempo_inicial}s")
 
