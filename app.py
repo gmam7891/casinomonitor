@@ -242,21 +242,18 @@ def filtrar_streamers_pt(streamers):
 
     return streamers_pt
 
-# ------------------ STREAMERS ------------------
-
-# Campo de input no sidebar (antes de tudo)
-streamer_filtro = st.sidebar.text_input("🔎 Nome do streamer (opcional)", key="streamer_filtro").strip().lower()
-
-# Carrega a lista base de streamers
+# ---------------- CARREGAR E FILTRAR STREAMERS FIXOS ----------------
 STREAMERS_INTERESSE = carregar_streamers()
+TODOS_STREAMERS = STREAMERS_INTERESSE
 
-# Define a lista final de streamers com ou sem filtro
-if streamer_filtro:
-    TODOS_STREAMERS = [streamer_filtro]
-else:
-    TODOS_STREAMERS = STREAMERS_INTERESSE
+# ------------------ STREAMLIT UI ------------------
+def carregar_streamers():
+    if not os.path.exists(STREAMERS_FILE):
+        with open(STREAMERS_FILE, "w") as f:
+            f.write("jukes\n")
+    with open(STREAMERS_FILE, "r") as f:
+        return [l.strip() for l in f if l.strip()]
 
-# ✅ Agora sim, fora do bloco if/else, defina a função
 def obter_id_categoria(nome_categoria):
     try:
         url = f"{BASE_URL_TWITCH}games?name={nome_categoria}"
@@ -267,7 +264,6 @@ def obter_id_categoria(nome_categoria):
     except Exception as e:
         logging.error(f"Erro ao buscar ID da categoria: {e}")
     return None
-
 
 def converter_duracao_para_segundos(dur_str):
     match = re.match(r"(?:(\d+)h)?(?:(\d+)m)?(?:(\d+)s)?", dur_str)
@@ -354,16 +350,10 @@ def buscar_streamers_por_categoria(nome_categoria="Virtual Casino", idioma="pt")
 STREAMERS_INTERESSE = carregar_streamers()
 TODOS_STREAMERS = STREAMERS_INTERESSE
 
+# 🧭 Sidebar
 st.sidebar.header("🎯 Filtros")
-
-# 🔎 Campo de input para streamer (agora com key e ordenado corretamente)
-streamer_filtro = st.sidebar.text_input("🔎 Nome do streamer (opcional)", key="streamer_filtro").strip().lower()
-
-# 📅 Datas
 data_inicio = st.sidebar.date_input("Data de início", value=datetime.today() - timedelta(days=7))
 data_fim = st.sidebar.date_input("Data de fim", value=datetime.today())
-
-# 🌐 URL customizada e segundo manual
 url_custom = st.sidebar.text_input("URL personalizada (VOD .m3u8 ou com ?t=...)")
 segundo_alvo = st.sidebar.number_input("Segundo para captura manual", min_value=0, max_value=99999, value=0)
 
@@ -995,4 +985,3 @@ if st.sidebar.button("🔬 Testar busca de streams"):
     resp = requests.get(test_url, headers=HEADERS_TWITCH)
     st.sidebar.write("🔁 Status:", resp.status_code)
     st.sidebar.json(resp.json())
-
