@@ -978,54 +978,6 @@ if st.sidebar.button("🔎 Sugerir novos streamers PT-BR"):
     else:
         st.warning("Nenhum novo streamer encontrado.")
 
-# ------------------ Filtro por Streamer ------------------
-st.markdown("## 🎯 Filtro por Streamer")
-
-streamer_filtro = st.text_input("Digite o nome do streamer para filtrar os dados", "")
-
-# Carrega os dados das varreduras
-dados_template = carregar_historico("template")
-dados_url = carregar_historico("url")
-dados_lives = carregar_historico("lives")
-
-# Combina os dados em um único DataFrame
-df_geral = pd.concat([dados_template, dados_url, dados_lives], ignore_index=True)
-
-# Converte tipo de dado
-df_geral["segundo"] = pd.to_numeric(df_geral.get("segundo", 0), errors="coerce").fillna(0).astype(int)
-
-# Aplica filtro por nome do streamer, se preenchido
-if streamer_filtro:
-    df_geral = df_geral[df_geral["streamer"].str.lower() == streamer_filtro.strip().lower()]
-
-# Filtra apenas detecções da Pragmatic Play
-df_pragmatic = df_geral[df_geral["jogo_detectado"].str.lower().str.contains("pragmatic")]
-
-if df_pragmatic.empty:
-    st.warning("Nenhuma detecção de Pragmatic Play encontrada para este streamer.")
-else:
-    # Agrupa por streamer e soma segundos detectados
-    tempo_total_por_streamer = (
-        df_pragmatic.groupby("streamer")["segundo"]
-        .sum()
-        .reset_index(name="Tempo Total (segundos)")
-    )
-
-    # Converte para minutos
-    tempo_total_por_streamer["Tempo Total (minutos)"] = (tempo_total_por_streamer["Tempo Total (segundos)"] / 60).round(1)
-
-    st.markdown("### 🕒 Tempo Total com Pragmatic Play por Streamer")
-    st.dataframe(tempo_total_por_streamer, use_container_width=True)
-
-    # Botão para exportar CSV
-    csv_data = tempo_total_por_streamer.to_csv(index=False).encode("utf-8")
-    st.download_button(
-        "⬇️ Baixar CSV",
-        data=csv_data,
-        file_name="tempo_pragmatic_por_streamer.csv",
-        mime="text/csv"
-    )
-
 
 # ------------------ Teste manual de resposta da Twitch ------------------
 if st.sidebar.button("🔬 Testar busca de streams"):
