@@ -133,7 +133,7 @@ def treinar_modelo(st, base_path="dataset", model_path="modelo/modelo_pragmatic.
         pred_labels = (val_preds > 0.5).astype(int).flatten()
         true_labels = val_gen.classes
 
-                     if len(np.unique(true_labels)) < 2:
+        if len(np.unique(true_labels)) < 2:
             st.warning("⚠️ Apenas uma classe presente na validação. O relatório será limitado.")
 
         labels_ordenadas = sorted(train_gen.class_indices.values())
