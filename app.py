@@ -23,19 +23,20 @@ from storage import salvar_deteccao, carregar_historico, limpar_historico, limpa
 # ---------------- OBTER ACCESS TOKEN DA TWITCH ----------------
 def obter_access_token(client_id, client_secret):
     url = "https://id.twitch.tv/oauth2/token"
-    params = {
+    data = {
         "client_id": client_id,
         "client_secret": client_secret,
         "grant_type": "client_credentials"
     }
     try:
-        resp = requests.post(url, data=params)  # <- trocado para `data=`
+        resp = requests.post(url, data=data)  # <-- Aqui está o "data=" correto
         resp.raise_for_status()
         return resp.json().get("access_token")
     except Exception as e:
         st.error("❌ Erro ao obter access_token:")
         st.code(str(e))
         st.stop()
+
 
 # ---------------- OpenCV em ambiente headless ----------------
 try:
