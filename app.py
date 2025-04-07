@@ -4,12 +4,12 @@ sys.path.append(os.path.dirname(__file__))
 
 from datetime import datetime, timedelta
 import streamlit as st
-import os
 import pandas as pd
 import logging
 import requests
 from dotenv import load_dotenv
 load_dotenv()
+
 import tensorflow as tf
 import time
 import re
@@ -17,7 +17,24 @@ import gdown
 from tensorflow.keras.models import load_model
 from storage import salvar_deteccao, carregar_historico, limpar_historico, limpar_todos_historicos
 
-# OpenCV em ambiente headless
+# ---------------- OBTER ACCESS TOKEN DA TWITCH ----------------
+def obter_access_token(client_id, client_secret):
+    url = "https://id.twitch.tv/oauth2/token"
+    params = {
+        "client_id": client_id,
+        "client_secret": client_secret,
+        "grant_type": "client_credentials"
+    }
+    try:
+        resp = requests.post(url, params=params)
+        resp.raise_for_status()
+        return resp.json().get("access_token")
+    except Exception as e:
+        st.error("❌ Erro ao obter access_token:")
+        st.code(str(e))
+        st.stop()
+
+# ---------------- OpenCV em ambiente headless ----------------
 try:
     import cv2
 except ImportError:
@@ -28,9 +45,10 @@ except ImportError:
     except Exception as e:
         st.error(f"❌ Falha ao instalar OpenCV automaticamente: {e}")
         st.stop()
-        
+
+# ---------------- Importar módulos internos ----------------
 from ml_training import treinar_modelo
-from ml_utils import(
+from ml_utils import (
     match_template_from_image,
     capturar_frame_ffmpeg_imageio,
     prever_jogo_em_frame,
@@ -39,7 +57,6 @@ from ml_utils import(
     varrer_vods_com_template,
     buscar_vods_twitch_por_periodo
 )
-
 # ---------------- CONFIGURAÇÃO GERAL ----------------
 st.set_page_config(page_title="Monitor Cassino PP", layout="wide")
 logging.basicConfig(level=logging.INFO, format='[%(levelname)s] %(asctime)s - %(message)s')
@@ -54,8 +71,10 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ---------------- VARIÁVEIS ----------------
-CLIENT_ID = os.getenv("tyi97jgeg2j9r6pvakldbmdd2aie3m")
-ACCESS_TOKEN = os.getenv("yd6vulkilaailzhr1r8zw8jio1w4ig")
+CLIENT_ID = os.getenv("TWITCH_CLIENT_ID")
+CLIENT_SECRET = os.getenv("TWITCH_CLIENT_SECRET")
+ACCESS_TOKEN = obter_access_token(CLIENT_ID, CLIENT_SECRET)
+
 HEADERS_TWITCH = {
     'Client-ID': CLIENT_ID,
     'Authorization': f'Bearer {ACCESS_TOKEN}'
