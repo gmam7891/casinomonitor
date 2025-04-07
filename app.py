@@ -454,6 +454,17 @@ with col3:
 
 with col4:
     if st.button("🌐 Varredura na URL personalizada") and url_custom:
+        st.markdown("🔄 Obtendo URL `.m3u8` da Twitch...")
+
+        # ⚡️ Aqui adaptamos para extrair o .m3u8
+        if ".m3u8" not in url_custom:
+            m3u8_url = obter_url_m3u8_twitch(url_custom)
+            if not m3u8_url:
+                st.error("❌ Não foi possível obter o link .m3u8 a partir do VOD.")
+                st.stop()
+        else:
+            m3u8_url = url_custom  # se já for .m3u8
+
         tempo_inicial = extrair_segundos_da_url_vod(url_custom)
         tempo_total = 10000
         intervalo = 5
@@ -462,7 +473,7 @@ with col4:
 
         inicio = time.time()
         resultado_url = varrer_url_customizada(
-            url_custom,
+            m3u8_url,
             st,
             st.session_state,
             prever_jogo_em_frame,
