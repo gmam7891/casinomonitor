@@ -250,7 +250,8 @@ STREAMERS_INTERESSE = carregar_streamers()
 if streamer_filtro:
     TODOS_STREAMERS = [streamer_filtro]
 else:
-def obter_id_categoria(nome_categoria):
+    TODOS_STREAMERS = STREAMERS_INTERESSE
+
     try:
         url = f"{BASE_URL_TWITCH}games?name={nome_categoria}"
         resp = requests.get(url, headers=HEADERS_TWITCH)
