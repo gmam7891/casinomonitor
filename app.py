@@ -926,46 +926,26 @@ if "data_hora" in df_geral.columns and "jogo_detectado" in df_geral.columns:
 else:
     st.info("Dados temporais insuficientes para gerar tendência.")
 
-    # --- Gráfico 9: Média de Viewers por Jogo ---
-    st.markdown("### 👀 Média de Viewers por Jogo Detectado")
-            
-            if "jogo_detectado" in df_geral.columns and "viewers" in df_geral.columns:
-                media_viewers = df_geral.groupby("jogo_detectado")["viewers"].mean().reset_index()
-                media_viewers.columns = ["Jogo", "Viewers Médios"]
-                media_viewers = media_viewers.sort_values(by="Viewers Médios", ascending=False)
-            
-                fig9 = px.bar(
-                    media_viewers,
-                    x="Jogo",
-                    y="Viewers Médios",
-                    text_auto=".0f",
-                    title="👀 Audiência Média por Jogo Detectado"
-                )
-                st.plotly_chart(fig9, use_container_width=True)
-            else:
-                st.info("Nenhum dado com número de viewers disponível ainda.")
-        # --- Gráfico 9: Média de Viewers por Jogo ---
+   # --- Gráfico 9: Média de Viewers por Jogo ---
+st.markdown("### 👀 Média de Viewers por Jogo Detectado")
 
-            st.markdown("### 👀 Média de Viewers por Jogo Detectado")
+if "jogo_detectado" in df_geral.columns and "viewers" in df_geral.columns:
+    media_viewers = df_geral.groupby("jogo_detectado")["viewers"].mean().reset_index()
+    media_viewers.columns = ["Jogo", "Viewers Médios"]
+    media_viewers = media_viewers.sort_values(by="Viewers Médios", ascending=False)
 
-            if "jogo_detectado" in df_geral.columns and "viewers" in df_geral.columns:
-                media_viewers = df_geral.groupby("jogo_detectado")["viewers"].mean().reset_index()
-                media_viewers.columns = ["Jogo", "Viewers Médios"]
-                media_viewers = media_viewers.sort_values(by="Viewers Médios", ascending=False)
-            
-                fig9 = px.bar(
-                    media_viewers,
-                    x="Jogo",
-                    y="Viewers Médios",
-                    text_auto=".0f",
-                    title="👀 Audiência Média por Jogo Detectado"
-                )
-                st.plotly_chart(fig9, use_container_width=True)
-            else:
-                st.info("Nenhum dado com número de viewers disponível ainda.")
+    fig9 = px.bar(
+        media_viewers,
+        x="Jogo",
+        y="Viewers Médios",
+        text_auto=".0f",
+        title="👀 Audiência Média por Jogo Detectado"
+    )
+    st.plotly_chart(fig9, use_container_width=True)
+else:
+    st.info("Nenhum dado com número de viewers disponível ainda.")
 
-
-        # --- Gráfico 10: Média de Viewers por Jogo ---            
+# --- Gráfico 10: Média de Viewers por Streamer ---
 st.markdown("### 🎥 Streamers com Maior Audiência Média")
 
 if "streamer" in df_geral.columns and "viewers" in df_geral.columns:
@@ -984,9 +964,8 @@ if "streamer" in df_geral.columns and "viewers" in df_geral.columns:
 else:
     st.info("Nenhum dado de viewers por streamer disponível.")
 
-        
-        # --- Gráfico 11: Média de Viewers por Jogo ---
-    st.markdown("### ⏱️ Evolução dos Viewers nas Detecções")
+# --- Gráfico 11: Evolução dos Viewers ao Longo do Tempo ---
+st.markdown("### ⏱️ Evolução dos Viewers nas Detecções")
 
 if "data_hora" in df_geral.columns and "viewers" in df_geral.columns:
     df_viewers = df_geral.copy()
@@ -1005,8 +984,7 @@ if "data_hora" in df_geral.columns and "viewers" in df_geral.columns:
 else:
     st.info("Sem dados temporais suficientes para mostrar evolução de viewers.")
 
-
-        # --- Gráfico 12: Média de Viewers por Jogo ---
+# --- Gráfico 12: Pico de Audiência por Streamer ---
 st.markdown("### 🔝 Pico de Audiência por Streamer")
 
 if "streamer" in df_geral.columns and "viewers" in df_geral.columns:
@@ -1024,7 +1002,6 @@ if "streamer" in df_geral.columns and "viewers" in df_geral.columns:
     st.plotly_chart(fig12, use_container_width=True)
 else:
     st.info("Não há dados de pico de audiência.")
-
 
 # ------------------ SUGERIR NOVOS STREAMERS ------------------
 st.sidebar.markdown("---")
