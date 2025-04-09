@@ -685,6 +685,7 @@ with abas[5]:
         st.info("📭 Nenhum dado disponível para análise. Execute uma varredura primeiro.")
     else:
     # Garantir formatação da coluna temporal
+    else:
     if "data_hora" in df_geral.columns:
         df_geral["data_hora"] = pd.to_datetime(df_geral["data_hora"], errors="coerce")
 
