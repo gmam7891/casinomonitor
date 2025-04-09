@@ -927,7 +927,7 @@ else:
     st.info("Dados temporais insuficientes para gerar tendência.")
 
     # --- Gráfico 9: Média de Viewers por Jogo ---
-            st.markdown("### 👀 Média de Viewers por Jogo Detectado")
+    st.markdown("### 👀 Média de Viewers por Jogo Detectado")
             
             if "jogo_detectado" in df_geral.columns and "viewers" in df_geral.columns:
                 media_viewers = df_geral.groupby("jogo_detectado")["viewers"].mean().reset_index()
