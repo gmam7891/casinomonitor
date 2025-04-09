@@ -681,15 +681,14 @@ with abas[5]:
     # Junta tudo
     df_geral = pd.concat([dados_template, dados_url, dados_lives], ignore_index=True)
 
-    if df_geral.empty:
-        st.info("📭 Nenhum dado disponível para análise. Execute uma varredura primeiro.")
-    else:
+if df_geral.empty:
+    st.info("📭 Nenhum dado disponível para análise. Execute uma varredura primeiro.")
+else:
     # Garantir formatação da coluna temporal
-    else:
-        if "data_hora" in df_geral.columns:
+    if "data_hora" in df_geral.columns:
         df_geral["data_hora"] = pd.to_datetime(df_geral["data_hora"], errors="coerce")
 
-        # --- Novo: criar dia da semana manualmente, sem locale ---
+        # Criar coluna de dia da semana manualmente
         dias_semana = {
             0: 'segunda-feira',
             1: 'terça-feira',
@@ -700,26 +699,23 @@ with abas[5]:
             6: 'domingo'
         }
         df_geral["dia_semana"] = df_geral["data_hora"].dt.dayofweek.map(dias_semana)
-        
-        # Garantir formatação da coluna temporal
-        if "data_hora" in df_geral.columns:
-            df_geral["data_hora"] = pd.to_datetime(df_geral["data_hora"], errors="coerce")
 
-        # --- Tabela de minutos com Pragmatic Play por streamer ---
-        st.markdown("### ⏱️ Total de minutos com Pragmatic Play por Streamer")
+    # --- A partir daqui seguem os gráficos normalmente ---
+    # Exemplo de gráfico: Total de minutos com Pragmatic Play por Streamer
+    st.markdown("### ⏱️ Total de minutos com Pragmatic Play por Streamer")
 
-        minutos_dict = calcular_minutos_por_streamer(df_geral.to_dict(orient="records"), nome_jogo="pragmatic")
+    minutos_dict = calcular_minutos_por_streamer(df_geral.to_dict(orient="records"), nome_jogo="pragmatic")
 
-        if minutos_dict:
-            df_minutos = pd.DataFrame(list(minutos_dict.items()), columns=["Streamer", "Minutos com Pragmatic"])
-            df_minutos = df_minutos.sort_values(by="Minutos com Pragmatic", ascending=False)
+    if minutos_dict:
+        df_minutos = pd.DataFrame(list(minutos_dict.items()), columns=["Streamer", "Minutos com Pragmatic"])
+        df_minutos = df_minutos.sort_values(by="Minutos com Pragmatic", ascending=False)
 
-            st.dataframe(df_minutos, use_container_width=True)
+        st.dataframe(df_minutos, use_container_width=True)
 
-            csv = df_minutos.to_csv(index=False).encode("utf-8")
-            st.download_button("⬇️ Baixar CSV de Minutos com Pragmatic", csv, "minutos_pragmatic.csv", "text/csv")
-        else:
-            st.info("Nenhum jogo Pragmatic Play detectado nos dados.")
+        csv = df_minutos.to_csv(index=False).encode("utf-8")
+        st.download_button("⬇️ Baixar CSV de Minutos com Pragmatic", csv, "minutos_pragmatic.csv", "text/csv")
+    else:
+        st.info("Nenhum jogo Pragmatic Play detectado nos dados.")
 
 
         # ------------------ Aba 7: Visualização de Dataset ------------------
