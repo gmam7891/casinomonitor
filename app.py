@@ -684,6 +684,22 @@ with abas[5]:
     if df_geral.empty:
         st.info("📭 Nenhum dado disponível para análise. Execute uma varredura primeiro.")
     else:
+    # Garantir formatação da coluna temporal
+    if "data_hora" in df_geral.columns:
+        df_geral["data_hora"] = pd.to_datetime(df_geral["data_hora"], errors="coerce")
+
+        # --- Novo: criar dia da semana manualmente, sem locale ---
+        dias_semana = {
+            0: 'segunda-feira',
+            1: 'terça-feira',
+            2: 'quarta-feira',
+            3: 'quinta-feira',
+            4: 'sexta-feira',
+            5: 'sábado',
+            6: 'domingo'
+        }
+        df_geral["dia_semana"] = df_geral["data_hora"].dt.dayofweek.map(dias_semana)
+        
         # Garantir formatação da coluna temporal
         if "data_hora" in df_geral.columns:
             df_geral["data_hora"] = pd.to_datetime(df_geral["data_hora"], errors="coerce")
