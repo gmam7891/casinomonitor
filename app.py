@@ -867,7 +867,7 @@ with abas[6]:  # "📂 Visualizar Dataset"
             with colunas[i % 4]:
                 st.image(imagem, caption=img_nome, use_container_width=True)
 
-    with abas[8]:  # Nova aba: Análise por Streamer
+    with abas[7]:  # Nova aba: Análise por Streamer
         st.markdown("## 🎯 Análise por Streamer Selecionado")
     
         streamer_foco = st.sidebar.selectbox("👤 Streamer para análise detalhada", carregar_streamers(), key="streamer_analise")
