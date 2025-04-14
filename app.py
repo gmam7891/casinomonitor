@@ -527,7 +527,7 @@ with col4:
         intervalo=intervalo,
         max_frames=max_frames
     )
-        duracao = time.time() - inicio
+    duracao = time.time() - inicio
 
         if resultado_url:
             salvar_deteccao("url", resultado_url)
