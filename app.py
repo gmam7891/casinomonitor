@@ -632,7 +632,7 @@ abas = st.tabs([
     "Resumo de VODs", 
     "Histórico",
     "Dashboards",
-    "Visualizar Dataset"
+    "Visualizar Dataset",
     "Análise por Streamer"
 ])
 
