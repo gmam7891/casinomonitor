@@ -518,22 +518,22 @@ with col4:
         max_frames = tempo_total // intervalo
 
       inicio = time.time()
-resultado_url = varrer_url_customizada(
-    m3u8_url,
-    st,
-    st.session_state,
-    prever_jogo_em_frame,
-    skip_inicial=tempo_inicial,
-    intervalo=intervalo,
-    max_frames=max_frames
-)
-duracao = time.time() - inicio
-
-if resultado_url:
-    salvar_deteccao("url", resultado_url)
-    st.success(f"✅ Varredura concluída e salva em {duracao:.2f}s")
-else:
-    st.warning("⚠️ Nenhum jogo detectado na URL.")
+        resultado_url = varrer_url_customizada(
+            m3u8_url,
+            st,
+            st.session_state,
+            prever_jogo_em_frame,
+            skip_inicial=tempo_inicial,
+            intervalo=intervalo,
+            max_frames=max_frames
+        )
+        duracao = time.time() - inicio
+        
+        if resultado_url:
+            salvar_deteccao("url", resultado_url)
+            st.success(f"✅ Varredura concluída e salva em {duracao:.2f}s")
+        else:
+            st.warning("⚠️ Nenhum jogo detectado na URL.")
 
 
 # ---------------- ABAS PRINCIPAIS ----------------
