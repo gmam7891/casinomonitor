@@ -187,6 +187,16 @@ def obter_url_m3u8_twitch(vod_url):
         st.error(f"❌ Erro ao obter URL m3u8: {e}")
         return None
 
+    from concurrent.futures import ThreadPoolExecutor
+
+def capturar_frames_paralelamente(vod_urls, segundo_alvo):
+    """Captura frames de múltiplos VODs em paralelo."""
+    with ThreadPoolExecutor(max_workers=4) as executor:
+        futures = []
+        for url in vod_urls:
+            futures.append(executor.submit(capturar_frame_ffmpeg_imageio, url, "frame.jpg", skip_seconds=segundo_alvo))
+        resultados = [future.result() for future in futures]
+    return resultados
 
 STREAMERS_FILE = "streamers.txt"
 DADOS_DIR = "dados"
