@@ -147,7 +147,13 @@ if "modelo_ml" not in st.session_state:
 # ---------------- FUNÇÕES AUXILIARES ----------------
 import os
 import subprocess
+import logging
+import pandas as pd
+import requests
+from datetime import datetime
+from concurrent.futures import ThreadPoolExecutor
 
+# 📡 Extrai link m3u8 de um VOD da Twitch via streamlink
 def obter_url_m3u8_twitch(vod_url):
     """
     Usa o streamlink para extrair a URL .m3u8 de um VOD da Twitch.
@@ -168,27 +174,7 @@ def obter_url_m3u8_twitch(vod_url):
         st.error(f"❌ Erro ao obter URL m3u8: {e}")
         return None
 
-def obter_url_m3u8_twitch(vod_url):
-    """
-    Usa o streamlink para extrair a URL .m3u8 de um VOD da Twitch.
-    """
-    try:
-        result = subprocess.run(
-            ["streamlink", "--stream-url", vod_url, "best"],
-            capture_output=True,
-            text=True
-        )
-        if result.returncode == 0:
-            return result.stdout.strip()
-        else:
-            st.error(f"❌ Erro ao rodar streamlink:\n{result.stderr}")
-            return None
-    except Exception as e:
-        st.error(f"❌ Erro ao obter URL m3u8: {e}")
-        return None
-
-    from concurrent.futures import ThreadPoolExecutor
-
+# ⚡️ Captura múltiplos frames paralelamente a partir de URLs
 def capturar_frames_paralelamente(vod_urls, segundo_alvo):
     """Captura frames de múltiplos VODs em paralelo."""
     with ThreadPoolExecutor(max_workers=4) as executor:
@@ -198,10 +184,42 @@ def capturar_frames_paralelamente(vod_urls, segundo_alvo):
         resultados = [future.result() for future in futures]
     return resultados
 
+# ⚙️ Varredura paralela para URL personalizada com modelo ML
+def varrer_url_customizada_paralela(m3u8_url, st, session_state, prever_jogo_fn, skip_inicial=0, intervalo=60, max_frames=5):
+    resultados = []
+
+    def processar_frame(tempo):
+        frame_path = f"frame_{tempo}.jpg"
+        sucesso = capturar_frame_ffmpeg_imageio(m3u8_url, frame_path, skip_seconds=tempo)
+        if sucesso:
+            resultado, confianca = prever_jogo_fn(frame_path, session_state.get("modelo_ml"))
+            if resultado:
+                return {
+                    "segundo": tempo,
+                    "frame": frame_path,
+                    "jogo_detectado": resultado,
+                    "confianca": confianca
+                }
+        return None
+
+    tempos = [skip_inicial + i * intervalo for i in range(max_frames)]
+
+    with ThreadPoolExecutor(max_workers=4) as executor:
+        futures = [executor.submit(processar_frame, tempo) for tempo in tempos]
+        for future in futures:
+            res = future.result()
+            if res:
+                resultados.append(res)
+
+    session_state["dados_url"] = resultados
+    return resultados
+
+# 📂 Diretórios e arquivos fixos
 STREAMERS_FILE = "streamers.txt"
 DADOS_DIR = "dados"
 os.makedirs(DADOS_DIR, exist_ok=True)
 
+# 📄 Lê streamers fixos do arquivo local
 def carregar_streamers():
     """Lê os streamers fixos do arquivo streamers.txt"""
     if not os.path.exists(STREAMERS_FILE):
@@ -210,12 +228,10 @@ def carregar_streamers():
     with open(STREAMERS_FILE, "r") as f:
         return [l.strip() for l in f if l.strip()]
 
+# 💾 Salva detecções em CSV
 def salvar_deteccao(tipo, dados):
     """Salva dados detectados no diretório /dados como CSV"""
     nome_arquivo = f"{DADOS_DIR}/{tipo}.csv"
-    import pandas as pd
-    from datetime import datetime
-
     df_novo = pd.DataFrame(dados)
     df_novo["data_hora"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
@@ -227,6 +243,7 @@ def salvar_deteccao(tipo, dados):
 
     df.to_csv(nome_arquivo, index=False)
 
+# 🧽 Filtra streamers apenas com idioma português
 def filtrar_streamers_pt(streamers):
     """Filtra a lista mantendo apenas streamers com idioma 'pt' (português)."""
     streamers_pt = []
@@ -251,6 +268,7 @@ def filtrar_streamers_pt(streamers):
             st.sidebar.text(f"❌ {i}")
 
     return streamers_pt
+
 
 # ---------------- FUNÇÃO: calcular minutos únicos com jogo por streamer ----------------
 def calcular_minutos_por_streamer(dados, nome_jogo="pragmatic"):
@@ -500,15 +518,15 @@ with col4:
         max_frames = tempo_total // intervalo
 
         inicio = time.time()
-        resultado_url = varrer_url_customizada(
-            m3u8_url,
-            st,
-            st.session_state,
-            prever_jogo_em_frame,
-            skip_inicial=tempo_inicial,
-            intervalo=intervalo,
-            max_frames=max_frames
-        )
+    resultado_url = varrer_url_customizada(
+        m3u8_url,
+        st,
+        st.session_state,
+        prever_jogo_em_frame,
+        skip_inicial=tempo_inicial,
+        intervalo=intervalo,
+        max_frames=max_frames
+    )
         duracao = time.time() - inicio
 
         if resultado_url:
