@@ -868,47 +868,47 @@ with abas[6]:  # "📂 Visualizar Dataset"
                 st.image(imagem, caption=img_nome, use_container_width=True)
 
     with abas[7]:  # ou [8], se for a última
-    st.markdown("## 🎯 Análise por Streamer Selecionado")
-
-    # Usa o streamer já escolhido lá em cima
-    streamer_foco = streamer_escolhido
-
-    dados_template = carregar_historico("template")
-    dados_vods = carregar_historico("vods")
-
-    dados_streamer = []
-
-    if not dados_template.empty:
-        dados_streamer += [d for d in dados_template.to_dict(orient="records") if d.get("streamer") == streamer_foco]
-    if not dados_vods.empty:
-        dados_streamer += [d for d in dados_vods.to_dict(orient="records") if d.get("streamer") == streamer_foco]
-
-    if not dados_streamer:
-        st.info(f"📭 Nenhuma detecção encontrada para {streamer_foco}.")
-    else:
-        df_streamer = pd.DataFrame(dados_streamer)
-
-        if "data_hora" in df_streamer.columns:
-            df_streamer["data_hora"] = pd.to_datetime(df_streamer["data_hora"])
-
-        st.dataframe(df_streamer, use_container_width=True)
-
-        if "jogo_detectado" in df_streamer.columns:
-            ranking = df_streamer["jogo_detectado"].value_counts().reset_index()
-            ranking.columns = ["Jogo", "Aparições"]
-            st.markdown("### 🏆 Jogos mais detectados")
-            st.bar_chart(ranking.set_index("Jogo"))
-
-        if "segundo" in df_streamer.columns and "jogo_detectado" in df_streamer.columns:
-            fig = px.scatter(
-                df_streamer,
-                x="segundo",
-                y="jogo_detectado",
-                color="jogo_detectado",
-                title=f"📈 Timeline de detecções - {streamer_foco}",
-                hover_data=["data_hora"]
-            )
-            st.plotly_chart(fig, use_container_width=True)
+        st.markdown("## 🎯 Análise por Streamer Selecionado")
+    
+        # Usa o streamer já escolhido lá em cima
+        streamer_foco = streamer_escolhido
+    
+        dados_template = carregar_historico("template")
+        dados_vods = carregar_historico("vods")
+    
+        dados_streamer = []
+    
+        if not dados_template.empty:
+            dados_streamer += [d for d in dados_template.to_dict(orient="records") if d.get("streamer") == streamer_foco]
+        if not dados_vods.empty:
+            dados_streamer += [d for d in dados_vods.to_dict(orient="records") if d.get("streamer") == streamer_foco]
+    
+        if not dados_streamer:
+            st.info(f"📭 Nenhuma detecção encontrada para {streamer_foco}.")
+        else:
+            df_streamer = pd.DataFrame(dados_streamer)
+    
+            if "data_hora" in df_streamer.columns:
+                df_streamer["data_hora"] = pd.to_datetime(df_streamer["data_hora"])
+    
+            st.dataframe(df_streamer, use_container_width=True)
+    
+            if "jogo_detectado" in df_streamer.columns:
+                ranking = df_streamer["jogo_detectado"].value_counts().reset_index()
+                ranking.columns = ["Jogo", "Aparições"]
+                st.markdown("### 🏆 Jogos mais detectados")
+                st.bar_chart(ranking.set_index("Jogo"))
+    
+            if "segundo" in df_streamer.columns and "jogo_detectado" in df_streamer.columns:
+                fig = px.scatter(
+                    df_streamer,
+                    x="segundo",
+                    y="jogo_detectado",
+                    color="jogo_detectado",
+                    title=f"📈 Timeline de detecções - {streamer_foco}",
+                    hover_data=["data_hora"]
+                )
+                st.plotly_chart(fig, use_container_width=True)
 
         
         # --- Gráfico 1: Share of Voice ---
