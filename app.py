@@ -518,15 +518,15 @@ with col4:
         max_frames = tempo_total // intervalo
 
       inicio = time.time()
-        resultado_url = varrer_url_customizada(
-            m3u8_url,
-            st,
-            st.session_state,
-            prever_jogo_em_frame,
-            skip_inicial=tempo_inicial,
-            intervalo=intervalo,
-            max_frames=max_frames
-        )
+            resultado_url = varrer_url_customizada(
+                m3u8_url,
+                st,
+                st.session_state,
+                prever_jogo_em_frame,
+                skip_inicial=tempo_inicial,
+                intervalo=intervalo,
+                max_frames=max_frames
+            )
         duracao = time.time() - inicio
         
         if resultado_url:
