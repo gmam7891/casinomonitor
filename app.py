@@ -503,38 +503,36 @@ with col3:
 
 with col4:
     if st.button("🌐 Varredura na URL personalizada") and url_custom:
-        # ⚡️ Extrair .m3u8
         if ".m3u8" not in url_custom:
             m3u8_url = obter_url_m3u8_twitch(url_custom)
             if not m3u8_url:
                 st.error("❌ Não foi possível obter o link .m3u8 a partir do VOD.")
                 st.stop()
         else:
-            m3u8_url = url_custom  # já é .m3u8
+            m3u8_url = url_custom
 
         tempo_inicial = extrair_segundos_da_url_vod(url_custom)
         tempo_total = 720
         intervalo = 120
         max_frames = tempo_total // intervalo
 
-      inicio = time.time()
-            resultado_url = varrer_url_customizada(
-                m3u8_url,
-                st,
-                st.session_state,
-                prever_jogo_em_frame,
-                skip_inicial=tempo_inicial,
-                intervalo=intervalo,
-                max_frames=max_frames
-            )
+        inicio = time.time()
+        resultado_url = varrer_url_customizada_paralela(
+            m3u8_url,
+            st,
+            st.session_state,
+            prever_jogo_em_frame,
+            skip_inicial=tempo_inicial,
+            intervalo=intervalo,
+            max_frames=max_frames
+        )
         duracao = time.time() - inicio
-        
+
         if resultado_url:
             salvar_deteccao("url", resultado_url)
             st.success(f"✅ Varredura concluída e salva em {duracao:.2f}s")
         else:
             st.warning("⚠️ Nenhum jogo detectado na URL.")
-
 
 # ---------------- ABAS PRINCIPAIS ----------------
 import plotly.express as px
