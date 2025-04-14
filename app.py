@@ -464,6 +464,47 @@ tipo_analise = st.sidebar.radio(
 
 vod_url_individual = st.sidebar.text_input("📺 URL da VOD", placeholder="https://www.twitch.tv/videos/...")
 
+if tipo_analise == "VOD específica (URL)":
+    if st.sidebar.button("🎯 Analisar VOD deste streamer"):
+        if vod_url_individual:
+            m3u8_url = obter_url_m3u8_twitch(vod_url_individual)
+            if not m3u8_url:
+                st.sidebar.error("❌ Não foi possível extrair a URL m3u8 da VOD.")
+            else:
+                tempo_inicial = extrair_segundos_da_url_vod(vod_url_individual)
+                resultado = varrer_url_customizada_paralela(
+                    m3u8_url,
+                    st,
+                    st.session_state,
+                    prever_jogo_em_frame,
+                    skip_inicial=tempo_inicial,
+                    intervalo=120,
+                    max_frames=6
+                )
+
+                if resultado:
+                    for r in resultado:
+                        r["streamer"] = streamer_escolhido
+                    salvar_deteccao("url", resultado)
+                    st.sidebar.success(f"✅ VOD analisada com sucesso para {streamer_escolhido}")
+                else:
+                    st.sidebar.warning("⚠️ Nenhum jogo detectado na VOD.")
+        else:
+            st.sidebar.warning("⚠️ Forneça a URL da VOD para análise.")
+
+elif tipo_analise == "Por período":
+    if st.sidebar.button("📅 Analisar VODs do período"):
+        dt_ini = datetime.combine(data_inicio, datetime.min.time())
+        dt_fim = datetime.combine(data_fim, datetime.max.time())
+
+        vods = buscar_vods_twitch_por_periodo(dt_ini, dt_fim, HEADERS_TWITCH, BASE_URL_TWITCH, [streamer_escolhido])
+        if vods:
+            salvar_deteccao("vods", vods)
+            st.sidebar.success(f"✅ {len(vods)} VODs salvas para {streamer_escolhido}")
+        else:
+            st.sidebar.warning("📭 Nenhuma VOD encontrada no período.")
+
+
 # ------------------ BOTÕES PRINCIPAIS ------------------
 col1, col2, col3, col4 = st.columns(4)
 
