@@ -493,16 +493,51 @@ if tipo_analise == "VOD específica (URL)":
             st.sidebar.warning("⚠️ Forneça a URL da VOD para análise.")
 
 elif tipo_analise == "Por período":
-    if st.sidebar.button("📅 Analisar VODs do período"):
+    # 🔹 Botão 1 - Buscar VODs do período
+    if st.sidebar.button("📺 Buscar VODs do período"):
         dt_ini = datetime.combine(data_inicio, datetime.min.time())
         dt_fim = datetime.combine(data_fim, datetime.max.time())
 
-        vods = buscar_vods_twitch_por_periodo(dt_ini, dt_fim, HEADERS_TWITCH, BASE_URL_TWITCH, [streamer_escolhido])
+        st.sidebar.info(f"🔍 Buscando VODs do streamer: {streamer_escolhido}...")
+
+        vods = buscar_vods_twitch_por_periodo(
+            dt_ini,
+            dt_fim,
+            HEADERS_TWITCH,
+            BASE_URL_TWITCH,
+            [streamer_escolhido]
+        )
+
         if vods:
+            for vod in vods:
+                vod["streamer"] = streamer_escolhido  # Garante que o nome fique salvo
             salvar_deteccao("vods", vods)
-            st.sidebar.success(f"✅ {len(vods)} VODs salvas para {streamer_escolhido}")
+            st.sidebar.success(f"✅ {len(vods)} VODs salvas para {streamer_escolhido}.")
         else:
             st.sidebar.warning("📭 Nenhuma VOD encontrada no período.")
+
+    # 🔹 Botão 2 - Varrer com imagens (template)
+    if st.sidebar.button("🖼️ Varrer VODs com imagens"):
+        dt_ini = datetime.combine(data_inicio, datetime.min.time())
+        dt_fim = datetime.combine(data_fim, datetime.max.time())
+
+        st.sidebar.info(f"🖼️ Varredura de imagens iniciada para {streamer_escolhido}...")
+
+        resultados = varrer_vods_com_template(
+            dt_ini,
+            dt_fim,
+            HEADERS_TWITCH,
+            BASE_URL_TWITCH,
+            [streamer_escolhido]
+        )
+
+        if resultados:
+            for r in resultados:
+                r["streamer"] = streamer_escolhido
+            salvar_deteccao("template", resultados)
+            st.sidebar.success(f"✅ {len(resultados)} jogos detectados via template.")
+        else:
+            st.sidebar.warning("⚠️ Nenhum jogo detectado via imagens.")
 
 
 # ------------------ BOTÕES PRINCIPAIS ------------------
