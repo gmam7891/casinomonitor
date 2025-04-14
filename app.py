@@ -451,6 +451,19 @@ if st.sidebar.button("🚀 Treinar modelo agora"):
     else:
         st.warning("⚠️ Falha no treinamento do modelo.")
 
+st.sidebar.markdown("---")
+st.sidebar.header("🎯 Análise por Streamer")
+
+streamers_disponiveis = carregar_streamers()
+streamer_escolhido = st.sidebar.selectbox("👤 Escolha o streamer", streamers_disponiveis)
+
+tipo_analise = st.sidebar.radio(
+    "Tipo de análise",
+    ["VOD específica (URL)", "Por período"]
+)
+
+vod_url_individual = st.sidebar.text_input("📺 URL da VOD", placeholder="https://www.twitch.tv/videos/...")
+
 # ------------------ BOTÕES PRINCIPAIS ------------------
 col1, col2, col3, col4 = st.columns(4)
 
