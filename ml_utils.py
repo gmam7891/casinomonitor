@@ -19,7 +19,57 @@ from tensorflow.keras.layers import GlobalAveragePooling2D, Dropout, Dense
 from tensorflow.keras import models
 import matplotlib.pyplot as plt
 import subprocess
+import re
+import pandas as pd
+import datetime
 
+def extrair_segundos_da_url_vod(url):
+    match = re.search(r"[?&]t=(\d+h)?(\d+m)?(\d+s)?", url)
+    if not match:
+        return 0
+    horas = int(match.group(1)[:-1]) if match.group(1) else 0
+    minutos = int(match.group(2)[:-1]) if match.group(2) else 0
+    segundos = int(match.group(3)[:-1]) if match.group(3) else 0
+    return horas * 3600 + minutos * 60 + segundos
+
+
+def buscar_vods_por_streamer_e_periodo(streamer, data_inicio, data_fim):
+    try:
+        df = pd.read_csv("vods.csv", parse_dates=["data"])
+    except FileNotFoundError:
+        return []
+
+    data_inicio = pd.to_datetime(data_inicio)
+    data_fim = pd.to_datetime(data_fim)
+
+    df_filtrado = df[
+        (df["streamer"] == streamer) &
+        (df["data"] >= data_inicio) &
+        (df["data"] <= data_fim)
+    ]
+
+    return df_filtrado.to_dict(orient="records")
+
+
+def analisar_por_periodo(streamer, vods, st, session_state, prever_jogo_em_frame, varrer_url_customizada_paralela, obter_url_m3u8_twitch):
+    resultados_finais = []
+
+    for vod in vods:
+        m3u8_url = obter_url_m3u8_twitch(vod["url"])
+        if not m3u8_url:
+            continue
+
+        resultado = varrer_url_customizada_paralela(
+            m3u8_url, st, session_state, prever_jogo_em_frame,
+            skip_inicial=0, intervalo=120, max_frames=6
+        )
+
+        if resultado:
+            for r in resultado:
+                r["streamer"] = streamer
+            resultados_finais.extend(resultado)
+
+    return resultados_finais
 
 def capturar_frame_ffmpeg_imageio(url, output_path, skip_seconds=0):
     try:
