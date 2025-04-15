@@ -22,7 +22,7 @@ import subprocess
 from tensorflow.keras.models import load_model
 from storage import salvar_deteccao, carregar_historico, limpar_historico, limpar_todos_historicos
 
-from utils import (
+from ml_utils import (
     extrair_segundos_da_url_vod,
     buscar_vods_por_streamer_e_periodo,
     analisar_por_periodo
