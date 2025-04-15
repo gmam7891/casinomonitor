@@ -295,249 +295,88 @@ def calcular_minutos_por_streamer(dados, nome_jogo="pragmatic"):
 STREAMERS_INTERESSE = carregar_streamers()
 TODOS_STREAMERS = STREAMERS_INTERESSE
 
-# ------------------ STREAMLIT UI ------------------
-def carregar_streamers():
-    if not os.path.exists(STREAMERS_FILE):
-        with open(STREAMERS_FILE, "w") as f:
-            f.write("jukes\n")
-    with open(STREAMERS_FILE, "r") as f:
-        return [l.strip() for l in f if l.strip()]
+# ------------------ SIDEBAR REFACTORED ------------------
+with st.sidebar.expander("🎯 Filtros de Data e URL"):
+    data_inicio = st.date_input("Data de início", value=datetime.today() - timedelta(days=7))
+    data_fim = st.date_input("Data de fim", value=datetime.today())
+    url_custom = st.text_input("URL personalizada (VOD .m3u8 ou com ?t=...)")
+    segundo_alvo = st.number_input("Segundo para captura manual", min_value=0, max_value=99999, value=0)
 
-def obter_id_categoria(nome_categoria):
-    try:
-        url = f"{BASE_URL_TWITCH}games?name={nome_categoria}"
-        resp = requests.get(url, headers=HEADERS_TWITCH)
-        data = resp.json().get("data", [])
-        if data:
-            return data[0]["id"]
-    except Exception as e:
-        logging.error(f"Erro ao buscar ID da categoria: {e}")
-    return None
+with st.sidebar.expander("🔧 Utilitários Twitch"):
+    col1, col2 = st.columns(2)
+    with col1:
+        if st.button("🔍 Testar conexão"):
+            test_url = "https://api.twitch.tv/helix/streams?first=1"
+            resp = requests.get(test_url, headers=HEADERS_TWITCH)
+            st.write("Status:", resp.status_code)
+            try:
+                st.json(resp.json())
+            except Exception as e:
+                st.error(f"Erro ao converter resposta: {e}")
+    with col2:
+        if st.button("🎲 Testar categoria"):
+            nome_categoria = "Virtual Casino"
+            url = f"{BASE_URL_TWITCH}games?name={nome_categoria}"
+            resp = requests.get(url, headers=HEADERS_TWITCH)
+            st.write("🔁 Status:", resp.status_code)
+            st.json(resp.json())
 
-def converter_duracao_para_segundos(dur_str):
-    match = re.match(r"(?:(\d+)h)?(?:(\d+)m)?(?:(\d+)s)?", dur_str)
-    if not match:
-        return 0
-    h, m, s = match.groups(default="0")
-    return int(h) * 3600 + int(m) * 60 + int(s)
-
-def extrair_segundos_da_url_vod(url):
-    match = re.search(r"[?&]t=(?:(\d+)h)?(?:(\d+)m)?(?:(\d+)s)?", url)
-    if not match:
-        return 0
-    h = int(match.group(1) or 0)
-    m = int(match.group(2) or 0)
-    s = int(match.group(3) or 0)
-    return h * 3600 + m * 60 + s
-
-def formatar_datas_br(df, coluna="timestamp"):
-    if coluna in df.columns:
-        df[coluna] = pd.to_datetime(df[coluna]).dt.strftime("%d/%m/%Y %H:%M:%S")
-    return df
-
-
-def sugerir_novos_streamers():
-    sugestoes = []
-    categorias_alvo = ["Slots", "Virtual Casino"]
-
-    try:
-        response = requests.get(
-    f"{BASE_URL_TWITCH}streams?first=500",
-    headers=HEADERS_TWITCH
-)
-
-        data = response.json().get("data", [])
-        atuais = set(STREAMERS_INTERESSE)
-
-        for stream in data:
-            game_name = stream.get("game_name", "").lower()
-            login = stream.get("user_login")
-            if any(cat.lower() in game_name for cat in categorias_alvo):
-                if login and login not in atuais:
-                    sugestoes.append(login)
-    except Exception as e:
-        logging.error(f"Erro ao buscar streamers: {e}")
-
-    return sugestoes
-
-def buscar_resumo_vods(dt_inicio, dt_fim, headers, base_url, streamers):
-    """Retorna lista com metadados simples das VODs sem fazer varredura."""
-    resumo = []
-    vods = buscar_vods_twitch_por_periodo(dt_inicio, dt_fim, headers, base_url, streamers)
-    for vod in vods:
-        resumo.append({
-            "streamer": vod["streamer"],
-            "data": vod["data"],
-            "duração (min)": round(vod["duração_segundos"] / 60, 1),
-            "visualizações": vod.get("view_count", "N/A"),
-            "url": vod["url"]
-        })
-    return resumo
-
-def buscar_streamers_por_categoria(nome_categoria="Virtual Casino", idioma="pt"):
-    sugestoes = []
-    try:
-        categoria_id = obter_id_categoria(nome_categoria)
-        if not categoria_id:
-            return []
-
-        url = f"{BASE_URL_TWITCH}streams?first=100&game_id={categoria_id}"
-        resp = requests.get(url, headers=HEADERS_TWITCH)
-        data = resp.json().get("data", [])
-
-        for stream in data:
-            if stream.get("language") == idioma:
-                login = stream.get("user_login")
-                if login:
-                    sugestoes.append(login)
-    except Exception as e:
-        logging.error(f"Erro ao buscar streamers por categoria: {e}")
-    return sugestoes
-
-
-# 🚀 Carregar e unir streamers fixos + da categoria Virtual Casino
-STREAMERS_INTERESSE = carregar_streamers()
-TODOS_STREAMERS = STREAMERS_INTERESSE
-
-# 🧭 Sidebar
-st.sidebar.header("🎯 Filtros")
-data_inicio = st.sidebar.date_input("Data de início", value=datetime.today() - timedelta(days=7))
-data_fim = st.sidebar.date_input("Data de fim", value=datetime.today())
-url_custom = st.sidebar.text_input("URL personalizada (VOD .m3u8 ou com ?t=...)")
-segundo_alvo = st.sidebar.number_input("Segundo para captura manual", min_value=0, max_value=99999, value=0)
-
-if st.sidebar.button("🔍 Testar conexão com Twitch"):
-    test_url = "https://api.twitch.tv/helix/streams?first=1"
-    resp = requests.get(test_url, headers=HEADERS_TWITCH)
-    st.sidebar.write("Status:", resp.status_code)
-    try:
-        st.sidebar.json(resp.json())
-    except Exception as e:
-        st.sidebar.error(f"Erro ao converter resposta: {e}")
-
-if st.sidebar.button("🎲 Testar nome da categoria"):
-    nome_categoria = "Virtual Casino"  # Você pode tentar trocar por "Slots" também
-    url = f"{BASE_URL_TWITCH}games?name={nome_categoria}"
-    resp = requests.get(url, headers=HEADERS_TWITCH)
-    st.sidebar.write("🔁 Status:", resp.status_code)
-    st.sidebar.json(resp.json())
-
-# 🎯 Captura manual
-if st.sidebar.button("🎯 Capturar frame no segundo exato") and url_custom:
-    m3u8_url = obter_url_m3u8_twitch(url_custom)
-    
-    if not m3u8_url:
-        st.error("❌ Não foi possível obter a URL .m3u8 do VOD.")
+with st.sidebar.expander("🧠 Modelo de Detecção"):
+    if "modelo_ml" in st.session_state:
+        st.success("✅ Modelo ML carregado")
     else:
-        frame_path = "frame_manual.jpg"
-        if capturar_frame_ffmpeg_imageio(m3u8_url, frame_path, skip_seconds=segundo_alvo):
-            st.image(frame_path, caption=f"Frame em {segundo_alvo}s", use_column_width=True)
-            resultado, confianca = prever_jogo_em_frame(frame_path, st.session_state.get("modelo_ml"))
-            if resultado:
-                st.success(f"🧠 Jogo detectado: `{resultado}` (confiança: {confianca:.2%})")
+        st.warning("⚠️ Modelo não carregado ainda")
+
+    if st.button("🚀 Treinar modelo agora"):
+        with st.spinner("Treinando modelo..."'):
+            sucesso, modelo = treinar_modelo(st)
+        if sucesso:
+            modelo.save(MODEL_PATH)
+            st.session_state["modelo_ml"] = modelo
+            st.success("✅ Modelo treinado e salvo com sucesso!")
+        else:
+            st.warning("⚠️ Falha no treinamento do modelo.")
+
+with st.sidebar.expander("🎯 Análise de VOD / Período"):
+    streamer_escolhido = st.selectbox("👤 Escolha o streamer", carregar_streamers())
+    tipo_analise = st.radio("Tipo de análise", ["VOD específica (URL)", "Por período"])
+    vod_url_individual = st.text_input("📺 URL da VOD", placeholder="https://www.twitch.tv/videos/...")
+
+    if tipo_analise == "VOD específica (URL)":
+        if st.button("🎯 Analisar esta VOD"):
+            if vod_url_individual:
+                with st.spinner("🔍 Analisando VOD..."):
+                    m3u8_url = obter_url_m3u8_twitch(vod_url_individual)
+                    if m3u8_url:
+                        tempo_inicial = extrair_segundos_da_url_vod(vod_url_individual)
+                        resultado = varrer_url_customizada_paralela(
+                            m3u8_url, st, st.session_state, prever_jogo_em_frame,
+                            skip_inicial=tempo_inicial, intervalo=120, max_frames=6
+                        )
+                        if resultado:
+                            for r in resultado:
+                                r["streamer"] = streamer_escolhido
+                            salvar_deteccao("url", resultado)
+                            st.success("✅ Análise concluída e salva com sucesso!")
+                        else:
+                            st.warning("⚠️ Nenhum jogo detectado na VOD.")
+                    else:
+                        st.error("❌ Não foi possível extrair a URL .m3u8.")
             else:
-                st.warning("❌ Nenhum jogo detectado.")
-        else:
-            st.error("❌ Erro ao capturar frame.")
+                st.warning("⚠️ Forneça a URL da VOD para análise.")
 
+# ------------------ EXIBIÇÃO DE RESULTADOS (MELHORADA) ------------------
+if 'dados_url' in st.session_state:
+    st.markdown("### 🎰 Resultados da VOD personalizada")
+    for res in st.session_state['dados_url']:
+        col1, col2 = st.columns([1, 3])
+        with col1:
+            st.image(res["frame"], caption=f"{res['segundo']}s", use_column_width=True)
+        with col2:
+            st.markdown(f"**🎯 Jogo detectado:** `{res['jogo_detectado']}`")
+            st.markdown(f"🧠 **Confiança:** `{res['confianca']:.2%}`")
 
-# 🚀 Treinar modelo
-if st.sidebar.button("🚀 Treinar modelo agora"):
-    sucesso, modelo = treinar_modelo(st)
-    if sucesso:
-        modelo.save(MODEL_PATH)
-        st.session_state["modelo_ml"] = modelo
-        st.success("✅ Modelo treinado, salvo e carregado com sucesso!")
-    else:
-        st.warning("⚠️ Falha no treinamento do modelo.")
-
-st.sidebar.markdown("---")
-st.sidebar.header("🎯 Análise por Streamer")
-
-streamers_disponiveis = carregar_streamers()
-streamer_escolhido = st.sidebar.selectbox("👤 Escolha o streamer", streamers_disponiveis)
-
-tipo_analise = st.sidebar.radio(
-    "Tipo de análise",
-    ["VOD específica (URL)", "Por período"]
-)
-
-vod_url_individual = st.sidebar.text_input("📺 URL da VOD", placeholder="https://www.twitch.tv/videos/...")
-
-if tipo_analise == "VOD específica (URL)":
-    if st.sidebar.button("🎯 Analisar VOD deste streamer"):
-        if vod_url_individual:
-            m3u8_url = obter_url_m3u8_twitch(vod_url_individual)
-            if not m3u8_url:
-                st.sidebar.error("❌ Não foi possível extrair a URL m3u8 da VOD.")
-            else:
-                tempo_inicial = extrair_segundos_da_url_vod(vod_url_individual)
-                resultado = varrer_url_customizada_paralela(
-                    m3u8_url,
-                    st,
-                    st.session_state,
-                    prever_jogo_em_frame,
-                    skip_inicial=tempo_inicial,
-                    intervalo=120,
-                    max_frames=6
-                )
-
-                if resultado:
-                    for r in resultado:
-                        r["streamer"] = streamer_escolhido
-                    salvar_deteccao("url", resultado)
-                    st.sidebar.success(f"✅ VOD analisada com sucesso para {streamer_escolhido}")
-                else:
-                    st.sidebar.warning("⚠️ Nenhum jogo detectado na VOD.")
-        else:
-            st.sidebar.warning("⚠️ Forneça a URL da VOD para análise.")
-
-elif tipo_analise == "Por período":
-    # 🔹 Botão 1 - Buscar VODs do período
-    if st.sidebar.button("📺 Buscar VODs do período"):
-        dt_ini = datetime.combine(data_inicio, datetime.min.time())
-        dt_fim = datetime.combine(data_fim, datetime.max.time())
-
-        st.sidebar.info(f"🔍 Buscando VODs do streamer: {streamer_escolhido}...")
-
-        vods = buscar_vods_twitch_por_periodo(
-            dt_ini,
-            dt_fim,
-            HEADERS_TWITCH,
-            BASE_URL_TWITCH,
-            [streamer_escolhido]
-        )
-
-        if vods:
-            for vod in vods:
-                vod["streamer"] = streamer_escolhido  # Garante que o nome fique salvo
-            salvar_deteccao("vods", vods)
-            st.sidebar.success(f"✅ {len(vods)} VODs salvas para {streamer_escolhido}.")
-        else:
-            st.sidebar.warning("📭 Nenhuma VOD encontrada no período.")
-
-    # 🔹 Botão 2 - Varrer com imagens (template)
-    if st.sidebar.button("🖼️ Varrer VODs com imagens"):
-        dt_ini = datetime.combine(data_inicio, datetime.min.time())
-        dt_fim = datetime.combine(data_fim, datetime.max.time())
-
-        st.sidebar.info(f"🖼️ Varredura de imagens iniciada para {streamer_escolhido}...")
-
-        resultados = varrer_vods_com_template(
-            dt_ini,
-            dt_fim,
-            HEADERS_TWITCH,
-            BASE_URL_TWITCH,
-            [streamer_escolhido]
-        )
-
-        if resultados:
-            for r in resultados:
-                r["streamer"] = streamer_escolhido
-            salvar_deteccao("template", resultados)
-            st.sidebar.success(f"✅ {len(resultados)} jogos detectados via template.")
-        else:
-            st.sidebar.warning("⚠️ Nenhum jogo detectado via imagens.")
+    st.success(f"Total de detecções: {len(st.session_state['dados_url'])}")
 
 
 # ------------------ BOTÕES PRINCIPAIS ------------------
