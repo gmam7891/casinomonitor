@@ -5,6 +5,7 @@ sys.path.append(os.path.dirname(__file__))
 from datetime import datetime, timedelta
 import streamlit as st
 import pandas as pd
+import datetime
 import logging
 import requests
 from dotenv import load_dotenv
@@ -366,16 +367,21 @@ with st.sidebar.expander("🎯 Análise de VOD / Período"):
                 st.warning("⚠️ Forneça a URL da VOD para análise.")
 
     elif tipo_analise == "Por período":
-        # Exibe botão específico para análise por período
+        data_inicio = st.date_input("📅 Data de início", value=datetime.today() - timedelta(days=7))
+        data_fim = st.date_input("📅 Data de fim", value=datetime.today())
+
         if st.button("📅 Analisar por Período"):
             with st.spinner(f"🔎 Buscando VODs do streamer {streamer_escolhido} por período..."):
-                # Aqui você insere sua lógica para buscar e analisar por período
-                resultado = analisar_por_periodo(streamer_escolhido)  # Substitua por sua função real
-                if resultado:
-                    salvar_deteccao("periodo", resultado)
-                    st.success("✅ Análise por período concluída e salva!")
+                vods = buscar_vods_por_streamer_e_periodo(streamer_escolhido, data_inicio, data_fim)
+                if not vods:
+                    st.warning("⚠️ Nenhuma VOD encontrada nesse período.")
                 else:
-                    st.warning("⚠️ Nenhuma VOD encontrada ou análise não retornou resultados.")
+                    resultados = analisar_por_periodo(streamer_escolhido, vods)
+                    if resultados:
+                        salvar_deteccao("periodo", resultados)
+                        st.success("✅ Análise por período concluída e salva!")
+                    else:
+                        st.warning("⚠️ Nenhuma detecção relevante encontrada.")
 
 # ------------------ EXIBIÇÃO DE RESULTADOS (MELHORADA) ------------------
 if 'dados_url' in st.session_state:
@@ -908,3 +914,42 @@ if st.sidebar.button("🔬 Testar busca de streams"):
     resp = requests.get(test_url, headers=HEADERS_TWITCH)
     st.sidebar.write("🔁 Status:", resp.status_code)
     st.sidebar.json(resp.json())
+
+def buscar_vods_por_streamer_e_periodo(streamer, data_inicio, data_fim):
+    try:
+        df = pd.read_csv("vods.csv", parse_dates=["data"])
+    except FileNotFoundError:
+        st.error("❌ Arquivo 'vods.csv' não encontrado.")
+        return []
+
+    data_inicio = pd.to_datetime(data_inicio)
+    data_fim = pd.to_datetime(data_fim)
+
+    df_filtrado = df[
+        (df["streamer"] == streamer) &
+        (df["data"] >= data_inicio) &
+        (df["data"] <= data_fim)
+    ]
+
+    return df_filtrado.to_dict(orient="records")
+
+
+def analisar_por_periodo(streamer, vods):
+    resultados_finais = []
+
+    for vod in vods:
+        m3u8_url = obter_url_m3u8_twitch(vod["url"])
+        if not m3u8_url:
+            continue
+
+        resultado = varrer_url_customizada_paralela(
+            m3u8_url, st, st.session_state, prever_jogo_em_frame,
+            skip_inicial=0, intervalo=120, max_frames=6
+        )
+
+        if resultado:
+            for r in resultado:
+                r["streamer"] = streamer
+            resultados_finais.extend(resultado)
+
+    return resultados_finais
