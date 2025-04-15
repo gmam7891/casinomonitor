@@ -465,60 +465,44 @@ with col4:
 # ---------------- ABAS PRINCIPAIS ----------------
 import plotly.express as px
 abas = st.tabs([
-    "Resultados", 
-    "Ranking de Jogos", 
-    "Timeline", 
-    "Resumo de VODs", 
-    "Histórico",
-    "Dashboards",
-    "Visualizar Dataset",
-    "Análise por Streamer"
+    "📊 Detecções", 
+    "🏆 Ranking", 
+    "🕒 Timeline", 
+    "📺 VODs", 
+    "📁 Histórico", 
+    "📈 Dashboards", 
+    "🖼️ Dataset", 
+    "🎯 Streamer Focus"
 ])
 
-# ------------------ Aba 1: Resultados ------------------
+# ------------------ ABA 0: Detecções ------------------
 with abas[0]:
+    st.subheader("🧠 Detecções recentes")
     if 'dados_url' in st.session_state:
-        st.markdown("### 🎰 Resultados da VOD personalizada")
+        st.markdown("#### 🎰 VOD personalizada")
         for res in st.session_state['dados_url']:
             col1, col2 = st.columns([1, 3])
             with col1:
-                st.image(res["frame"], caption=f"{res['segundo']}s", use_column_width=True)
+                st.image(res["frame"], caption=f"{res['segundo']}s", use_container_width=True)
             with col2:
-                st.success(f"🎯 Jogo detectado: `{res['jogo_detectado']}`")
+                st.markdown(f"**Jogo:** `{res['jogo_detectado']}`")
+                st.markdown(f"**Confiança:** `{res['confianca']:.2%}`")
 
     if 'dados_vods_template' in st.session_state:
-        st.markdown("### 🖼️ Resultados por Template")
+        st.markdown("#### 🖼️ Por Template")
         for res in st.session_state['dados_vods_template']:
             col1, col2 = st.columns([1, 3])
             with col1:
-                st.image(res["frame"], caption=f"{res['segundo']}s", use_column_width=True)
+                st.image(res["frame"], caption=f"{res['segundo']}s", use_container_width=True)
             with col2:
-                st.write(f"🎥 Streamer: `{res['streamer']}`")
-                st.write(f"🧩 Jogo detectado: `{res['jogo_detectado']}`")
-                st.write(f"⏱ Tempo: {res['segundo']}s")
+                st.write(f"**Streamer:** `{res['streamer']}`")
+                st.write(f"**Jogo:** `{res['jogo_detectado']}`")
+                st.write(f"**Tempo:** {res['segundo']}s")
                 st.write(f"🔗 [Ver VOD]({res['url']})")
 
-# ------------------ Aba 2: Ranking ------------------
+# ------------------ ABA 1: Ranking ------------------
 with abas[1]:
-    def exibir_ranking_jogos(dados):
-        if not dados:
-            st.info("Nenhum jogo detectado ainda.")
-            return
-
-        df = pd.DataFrame(dados)
-        if 'jogo_detectado' not in df.columns:
-            st.warning("⚠️ Coluna 'jogo_detectado' não encontrada.")
-            return
-
-        ranking = df['jogo_detectado'].value_counts().reset_index()
-        ranking.columns = ['Jogo', 'Aparições']
-
-        st.markdown("### 🏆 Ranking de Jogos Detectados")
-        st.dataframe(ranking, use_container_width=True)
-
-        fig = px.bar(ranking, x='Jogo', y='Aparições', text='Aparições', color='Jogo', title="Top Jogos")
-        fig.update_layout(showlegend=False)
-        st.plotly_chart(fig, use_container_width=True)
+    from collections import Counter
 
     dados_para_ranking = []
     if 'dados_url' in st.session_state:
@@ -526,36 +510,21 @@ with abas[1]:
     if 'dados_vods_template' in st.session_state:
         dados_para_ranking += st.session_state['dados_vods_template']
 
-    exibir_ranking_jogos(dados_para_ranking)
-
-# ------------------ Aba 3: Timeline ------------------
-with abas[2]:
-    def exibir_timeline_jogos(dados):
-        if not dados:
-            st.info("Nenhum dado disponível para exibir a timeline.")
-            return
-
-        df = pd.DataFrame(dados)
-        if 'segundo' not in df.columns or 'jogo_detectado' not in df.columns:
-            st.warning("⚠️ Dados incompletos para a timeline.")
-            return
-
-        if 'streamer' not in df.columns:
-            df['streamer'] = 'Desconhecido'
-
-        fig = px.scatter(
-            df,
-            x="segundo",
-            y="jogo_detectado",
-            color="streamer",
-            hover_data=["streamer", "segundo", "url"] if 'url' in df.columns else ["streamer", "segundo"],
-            title="🕒 Timeline de Jogos Detectados na VOD",
-            labels={"segundo": "Tempo (s)", "jogo_detectado": "Jogo"}
-        )
-        fig.update_traces(marker=dict(size=10))
-        fig.update_layout(height=500)
+    st.subheader("🏆 Jogos mais detectados")
+    if dados_para_ranking:
+        df = pd.DataFrame(dados_para_ranking)
+        ranking = df['jogo_detectado'].value_counts().reset_index()
+        ranking.columns = ['Jogo', 'Aparições']
+        st.dataframe(ranking, use_container_width=True)
+        fig = px.bar(ranking, x='Jogo', y='Aparições', text='Aparições', title="Ranking de Jogos")
+        fig.update_layout(showlegend=False)
         st.plotly_chart(fig, use_container_width=True)
+    else:
+        st.info("Nenhum dado disponível.")
 
+# ------------------ ABA 2: Timeline ------------------
+with abas[2]:
+    st.subheader("🕒 Linha do Tempo de Detecção")
     dados_timeline = []
     if 'dados_url' in st.session_state:
         dados_timeline += st.session_state['dados_url']
@@ -564,190 +533,37 @@ with abas[2]:
     if 'dados_lives' in st.session_state:
         dados_timeline += st.session_state['dados_lives']
 
-    exibir_timeline_jogos(dados_timeline)
+    if dados_timeline:
+        df = pd.DataFrame(dados_timeline)
+        if 'segundo' in df.columns and 'jogo_detectado' in df.columns:
+            if 'streamer' not in df.columns:
+                df['streamer'] = 'Desconhecido'
+            fig = px.scatter(df, x="segundo", y="jogo_detectado", color="streamer",
+                             title="Timeline de Detecções",
+                             hover_data=["streamer", "segundo", "url"] if 'url' in df.columns else ["streamer", "segundo"])
+            fig.update_traces(marker=dict(size=10))
+            st.plotly_chart(fig, use_container_width=True)
+        else:
+            st.warning("Dados incompletos.")
+    else:
+        st.info("Nenhuma detecção disponível.")
 
-# ------------------ Aba 4: Resumo de VODs ------------------
+# ------------------ ABA 3: VODs ------------------
 with abas[3]:
-    st.markdown("### 📂 Resumo de VODs no período selecionado")
-
+    st.subheader("📺 VODs Resumidas")
     if 'vods_resumo' in st.session_state and st.session_state['vods_resumo']:
         df = pd.DataFrame(st.session_state['vods_resumo'])
         df["data"] = pd.to_datetime(df["data"]).dt.strftime("%d/%m/%Y %H:%M")
         df["link"] = df["url"].apply(lambda x: f"[Abrir VOD]({x})")
         df = df.drop(columns=["url"])
-
-        # Ordenar pela duração
         df = df.sort_values(by="duração (min)", ascending=False)
-
-        # Mostrar tabela interativa
         st.dataframe(df, use_container_width=True)
-
-        # Botão para baixar como CSV
-        csv = df.to_csv(index=False).encode("utf-8")
-        st.download_button(
-            label="⬇️ Baixar como CSV",
-            data=csv,
-            file_name="resumo_vods.csv",
-            mime="text/csv"
-        )
+        st.download_button("⬇️ Baixar CSV", data=df.to_csv(index=False).encode("utf-8"),
+                           file_name="vods_resumo.csv", mime="text/csv")
     else:
-        st.info("📭 Nenhum dado carregado. Clique em **'Verificar VODs (resumo)'**.")
+        st.info("Nenhuma VOD carregada.")
 
-# ------------------ Aba 5: Histórico ------------------
-from storage import carregar_historico, limpar_historico
-
-with abas[4]:  # 📚 Histórico
-    st.markdown("## 📦 Histórico de Detecções Salvas")
-
-    tipos = ["lives", "vods", "template", "url"]
-
-    for tipo in tipos:
-        st.subheader(f"🗂 Histórico de: {tipo.upper()}")
-        df = carregar_historico(tipo)
-        if not df.empty:
-            st.dataframe(df, use_container_width=True)
-            col1, col2 = st.columns(2)
-            with col1:
-                st.download_button(
-                    f"⬇️ Baixar CSV ({tipo})",
-                    data=df.to_csv(index=False).encode("utf-8"),
-                    file_name=f"{tipo}_historico.csv",
-                    mime="text/csv"
-                )
-            with col2:
-                if st.button(f"🗑 Limpar {tipo.upper()}", key=f"limpar_{tipo}"):
-                    limpar_historico(tipo)
-                    st.warning(f"Histórico de {tipo} apagado.")
-        else:
-            st.info(f"Nenhum dado salvo para {tipo}.")
-
-# ------------------ Aba 6: Dashboards Interativos ------------------
-from storage import carregar_historico
-import plotly.express as px
-import pandas as pd
-
-with abas[5]:
-    st.markdown("## 📈 Dashboards Interativos de Detecção")
-
-    # Carrega dados salvos
-    dados_template = carregar_historico("template")
-    dados_url = carregar_historico("url")
-    dados_lives = carregar_historico("lives")
-
-    # Junta tudo
-    df_geral = pd.concat([dados_template, dados_url, dados_lives], ignore_index=True)
-
-if df_geral.empty:
-    st.info("📭 Nenhum dado disponível para análise. Execute uma varredura primeiro.")
-else:
-    # Garantir formatação da coluna temporal
-    if "data_hora" in df_geral.columns:
-        df_geral["data_hora"] = pd.to_datetime(df_geral["data_hora"], errors="coerce")
-
-        # Criar coluna de dia da semana manualmente
-        dias_semana = {
-            0: 'segunda-feira',
-            1: 'terça-feira',
-            2: 'quarta-feira',
-            3: 'quinta-feira',
-            4: 'sexta-feira',
-            5: 'sábado',
-            6: 'domingo'
-        }
-        df_geral["dia_semana"] = df_geral["data_hora"].dt.dayofweek.map(dias_semana)
-
-    # --- A partir daqui seguem os gráficos normalmente ---
-    # Exemplo de gráfico: Total de minutos com Pragmatic Play por Streamer
-    st.markdown("### ⏱️ Total de minutos com Pragmatic Play por Streamer")
-
-    minutos_dict = calcular_minutos_por_streamer(df_geral.to_dict(orient="records"), nome_jogo="pragmatic")
-
-    if minutos_dict:
-        df_minutos = pd.DataFrame(list(minutos_dict.items()), columns=["Streamer", "Minutos com Pragmatic"])
-        df_minutos = df_minutos.sort_values(by="Minutos com Pragmatic", ascending=False)
-
-        st.dataframe(df_minutos, use_container_width=True)
-
-        csv = df_minutos.to_csv(index=False).encode("utf-8")
-        st.download_button("⬇️ Baixar CSV de Minutos com Pragmatic", csv, "minutos_pragmatic.csv", "text/csv")
-    else:
-        st.info("Nenhum jogo Pragmatic Play detectado nos dados.")
-
-
-        # ------------------ Aba 7: Visualização de Dataset ------------------
-import os
-from PIL import Image
-
-with abas[6]:  # "📂 Visualizar Dataset"
-    st.markdown("## 🖼️ Visualização das Imagens do Dataset")
-
-    dataset_dir = "dataset"
-    classes_disponiveis = sorted([d for d in os.listdir(dataset_dir) if os.path.isdir(os.path.join(dataset_dir, d))])
-
-    if not classes_disponiveis:
-        st.error("❌ Nenhuma classe encontrada na pasta /dataset/")
-    else:
-        classe = st.selectbox("📁 Escolha a classe", classes_disponiveis)
-        caminho_classe = os.path.join(dataset_dir, classe)
-        imagens = sorted([f for f in os.listdir(caminho_classe) if f.lower().endswith((".jpg", ".jpeg", ".png"))])
-
-        total = len(imagens)
-        st.write(f"📸 {total} imagens encontradas na classe **{classe}**")
-
-        imagens_por_pagina = st.slider("🧮 Imagens por página", 4, 24, 12)
-        pagina = st.number_input("📄 Página", min_value=1, max_value=(len(imagens) // imagens_por_pagina) + 1, step=1)
-        inicio = (pagina - 1) * imagens_por_pagina
-        fim = inicio + imagens_por_pagina
-
-        colunas = st.columns(4)
-        for i, img_nome in enumerate(imagens[inicio:fim]):
-            caminho_img = os.path.join(caminho_classe, img_nome)
-            imagem = Image.open(caminho_img)
-            with colunas[i % 4]:
-                st.image(imagem, caption=img_nome, use_container_width=True)
-
-    with abas[7]:  # ou [8], se for a última
-        st.markdown("## 🎯 Análise por Streamer Selecionado")
-    
-        # Usa o streamer já escolhido lá em cima
-        streamer_foco = streamer_escolhido
-    
-        dados_template = carregar_historico("template")
-        dados_vods = carregar_historico("vods")
-    
-        dados_streamer = []
-    
-        if not dados_template.empty:
-            dados_streamer += [d for d in dados_template.to_dict(orient="records") if d.get("streamer") == streamer_foco]
-        if not dados_vods.empty:
-            dados_streamer += [d for d in dados_vods.to_dict(orient="records") if d.get("streamer") == streamer_foco]
-    
-        if not dados_streamer:
-            st.info(f"📭 Nenhuma detecção encontrada para {streamer_foco}.")
-        else:
-            df_streamer = pd.DataFrame(dados_streamer)
-    
-            if "data_hora" in df_streamer.columns:
-                df_streamer["data_hora"] = pd.to_datetime(df_streamer["data_hora"])
-    
-            st.dataframe(df_streamer, use_container_width=True)
-    
-            if "jogo_detectado" in df_streamer.columns:
-                ranking = df_streamer["jogo_detectado"].value_counts().reset_index()
-                ranking.columns = ["Jogo", "Aparições"]
-                st.markdown("### 🏆 Jogos mais detectados")
-                st.bar_chart(ranking.set_index("Jogo"))
-    
-            if "segundo" in df_streamer.columns and "jogo_detectado" in df_streamer.columns:
-                fig = px.scatter(
-                    df_streamer,
-                    x="segundo",
-                    y="jogo_detectado",
-                    color="jogo_detectado",
-                    title=f"📈 Timeline de detecções - {streamer_foco}",
-                    hover_data=["data_hora"]
-                )
-                st.plotly_chart(fig, use_container_width=True)
+# 📌 Demais abas seguem abaixo
 
         
         # --- Gráfico 1: Share of Voice ---
