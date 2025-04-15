@@ -464,6 +464,7 @@ with col4:
 
 # ---------------- ABAS PRINCIPAIS ----------------
 import plotly.express as px
+from storage import carregar_historico
 abas = st.tabs([
     "📊 Detecções", 
     "🏆 Ranking", 
@@ -563,7 +564,19 @@ with abas[3]:
     else:
         st.info("Nenhuma VOD carregada.")
 
-# 📌 Demais abas seguem abaixo
+# ------------------ ABA 5: Dashboards ------------------
+with abas[5]:
+    st.subheader("📈 Painéis de Detecção")
+    dados_template = carregar_historico("template")
+    dados_url = carregar_historico("url")
+    dados_lives = carregar_historico("lives")
+    df_geral = pd.concat([dados_template, dados_url, dados_lives], ignore_index=True)
+
+    if df_geral.empty:
+        st.info("📭 Nenhum dado disponível para análise. Execute uma varredura primeiro.")
+    else:
+        st.write("✅ Dados carregados para análise.")
+
 
         
         # --- Gráfico 1: Share of Voice ---
