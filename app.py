@@ -22,6 +22,13 @@ import subprocess
 from tensorflow.keras.models import load_model
 from storage import salvar_deteccao, carregar_historico, limpar_historico, limpar_todos_historicos
 
+from utils import (
+    extrair_segundos_da_url_vod,
+    buscar_vods_por_streamer_e_periodo,
+    analisar_por_periodo
+)
+
+
 # ---------------- OBTER ACCESS TOKEN DA TWITCH ----------------
 def obter_access_token(client_id, client_secret):
     url = "https://id.twitch.tv/oauth2/token"
@@ -376,7 +383,12 @@ with st.sidebar.expander("🎯 Análise de VOD / Período"):
                 if not vods:
                     st.warning("⚠️ Nenhuma VOD encontrada nesse período.")
                 else:
-                    resultados = analisar_por_periodo(streamer_escolhido, vods)
+                    resultados = analisar_por_periodo(
+                        streamer_escolhido, vods,
+                        st, st.session_state,
+                        prever_jogo_em_frame, varrer_url_customizada_paralela,
+                        obter_url_m3u8_twitch
+                    )
                     if resultados:
                         salvar_deteccao("periodo", resultados)
                         st.success("✅ Análise por período concluída e salva!")
