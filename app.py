@@ -297,6 +297,25 @@ STREAMERS_INTERESSE = carregar_streamers()
 TODOS_STREAMERS = STREAMERS_INTERESSE
 
 # ------------------ SIDEBAR REFACTORED ------------------
+
+def buscar_vods_por_streamer_e_periodo(streamer, data_inicio, data_fim):
+    try:
+        df = pd.read_csv("vods.csv", parse_dates=["data"])
+    except FileNotFoundError:
+        st.error("❌ Arquivo 'vods.csv' não encontrado.")
+        return []
+
+    data_inicio = pd.to_datetime(data_inicio)
+    data_fim = pd.to_datetime(data_fim)
+
+    df_filtrado = df[
+        (df["streamer"] == streamer) &
+        (df["data"] >= data_inicio) &
+        (df["data"] <= data_fim)
+    ]
+
+    return df_filtrado.to_dict(orient="records")
+
 with st.sidebar.expander("🎯 Filtros de Data e URL"):
     data_inicio = st.date_input("Data de início", value=datetime.today() - timedelta(days=7))
     data_fim = st.date_input("Data de fim", value=datetime.today())
