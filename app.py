@@ -465,6 +465,20 @@ with col4:
 # ---------------- ABAS PRINCIPAIS ----------------
 import plotly.express as px
 from storage import carregar_historico
+
+def buscar_resumo_vods(dt_inicio, dt_fim, headers, base_url, streamers):
+    resumo = []
+    vods = buscar_vods_twitch_por_periodo(dt_inicio, dt_fim, headers, base_url, streamers)
+    for vod in vods:
+        resumo.append({
+            "streamer": vod["streamer"],
+            "data": vod["data"],
+            "duração (min)": round(vod["duração_segundos"] / 60, 1),
+            "visualizações": vod.get("view_count", "N/A"),
+            "url": vod["url"]
+        })
+    return resumo
+
 abas = st.tabs([
     "📊 Detecções", 
     "🏆 Ranking", 
