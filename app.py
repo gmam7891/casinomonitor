@@ -328,7 +328,7 @@ with st.sidebar.expander("🧠 Modelo de Detecção"):
         st.warning("⚠️ Modelo não carregado ainda")
 
     if st.button("🚀 Treinar modelo agora"):
-        with st.spinner("Treinando modelo..."'):
+        with st.spinner("Treinando modelo..."):
             sucesso, modelo = treinar_modelo(st)
         if sucesso:
             modelo.save(MODEL_PATH)
