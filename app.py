@@ -466,6 +466,7 @@ with col4:
 import plotly.express as px
 from storage import carregar_historico
 
+
 def buscar_resumo_vods(dt_inicio, dt_fim, headers, base_url, streamers):
     resumo = []
     vods = buscar_vods_twitch_por_periodo(dt_inicio, dt_fim, headers, base_url, streamers)
@@ -567,12 +568,67 @@ with abas[2]:
 with abas[3]:
     st.subheader("📺 VODs Resumidas")
 
-    if st.button("🔄 Carregar resumo de VODs"):
-        from datetime import datetime, timedelta
-        dt_ini = datetime.today() - timedelta(days=7)
-        dt_fim = datetime.today()
-        resumo = buscar_resumo_vods(dt_ini, dt_fim, HEADERS_TWITCH, BASE_URL_TWITCH, TODOS_STREAMERS)
-        st.session_state['vods_resumo'] = resumo
+    col1, col2, col3 = st.columns([1, 1, 2])
+    with col1:
+        if st.button("🔄 Carregar resumo de VODs"):
+            from datetime import datetime, timedelta
+            dt_ini = datetime.today() - timedelta(days=7)
+            dt_fim = datetime.today()
+            resumo = buscar_resumo_vods(dt_ini, dt_fim, HEADERS_TWITCH, BASE_URL_TWITCH, TODOS_STREAMERS)
+            st.session_state['vods_resumo'] = resumo
+
+    with col2:
+        if st.button("📡 Detectar jogos por período (todos)"):
+            from datetime import datetime, timedelta
+            dt_ini = datetime.today() - timedelta(days=7)
+            dt_fim = datetime.today()
+            vods = buscar_vods_twitch_por_periodo(dt_ini, dt_fim, HEADERS_TWITCH, BASE_URL_TWITCH, TODOS_STREAMERS)
+            resultados = []
+            for vod in vods:
+                m3u8_url = obter_url_m3u8_twitch(vod["url"])
+                if not m3u8_url:
+                    continue
+                res = varrer_url_customizada_paralela(
+                    m3u8_url, st, st.session_state, prever_jogo_em_frame,
+                    skip_inicial=0, intervalo=120, max_frames=5
+                )
+                for r in res:
+                    r["streamer"] = vod["streamer"]
+                    r["url"] = vod["url"]
+                resultados += res
+
+            if resultados:
+                salvar_deteccao("template", resultados)
+                st.success(f"✅ {len(resultados)} jogos detectados nas VODs.")
+            else:
+                st.warning("⚠️ Nenhum jogo detectado nas VODs.")
+
+    with col3:
+        streamer_individual = st.selectbox("🎯 Streamer específico", carregar_streamers())
+        if st.button("📡 Detectar deste streamer", key="detectar_streamer_sidebar"):
+            from datetime import datetime, timedelta
+            dt_ini = datetime.today() - timedelta(days=7)
+            dt_fim = datetime.today()
+            vods = buscar_vods_twitch_por_periodo(dt_ini, dt_fim, HEADERS_TWITCH, BASE_URL_TWITCH, [streamer_individual])
+            resultados = []
+            for vod in vods:
+                m3u8_url = obter_url_m3u8_twitch(vod["url"])
+                if not m3u8_url:
+                    continue
+                res = varrer_url_customizada_paralela(
+                    m3u8_url, st, st.session_state, prever_jogo_em_frame,
+                    skip_inicial=0, intervalo=120, max_frames=5
+                )
+                for r in res:
+                    r["streamer"] = vod["streamer"]
+                    r["url"] = vod["url"]
+                resultados += res
+
+            if resultados:
+                salvar_deteccao("template", resultados)
+                st.success(f"✅ {len(resultados)} jogos detectados nas VODs de {streamer_individual}.")
+            else:
+                st.warning(f"⚠️ Nenhum jogo detectado para {streamer_individual}.")
 
     if 'vods_resumo' in st.session_state and st.session_state['vods_resumo']:
         df = pd.DataFrame(st.session_state['vods_resumo'])
