@@ -552,6 +552,15 @@ with abas[2]:
 # ------------------ ABA 3: VODs ------------------
 with abas[3]:
     st.subheader("📺 VODs Resumidas")
+
+    if st.button("🔄 Carregar resumo de VODs"):
+        from datetime import datetime, timedelta
+        from app import buscar_resumo_vods, HEADERS_TWITCH, BASE_URL_TWITCH, TODOS_STREAMERS
+        dt_ini = datetime.today() - timedelta(days=7)
+        dt_fim = datetime.today()
+        resumo = buscar_resumo_vods(dt_ini, dt_fim, HEADERS_TWITCH, BASE_URL_TWITCH, TODOS_STREAMERS)
+        st.session_state['vods_resumo'] = resumo
+
     if 'vods_resumo' in st.session_state and st.session_state['vods_resumo']:
         df = pd.DataFrame(st.session_state['vods_resumo'])
         df["data"] = pd.to_datetime(df["data"]).dt.strftime("%d/%m/%Y %H:%M")
