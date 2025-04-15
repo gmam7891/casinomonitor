@@ -555,7 +555,6 @@ with abas[3]:
 
     if st.button("🔄 Carregar resumo de VODs"):
         from datetime import datetime, timedelta
-        from app import buscar_resumo_vods, HEADERS_TWITCH, BASE_URL_TWITCH, TODOS_STREAMERS
         dt_ini = datetime.today() - timedelta(days=7)
         dt_fim = datetime.today()
         resumo = buscar_resumo_vods(dt_ini, dt_fim, HEADERS_TWITCH, BASE_URL_TWITCH, TODOS_STREAMERS)
@@ -585,7 +584,6 @@ with abas[5]:
         st.info("📭 Nenhum dado disponível para análise. Execute uma varredura primeiro.")
     else:
         st.write("✅ Dados carregados para análise.")
-
 
         
         # --- Gráfico 1: Share of Voice ---
