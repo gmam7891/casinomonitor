@@ -365,6 +365,18 @@ with st.sidebar.expander("🎯 Análise de VOD / Período"):
             else:
                 st.warning("⚠️ Forneça a URL da VOD para análise.")
 
+    elif tipo_analise == "Por período":
+        # Exibe botão específico para análise por período
+        if st.button("📅 Analisar por Período"):
+            with st.spinner(f"🔎 Buscando VODs do streamer {streamer_escolhido} por período..."):
+                # Aqui você insere sua lógica para buscar e analisar por período
+                resultado = analisar_por_periodo(streamer_escolhido)  # Substitua por sua função real
+                if resultado:
+                    salvar_deteccao("periodo", resultado)
+                    st.success("✅ Análise por período concluída e salva!")
+                else:
+                    st.warning("⚠️ Nenhuma VOD encontrada ou análise não retornou resultados.")
+
 # ------------------ EXIBIÇÃO DE RESULTADOS (MELHORADA) ------------------
 if 'dados_url' in st.session_state:
     st.markdown("### 🎰 Resultados da VOD personalizada")
