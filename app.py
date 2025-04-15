@@ -1003,6 +1003,30 @@ else:
     st.info("Não há dados de pico de audiência.")
 
 # ------------------ SUGERIR NOVOS STREAMERS ------------------
+def sugerir_novos_streamers():
+    sugestoes = []
+    categorias_alvo = ["Slots", "Virtual Casino"]
+
+    try:
+        response = requests.get(
+            f"{BASE_URL_TWITCH}streams?first=100",
+            headers=HEADERS_TWITCH
+        )
+        data = response.json().get("data", [])
+        atuais = set(STREAMERS_INTERESSE)
+
+        for stream in data:
+            game_name = stream.get("game_name", "").lower()
+            login = stream.get("user_login")
+            if any(cat.lower() in game_name for cat in categorias_alvo):
+                if login and login not in atuais:
+                    sugestoes.append(login)
+    except Exception as e:
+        logging.error(f"Erro ao buscar streamers: {e}")
+
+    return sugestoes
+
+
 st.sidebar.markdown("---")
 if st.sidebar.button("🔎 Sugerir novos streamers PT-BR"):
     novos = sugerir_novos_streamers()
