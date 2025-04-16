@@ -66,9 +66,11 @@ from ml_utils import (
     prever_jogo_em_frame,
     verificar_jogo_em_live,
     varrer_url_customizada,
-    varrer_vods_com_modelo,  # ✅ USAR A NOVA FUNÇÃO AQUI
-    buscar_vods_twitch_por_periodo
+    varrer_vods_com_modelo,
+    buscar_vods_twitch_por_periodo,
+    buscar_vods_por_streamer_e_periodo  # <- esse estava faltando
 )
+
 # ---------------- CONFIGURAÇÃO GERAL ----------------
 st.set_page_config(page_title="Monitor Cassino PP", layout="wide")
 logging.basicConfig(level=logging.INFO, format='[%(levelname)s] %(asctime)s - %(message)s')
