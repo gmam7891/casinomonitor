@@ -103,7 +103,8 @@ def analisar_por_periodo(streamer, vods, st, session_state, prever_jogo_em_frame
 def prever_jogo_em_frame(image_path, modelo=None, threshold=0.4):
     try:
         if modelo is None:
-            return match_template_from_image(image_path)
+            resultado = match_template_from_image(image_path)
+            return resultado, None  # Template não tem confiança
 
         img = keras_image.load_img(image_path, target_size=(224, 224))
         x = keras_image.img_to_array(img)
@@ -113,10 +114,12 @@ def prever_jogo_em_frame(image_path, modelo=None, threshold=0.4):
         y_pred = modelo.predict(x)[0][0]
         print(f"🧠 Confiança da predição: {y_pred:.4f} | Threshold: {threshold} | Resultado: {'✅' if y_pred > threshold else '❌'}")
 
-        return "Pragmatic Play (ML)" if y_pred > threshold else None
+        resultado = "Pragmatic Play (ML)" if y_pred > threshold else None
+        return resultado, float(y_pred)
     except Exception as e:
         print(f"[Erro] prever_jogo_em_frame: {e}")
-        return None
+        return None, None
+
 
 def match_template_from_image(image_path, templates_dir="templates/", threshold=0.8):
     try:
