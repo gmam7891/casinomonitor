@@ -32,6 +32,16 @@ def extrair_segundos_da_url_vod(url):
     segundos = int(match.group(3)[:-1]) if match.group(3) else 0
     return horas * 3600 + minutos * 60 + segundos
 
+def obter_user_id(login, headers):
+    url = f"https://api.twitch.tv/helix/users?login={login}"
+    try:
+        resp = requests.get(url, headers=headers)
+        data = resp.json()
+        return data["data"][0]["id"] if data.get("data") else None
+    except Exception as e:
+        logging.error(f"Erro ao obter user_id para {login}: {e}")
+        return None
+
 def buscar_vods_por_streamer_e_periodo(streamer, data_inicio, data_fim, headers, base_url):
     todos_vods = []
 
