@@ -957,13 +957,20 @@ def buscar_vods_por_streamer_e_periodo(streamer, data_inicio, data_fim):
     data_inicio = pd.to_datetime(data_inicio)
     data_fim = pd.to_datetime(data_fim)
 
+    st.write("📊 Streamer selecionado:", streamer)
+    st.write("📅 Período selecionado:", data_inicio, "até", data_fim)
+    st.write("📄 Dados CSV lidos:", df)
+
     df_filtrado = df[
         (df["streamer"] == streamer) &
         (df["data"] >= data_inicio) &
         (df["data"] <= data_fim)
     ]
 
+    st.write("✅ VODs filtradas:", df_filtrado)
+
     return df_filtrado.to_dict(orient="records")
+
 
 
 def analisar_por_periodo(streamer, vods):
