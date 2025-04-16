@@ -66,7 +66,7 @@ from ml_utils import (
     prever_jogo_em_frame,
     verificar_jogo_em_live,
     varrer_url_customizada,
-    varrer_vods_com_template,
+    varrer_vods_com_modelo,  # ✅ USAR A NOVA FUNÇÃO AQUI
     buscar_vods_twitch_por_periodo
 )
 # ---------------- CONFIGURAÇÃO GERAL ----------------
