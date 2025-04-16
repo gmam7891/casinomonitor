@@ -34,21 +34,46 @@ def extrair_segundos_da_url_vod(url):
 
 
 def buscar_vods_por_streamer_e_periodo(streamer, data_inicio, data_fim):
-    try:
-        df = pd.read_csv("vods.csv", parse_dates=["data"])
-    except FileNotFoundError:
+    todos_vods = []
+
+    if data_inicio.tzinfo is None:
+        data_inicio = data_inicio.replace(tzinfo=timezone.utc)
+    if data_fim.tzinfo is None:
+        data_fim = data_fim.replace(tzinfo=timezone.utc)
+
+    user_id = obter_user_id(streamer, HEADERS_TWITCH)
+    if not user_id:
+        st.warning(f"Streamer {streamer} não encontrado na API da Twitch.")
         return []
 
-    data_inicio = pd.to_datetime(data_inicio)
-    data_fim = pd.to_datetime(data_fim)
+    try:
+        url = f"{BASE_URL_TWITCH}videos?user_id={user_id}&type=archive&first=100"
+        resp = requests.get(url, headers=HEADERS_TWITCH)
+        vods = resp.json().get("data", [])
 
-    df_filtrado = df[
-        (df["streamer"] == streamer) &
-        (df["data"] >= data_inicio) &
-        (df["data"] <= data_fim)
-    ]
+        for vod in vods:
+            created_at = datetime.fromisoformat(vod["created_at"].replace("Z", "+00:00"))
+            if not (data_inicio <= created_at <= data_fim):
+                continue
 
-    return df_filtrado.to_dict(orient="records")
+            dur = converter_duracao_para_segundos(vod["duration"])
+
+            todos_vods.append({
+                "streamer": streamer,
+                "titulo": vod["title"],
+                "url": vod["url"],
+                "data": created_at,
+                "duração_segundos": dur,
+                "duração_raw": vod["duration"],
+                "id_vod": vod["id"],
+                "view_count": vod.get("view_count", 0)
+            })
+
+    except Exception as e:
+        logging.error(f"Erro ao buscar VODs para {streamer}: {e}")
+
+    return todos_vods
+
 
 
 def analisar_por_periodo(streamer, vods, st, session_state, prever_jogo_em_frame, varrer_url_customizada_paralela, obter_url_m3u8_twitch):
