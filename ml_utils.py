@@ -52,6 +52,8 @@ def buscar_vods_por_streamer_e_periodo(streamer, data_inicio, data_fim):
 
 
 def analisar_por_periodo(streamer, vods, st, session_state, prever_jogo_em_frame, varrer_url_customizada_paralela, obter_url_m3u8_twitch):
+    st.write("🛠️ Rodando análise por período")
+    st.write("🔎 VODs recebidas:", vods)
     resultados_finais = []
 
     for vod in vods:
