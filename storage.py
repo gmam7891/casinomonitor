@@ -18,3 +18,17 @@ def salvar_deteccao(tipo, dados):
         df = df_novo
 
     df.to_csv(nome_arquivo, index=False)
+
+def carregar_historico(tipo):
+    """Carrega um CSV salvo anteriormente no diretório 'dados'."""
+    nome_arquivo = f"{DADOS_DIR}/{tipo}.csv"
+    if os.path.exists(nome_arquivo):
+        return pd.read_csv(nome_arquivo)
+    else:
+        return pd.DataFrame()
+
+def limpar_historico(tipo):
+    """Remove um CSV específico do diretório 'dados'."""
+    nome_arquivo = f"{DADOS_DIR}/{tipo}.csv"
+    if os.path.exists(nome_arquivo):
+        os.remove(nome_arquivo)
