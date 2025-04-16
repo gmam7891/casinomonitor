@@ -20,6 +20,7 @@ from tensorflow.keras import models
 import matplotlib.pyplot as plt
 import subprocess
 import pandas as pd
+import streamlit as st  # necessário para chamadas como st.write, st.warning
 
 def extrair_segundos_da_url_vod(url):
     match = re.search(r"[?&]t=(\d+h)?(\d+m)?(\d+s)?", url)
@@ -32,6 +33,11 @@ def extrair_segundos_da_url_vod(url):
 
 def buscar_vods_por_streamer_e_periodo(streamer, data_inicio, data_fim, headers, base_url):
     todos_vods = []
+
+    if not isinstance(data_inicio, datetime):
+        data_inicio = pd.to_datetime(data_inicio)
+    if not isinstance(data_fim, datetime):
+        data_fim = pd.to_datetime(data_fim)
 
     if data_inicio.tzinfo is None:
         data_inicio = data_inicio.replace(tzinfo=timezone.utc)
