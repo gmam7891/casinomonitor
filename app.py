@@ -373,9 +373,7 @@ with st.sidebar.expander("🎯 Análise de VOD / Período"):
 
         if st.button("📅 Analisar por Período"):
             with st.spinner(f"🔎 Buscando VODs do streamer {streamer_escolhido} por período..."):
-                vods = buscar_vods_por_streamer_e_periodo(
-                    streamer_escolhido, data_inicio, data_fim, HEADERS_TWITCH, BASE_URL_TWITCH
-                )
+                vods = buscar_vods_por_streamer_e_periodo(streamer_escolhido, data_inicio, data_fim, HEADERS_TWITCH, BASE_URL_TWITCH)
 
                 if not vods:
                     st.warning("⚠️ Nenhuma VOD encontrada nesse período.")
