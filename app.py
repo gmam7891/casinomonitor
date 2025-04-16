@@ -68,7 +68,7 @@ from ml_utils import (
     varrer_url_customizada,
     varrer_vods_com_modelo,
     buscar_vods_twitch_por_periodo,
-    buscar_vods_por_streamer_e_periodo  # <- esse estava faltando
+    buscar_vods_por_streamer_e_periodo
 )
 
 # ---------------- CONFIGURAÇÃO GERAL ----------------
