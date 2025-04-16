@@ -228,9 +228,14 @@ def varrer_url_customizada(url, st, session_state, prever_func, skip_inicial=0, 
 
     return resultados
 
-def varrer_vods_com_template(dt_inicio, dt_fim, headers, base_url, streamers, intervalo=60):
+def varrer_vods_com_modelo(dt_inicio, dt_fim, headers, base_url, streamers, session_state, prever_fn, intervalo=60):
     resultados = []
     vods = buscar_vods_twitch_por_periodo(dt_inicio, dt_fim, headers, base_url, streamers)
+
+    modelo = session_state.get("modelo_ml")
+    if modelo is None:
+        print("❌ Modelo ML não carregado na sessão.")
+        return []
 
     for vod in vods:
         dur = vod["duração_segundos"]
@@ -238,7 +243,7 @@ def varrer_vods_com_template(dt_inicio, dt_fim, headers, base_url, streamers, in
         for segundo in range(0, dur, intervalo):
             frame_path = f"vod_{vod['id_vod']}_{segundo}.jpg"
             if capturar_frame_ffmpeg_imageio(url, frame_path, skip_seconds=segundo):
-                jogo = match_template_from_image(frame_path)
+                jogo = prever_fn(frame_path, modelo)
                 if jogo:
                     resultados.append({
                         "streamer": vod["streamer"],
@@ -248,6 +253,7 @@ def varrer_vods_com_template(dt_inicio, dt_fim, headers, base_url, streamers, in
                         "url": url
                     })
     return resultados
+
 
 
 def buscar_vods_twitch_por_periodo(dt_inicio, dt_fim, headers, base_url, streamers):
