@@ -168,26 +168,6 @@ def obter_url_m3u8_twitch(vod_url):
         st.error(f"❌ Erro ao obter URL m3u8: {e}")
         return None
 
-def obter_url_m3u8_twitch(vod_url):
-    """
-    Usa o streamlink para extrair a URL .m3u8 de um VOD da Twitch.
-    """
-    try:
-        result = subprocess.run(
-            ["streamlink", "--stream-url", vod_url, "best"],
-            capture_output=True,
-            text=True
-        )
-        if result.returncode == 0:
-            return result.stdout.strip()
-        else:
-            st.error(f"❌ Erro ao rodar streamlink:\n{result.stderr}")
-            return None
-    except Exception as e:
-        st.error(f"❌ Erro ao obter URL m3u8: {e}")
-        return None
-
-
 STREAMERS_FILE = "streamers.txt"
 DADOS_DIR = "dados"
 os.makedirs(DADOS_DIR, exist_ok=True)
