@@ -396,25 +396,6 @@ with st.sidebar.expander("🎯 Análise de VOD / Período"):
                         st.warning("⚠️ Nenhuma detecção relevante encontrada.")
 
 
-    def buscar_vods_por_streamer_e_periodo(streamer, data_inicio, data_fim):
-        try:
-            df = pd.read_csv("vods.csv", parse_dates=["data"])
-        except FileNotFoundError:
-            st.error("❌ Arquivo 'vods.csv' não encontrado.")
-            return []
-    
-        data_inicio = pd.to_datetime(data_inicio)
-        data_fim = pd.to_datetime(data_fim)
-    
-        df_filtrado = df[
-            (df["streamer"] == streamer) &
-            (df["data"] >= data_inicio) &
-            (df["data"] <= data_fim)
-        ]
-    
-        return df_filtrado.to_dict(orient="records")
-
-
 # ------------------ EXIBIÇÃO DE RESULTADOS (MELHORADA) ------------------
 if 'dados_url' in st.session_state:
     st.markdown("### 🎰 Resultados da VOD personalizada")
