@@ -293,8 +293,6 @@ def calcular_minutos_por_streamer(dados, nome_jogo="pragmatic"):
 
     return {s: len(mins) for s, mins in minutos_por_streamer.items()}
 
-
-
 # ---------------- CARREGAR E FILTRAR STREAMERS FIXOS ----------------
 STREAMERS_INTERESSE = carregar_streamers()
 TODOS_STREAMERS = STREAMERS_INTERESSE
