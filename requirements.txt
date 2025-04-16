@@ -11,4 +11,4 @@ gdown
 plotly
 Pillow
 matplotlib
-streamlink 6.2.1
+streamlink==6.2.1
