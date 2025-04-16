@@ -129,3 +129,27 @@ def prever_jogo_em_frame(image_path, modelo=None, threshold=0.4):
     except Exception as e:
         print(f"[Erro] prever_jogo_em_frame: {e}")
         return None, None
+
+def match_template_from_image(image_path, templates_dir="templates/", threshold=0.8):
+    try:
+        img = cv2.imread(image_path)
+        if img is None:
+            return None
+        gray_img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+
+        for template_file in os.listdir(templates_dir):
+            template_path = os.path.join(templates_dir, template_file)
+            template = cv2.imread(template_path, 0)
+            if template is None:
+                continue
+
+            res = cv2.matchTemplate(gray_img, template, cv2.TM_CCOEFF_NORMED)
+            _, max_val, _, _ = cv2.minMaxLoc(res)
+
+            if max_val >= threshold:
+                return os.path.splitext(template_file)[0]
+
+        return None
+    except Exception as e:
+        print(f"[Erro] match_template_from_image: {e}")
+        return None
