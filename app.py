@@ -5,6 +5,7 @@ sys.path.append(os.path.dirname(__file__))
 from datetime import datetime, timedelta
 import streamlit as st
 import pandas as pd
+import datetime
 import logging
 import requests
 from dotenv import load_dotenv
@@ -19,7 +20,14 @@ import re
 import gdown
 import subprocess
 from tensorflow.keras.models import load_model
-from storage import salvar_deteccao
+from storage import salvar_deteccao, carregar_historico, limpar_historico, limpar_todos_historicos
+
+from ml_utils import (
+    extrair_segundos_da_url_vod,
+    buscar_vods_por_streamer_e_periodo,
+    analisar_por_periodo
+)
+
 
 # ---------------- OBTER ACCESS TOKEN DA TWITCH ----------------
 def obter_access_token(client_id, client_secret):
@@ -147,7 +155,13 @@ if "modelo_ml" not in st.session_state:
 # ---------------- FUNÇÕES AUXILIARES ----------------
 import os
 import subprocess
+import logging
+import pandas as pd
+import requests
+from datetime import datetime
+from concurrent.futures import ThreadPoolExecutor
 
+# 📡 Extrai link m3u8 de um VOD da Twitch via streamlink
 def obter_url_m3u8_twitch(vod_url):
     """
     Usa o streamlink para extrair a URL .m3u8 de um VOD da Twitch.
@@ -168,10 +182,52 @@ def obter_url_m3u8_twitch(vod_url):
         st.error(f"❌ Erro ao obter URL m3u8: {e}")
         return None
 
+# ⚡️ Captura múltiplos frames paralelamente a partir de URLs
+def capturar_frames_paralelamente(vod_urls, segundo_alvo):
+    """Captura frames de múltiplos VODs em paralelo."""
+    with ThreadPoolExecutor(max_workers=4) as executor:
+        futures = []
+        for url in vod_urls:
+            futures.append(executor.submit(capturar_frame_ffmpeg_imageio, url, "frame.jpg", skip_seconds=segundo_alvo))
+        resultados = [future.result() for future in futures]
+    return resultados
+
+# ⚙️ Varredura paralela para URL personalizada com modelo ML
+def varrer_url_customizada_paralela(m3u8_url, st, session_state, prever_jogo_fn, skip_inicial=0, intervalo=60, max_frames=5):
+    resultados = []
+
+    def processar_frame(tempo):
+        frame_path = f"frame_{tempo}.jpg"
+        sucesso = capturar_frame_ffmpeg_imageio(m3u8_url, frame_path, skip_seconds=tempo)
+        if sucesso:
+            resultado, confianca = prever_jogo_fn(frame_path, session_state.get("modelo_ml"))
+            if resultado:
+                return {
+                    "segundo": tempo,
+                    "frame": frame_path,
+                    "jogo_detectado": resultado,
+                    "confianca": confianca
+                }
+        return None
+
+    tempos = [skip_inicial + i * intervalo for i in range(max_frames)]
+
+    with ThreadPoolExecutor(max_workers=4) as executor:
+        futures = [executor.submit(processar_frame, tempo) for tempo in tempos]
+        for future in futures:
+            res = future.result()
+            if res:
+                resultados.append(res)
+
+    session_state["dados_url"] = resultados
+    return resultados
+
+# 📂 Diretórios e arquivos fixos
 STREAMERS_FILE = "streamers.txt"
 DADOS_DIR = "dados"
 os.makedirs(DADOS_DIR, exist_ok=True)
 
+# 📄 Lê streamers fixos do arquivo local
 def carregar_streamers():
     """Lê os streamers fixos do arquivo streamers.txt"""
     if not os.path.exists(STREAMERS_FILE):
@@ -180,12 +236,10 @@ def carregar_streamers():
     with open(STREAMERS_FILE, "r") as f:
         return [l.strip() for l in f if l.strip()]
 
+# 💾 Salva detecções em CSV
 def salvar_deteccao(tipo, dados):
     """Salva dados detectados no diretório /dados como CSV"""
     nome_arquivo = f"{DADOS_DIR}/{tipo}.csv"
-    import pandas as pd
-    from datetime import datetime
-
     df_novo = pd.DataFrame(dados)
     df_novo["data_hora"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
@@ -197,6 +251,7 @@ def salvar_deteccao(tipo, dados):
 
     df.to_csv(nome_arquivo, index=False)
 
+# 🧽 Filtra streamers apenas com idioma português
 def filtrar_streamers_pt(streamers):
     """Filtra a lista mantendo apenas streamers com idioma 'pt' (português)."""
     streamers_pt = []
@@ -221,6 +276,7 @@ def filtrar_streamers_pt(streamers):
             st.sidebar.text(f"❌ {i}")
 
     return streamers_pt
+
 
 # ---------------- FUNÇÃO: calcular minutos únicos com jogo por streamer ----------------
 def calcular_minutos_por_streamer(dados, nome_jogo="pragmatic"):
@@ -247,161 +303,131 @@ def calcular_minutos_por_streamer(dados, nome_jogo="pragmatic"):
 STREAMERS_INTERESSE = carregar_streamers()
 TODOS_STREAMERS = STREAMERS_INTERESSE
 
-# ------------------ STREAMLIT UI ------------------
-def carregar_streamers():
-    if not os.path.exists(STREAMERS_FILE):
-        with open(STREAMERS_FILE, "w") as f:
-            f.write("jukes\n")
-    with open(STREAMERS_FILE, "r") as f:
-        return [l.strip() for l in f if l.strip()]
+# ------------------ SIDEBAR REFACTORED ------------------
+with st.sidebar.expander("🎯 Filtros de Data e URL"):
+    data_inicio = st.date_input("Data de início", value=datetime.today() - timedelta(days=7))
+    data_fim = st.date_input("Data de fim", value=datetime.today())
+    url_custom = st.text_input("URL personalizada (VOD .m3u8 ou com ?t=...)")
+    segundo_alvo = st.number_input("Segundo para captura manual", min_value=0, max_value=99999, value=0)
 
-def obter_id_categoria(nome_categoria):
-    try:
-        url = f"{BASE_URL_TWITCH}games?name={nome_categoria}"
-        resp = requests.get(url, headers=HEADERS_TWITCH)
-        data = resp.json().get("data", [])
-        if data:
-            return data[0]["id"]
-    except Exception as e:
-        logging.error(f"Erro ao buscar ID da categoria: {e}")
-    return None
+with st.sidebar.expander("🔧 Utilitários Twitch"):
+    col1, col2 = st.columns(2)
+    with col1:
+        if st.button("🔍 Testar conexão"):
+            test_url = "https://api.twitch.tv/helix/streams?first=1"
+            resp = requests.get(test_url, headers=HEADERS_TWITCH)
+            st.write("Status:", resp.status_code)
+            try:
+                st.json(resp.json())
+            except Exception as e:
+                st.error(f"Erro ao converter resposta: {e}")
+    with col2:
+        if st.button("🎲 Testar categoria"):
+            nome_categoria = "Virtual Casino"
+            url = f"{BASE_URL_TWITCH}games?name={nome_categoria}"
+            resp = requests.get(url, headers=HEADERS_TWITCH)
+            st.write("🔁 Status:", resp.status_code)
+            st.json(resp.json())
 
-def converter_duracao_para_segundos(dur_str):
-    match = re.match(r"(?:(\d+)h)?(?:(\d+)m)?(?:(\d+)s)?", dur_str)
-    if not match:
-        return 0
-    h, m, s = match.groups(default="0")
-    return int(h) * 3600 + int(m) * 60 + int(s)
-
-def extrair_segundos_da_url_vod(url):
-    match = re.search(r"[?&]t=(?:(\d+)h)?(?:(\d+)m)?(?:(\d+)s)?", url)
-    if not match:
-        return 0
-    h = int(match.group(1) or 0)
-    m = int(match.group(2) or 0)
-    s = int(match.group(3) or 0)
-    return h * 3600 + m * 60 + s
-
-def formatar_datas_br(df, coluna="timestamp"):
-    if coluna in df.columns:
-        df[coluna] = pd.to_datetime(df[coluna]).dt.strftime("%d/%m/%Y %H:%M:%S")
-    return df
-
-
-def sugerir_novos_streamers():
-    sugestoes = []
-    categorias_alvo = ["Slots", "Virtual Casino"]
-
-    try:
-        response = requests.get(
-    f"{BASE_URL_TWITCH}streams?first=350",
-    headers=HEADERS_TWITCH
-)
-
-        data = response.json().get("data", [])
-        atuais = set(STREAMERS_INTERESSE)
-
-        for stream in data:
-            game_name = stream.get("game_name", "").lower()
-            login = stream.get("user_login")
-            if any(cat.lower() in game_name for cat in categorias_alvo):
-                if login and login not in atuais:
-                    sugestoes.append(login)
-    except Exception as e:
-        logging.error(f"Erro ao buscar streamers: {e}")
-
-    return sugestoes
-
-def buscar_resumo_vods(dt_inicio, dt_fim, headers, base_url, streamers):
-    """Retorna lista com metadados simples das VODs sem fazer varredura."""
-    resumo = []
-    vods = buscar_vods_twitch_por_periodo(dt_inicio, dt_fim, headers, base_url, streamers)
-    for vod in vods:
-        resumo.append({
-            "streamer": vod["streamer"],
-            "data": vod["data"],
-            "duração (min)": round(vod["duração_segundos"] / 60, 1),
-            "visualizações": vod.get("view_count", "N/A"),
-            "url": vod["url"]
-        })
-    return resumo
-
-def buscar_streamers_por_categoria(nome_categoria="Virtual Casino", idioma="pt"):
-    sugestoes = []
-    try:
-        categoria_id = obter_id_categoria(nome_categoria)
-        if not categoria_id:
-            return []
-
-        url = f"{BASE_URL_TWITCH}streams?first=100&game_id={categoria_id}"
-        resp = requests.get(url, headers=HEADERS_TWITCH)
-        data = resp.json().get("data", [])
-
-        for stream in data:
-            if stream.get("language") == idioma:
-                login = stream.get("user_login")
-                if login:
-                    sugestoes.append(login)
-    except Exception as e:
-        logging.error(f"Erro ao buscar streamers por categoria: {e}")
-    return sugestoes
-
-
-# 🚀 Carregar e unir streamers fixos + da categoria Virtual Casino
-STREAMERS_INTERESSE = carregar_streamers()
-TODOS_STREAMERS = STREAMERS_INTERESSE
-
-# 🧭 Sidebar
-st.sidebar.header("🎯 Filtros")
-data_inicio = st.sidebar.date_input("Data de início", value=datetime.today() - timedelta(days=7))
-data_fim = st.sidebar.date_input("Data de fim", value=datetime.today())
-url_custom = st.sidebar.text_input("URL personalizada (VOD .m3u8 ou com ?t=...)")
-segundo_alvo = st.sidebar.number_input("Segundo para captura manual", min_value=0, max_value=99999, value=0)
-
-if st.sidebar.button("🔍 Testar conexão com Twitch"):
-    test_url = "https://api.twitch.tv/helix/streams?first=1"
-    resp = requests.get(test_url, headers=HEADERS_TWITCH)
-    st.sidebar.write("Status:", resp.status_code)
-    try:
-        st.sidebar.json(resp.json())
-    except Exception as e:
-        st.sidebar.error(f"Erro ao converter resposta: {e}")
-
-if st.sidebar.button("🎲 Testar nome da categoria"):
-    nome_categoria = "Virtual Casino"  # Você pode tentar trocar por "Slots" também
-    url = f"{BASE_URL_TWITCH}games?name={nome_categoria}"
-    resp = requests.get(url, headers=HEADERS_TWITCH)
-    st.sidebar.write("🔁 Status:", resp.status_code)
-    st.sidebar.json(resp.json())
-
-# 🎯 Captura manual
-if st.sidebar.button("🎯 Capturar frame no segundo exato") and url_custom:
-    m3u8_url = obter_url_m3u8_twitch(url_custom)
-    
-    if not m3u8_url:
-        st.error("❌ Não foi possível obter a URL .m3u8 do VOD.")
+with st.sidebar.expander("🧠 Modelo de Detecção"):
+    if "modelo_ml" in st.session_state:
+        st.success("✅ Modelo ML carregado")
     else:
-        frame_path = "frame_manual.jpg"
-        if capturar_frame_ffmpeg_imageio(m3u8_url, frame_path, skip_seconds=segundo_alvo):
-            st.image(frame_path, caption=f"Frame em {segundo_alvo}s", use_column_width=True)
-            resultado, confianca = prever_jogo_em_frame(frame_path, st.session_state.get("modelo_ml"))
-            if resultado:
-                st.success(f"🧠 Jogo detectado: `{resultado}` (confiança: {confianca:.2%})")
-            else:
-                st.warning("❌ Nenhum jogo detectado.")
+        st.warning("⚠️ Modelo não carregado ainda")
+
+    if st.button("🚀 Treinar modelo agora"):
+        with st.spinner("Treinando modelo..."):
+            sucesso, modelo = treinar_modelo(st)
+        if sucesso:
+            modelo.save(MODEL_PATH)
+            st.session_state["modelo_ml"] = modelo
+            st.success("✅ Modelo treinado e salvo com sucesso!")
         else:
-            st.error("❌ Erro ao capturar frame.")
+            st.warning("⚠️ Falha no treinamento do modelo.")
+
+with st.sidebar.expander("🎯 Análise de VOD / Período"):
+    streamer_escolhido = st.selectbox("👤 Escolha o streamer", carregar_streamers())
+    tipo_analise = st.radio("Tipo de análise", ["VOD específica (URL)", "Por período"])
+    vod_url_individual = st.text_input("📺 URL da VOD", placeholder="https://www.twitch.tv/videos/...")
+
+    if tipo_analise == "VOD específica (URL)":
+        if st.button("🎯 Analisar esta VOD"):
+            if vod_url_individual:
+                with st.spinner("🔍 Analisando VOD..."):
+                    m3u8_url = obter_url_m3u8_twitch(vod_url_individual)
+                    if m3u8_url:
+                        tempo_inicial = extrair_segundos_da_url_vod(vod_url_individual)
+                        resultado = varrer_url_customizada_paralela(
+                            m3u8_url, st, st.session_state, prever_jogo_em_frame,
+                            skip_inicial=tempo_inicial, intervalo=120, max_frames=6
+                        )
+                        if resultado:
+                            for r in resultado:
+                                r["streamer"] = streamer_escolhido
+                            salvar_deteccao("url", resultado)
+                            st.success("✅ Análise concluída e salva com sucesso!")
+                        else:
+                            st.warning("⚠️ Nenhum jogo detectado na VOD.")
+                    else:
+                        st.error("❌ Não foi possível extrair a URL .m3u8.")
+            else:
+                st.warning("⚠️ Forneça a URL da VOD para análise.")
+
+    elif tipo_analise == "Por período":
+        data_inicio = st.date_input("📅 Data de início", value=datetime.today() - timedelta(days=7))
+        data_fim = st.date_input("📅 Data de fim", value=datetime.today())
+
+        if st.button("📅 Analisar por Período"):
+            with st.spinner(f"🔎 Buscando VODs do streamer {streamer_escolhido} por período..."):
+                vods = buscar_vods_por_streamer_e_periodo(streamer_escolhido, data_inicio, data_fim)
+                if not vods:
+                    st.warning("⚠️ Nenhuma VOD encontrada nesse período.")
+                else:
+                    resultados = analisar_por_periodo(
+                        streamer_escolhido, vods,
+                        st, st.session_state,
+                        prever_jogo_em_frame, varrer_url_customizada_paralela,
+                        obter_url_m3u8_twitch
+                    )
+                    if resultados:
+                        salvar_deteccao("periodo", resultados)
+                        st.success("✅ Análise por período concluída e salva!")
+                    else:
+                        st.warning("⚠️ Nenhuma detecção relevante encontrada.")
 
 
-# 🚀 Treinar modelo
-if st.sidebar.button("🚀 Treinar modelo agora"):
-    sucesso, modelo = treinar_modelo(st)
-    if sucesso:
-        modelo.save(MODEL_PATH)
-        st.session_state["modelo_ml"] = modelo
-        st.success("✅ Modelo treinado, salvo e carregado com sucesso!")
-    else:
-        st.warning("⚠️ Falha no treinamento do modelo.")
+    def buscar_vods_por_streamer_e_periodo(streamer, data_inicio, data_fim):
+        try:
+            df = pd.read_csv("vods.csv", parse_dates=["data"])
+        except FileNotFoundError:
+            st.error("❌ Arquivo 'vods.csv' não encontrado.")
+            return []
+    
+        data_inicio = pd.to_datetime(data_inicio)
+        data_fim = pd.to_datetime(data_fim)
+    
+        df_filtrado = df[
+            (df["streamer"] == streamer) &
+            (df["data"] >= data_inicio) &
+            (df["data"] <= data_fim)
+        ]
+    
+        return df_filtrado.to_dict(orient="records")
+
+
+# ------------------ EXIBIÇÃO DE RESULTADOS (MELHORADA) ------------------
+if 'dados_url' in st.session_state:
+    st.markdown("### 🎰 Resultados da VOD personalizada")
+    for res in st.session_state['dados_url']:
+        col1, col2 = st.columns([1, 3])
+        with col1:
+            st.image(res["frame"], caption=f"{res['segundo']}s", use_column_width=True)
+        with col2:
+            st.markdown(f"**🎯 Jogo detectado:** {res['jogo_detectado']}")
+            st.markdown(f"🧠 **Confiança:** {res['confianca']:.2%}")
+
+    st.success(f"Total de detecções: {len(st.session_state['dados_url'])}")
+
 
 # ------------------ BOTÕES PRINCIPAIS ------------------
 col1, col2, col3, col4 = st.columns(4)
@@ -455,14 +481,13 @@ with col3:
 
 with col4:
     if st.button("🌐 Varredura na URL personalizada") and url_custom:
-        # ⚡️ Extrair .m3u8
         if ".m3u8" not in url_custom:
             m3u8_url = obter_url_m3u8_twitch(url_custom)
             if not m3u8_url:
                 st.error("❌ Não foi possível obter o link .m3u8 a partir do VOD.")
                 st.stop()
         else:
-            m3u8_url = url_custom  # já é .m3u8
+            m3u8_url = url_custom
 
         tempo_inicial = extrair_segundos_da_url_vod(url_custom)
         tempo_total = 720
@@ -470,7 +495,7 @@ with col4:
         max_frames = tempo_total // intervalo
 
         inicio = time.time()
-        resultado_url = varrer_url_customizada(
+        resultado_url = varrer_url_customizada_paralela(
             m3u8_url,
             st,
             st.session_state,
@@ -489,60 +514,61 @@ with col4:
 
 # ---------------- ABAS PRINCIPAIS ----------------
 import plotly.express as px
+from storage import carregar_historico
+
+
+def buscar_resumo_vods(dt_inicio, dt_fim, headers, base_url, streamers):
+    resumo = []
+    vods = buscar_vods_twitch_por_periodo(dt_inicio, dt_fim, headers, base_url, streamers)
+    for vod in vods:
+        resumo.append({
+            "streamer": vod["streamer"],
+            "data": vod["data"],
+            "duração (min)": round(vod["duração_segundos"] / 60, 1),
+            "visualizações": vod.get("view_count", "N/A"),
+            "url": vod["url"]
+        })
+    return resumo
+
 abas = st.tabs([
-    "Resultados", 
-    "Ranking de Jogos", 
-    "Timeline", 
-    "Resumo de VODs", 
-    "Histórico", 
-    "Dashboards",
-    "Visualizar Dataset"
+    "📊 Detecções", 
+    "🏆 Ranking", 
+    "🕒 Timeline", 
+    "📺 VODs", 
+    "📁 Histórico", 
+    "📈 Dashboards", 
+    "🖼️ Dataset", 
+    "🎯 Streamer Focus"
 ])
 
-# ------------------ Aba 1: Resultados ------------------
+# ------------------ ABA 0: Detecções ------------------
 with abas[0]:
+    st.subheader("🧠 Detecções recentes")
     if 'dados_url' in st.session_state:
-        st.markdown("### 🎰 Resultados da VOD personalizada")
+        st.markdown("#### 🎰 VOD personalizada")
         for res in st.session_state['dados_url']:
             col1, col2 = st.columns([1, 3])
             with col1:
-                st.image(res["frame"], caption=f"{res['segundo']}s", use_column_width=True)
+                st.image(res["frame"], caption=f"{res['segundo']}s", use_container_width=True)
             with col2:
-                st.success(f"🎯 Jogo detectado: `{res['jogo_detectado']}`")
+                st.markdown(f"**Jogo:** {res['jogo_detectado']}")
+                st.markdown(f"**Confiança:** {res['confianca']:.2%}")
 
     if 'dados_vods_template' in st.session_state:
-        st.markdown("### 🖼️ Resultados por Template")
+        st.markdown("#### 🖼️ Por Template")
         for res in st.session_state['dados_vods_template']:
             col1, col2 = st.columns([1, 3])
             with col1:
-                st.image(res["frame"], caption=f"{res['segundo']}s", use_column_width=True)
+                st.image(res["frame"], caption=f"{res['segundo']}s", use_container_width=True)
             with col2:
-                st.write(f"🎥 Streamer: `{res['streamer']}`")
-                st.write(f"🧩 Jogo detectado: `{res['jogo_detectado']}`")
-                st.write(f"⏱ Tempo: {res['segundo']}s")
+                st.write(f"**Streamer:** {res['streamer']}")
+                st.write(f"**Jogo:** {res['jogo_detectado']}")
+                st.write(f"**Tempo:** {res['segundo']}s")
                 st.write(f"🔗 [Ver VOD]({res['url']})")
 
-# ------------------ Aba 2: Ranking ------------------
+# ------------------ ABA 1: Ranking ------------------
 with abas[1]:
-    def exibir_ranking_jogos(dados):
-        if not dados:
-            st.info("Nenhum jogo detectado ainda.")
-            return
-
-        df = pd.DataFrame(dados)
-        if 'jogo_detectado' not in df.columns:
-            st.warning("⚠️ Coluna 'jogo_detectado' não encontrada.")
-            return
-
-        ranking = df['jogo_detectado'].value_counts().reset_index()
-        ranking.columns = ['Jogo', 'Aparições']
-
-        st.markdown("### 🏆 Ranking de Jogos Detectados")
-        st.dataframe(ranking, use_container_width=True)
-
-        fig = px.bar(ranking, x='Jogo', y='Aparições', text='Aparições', color='Jogo', title="Top Jogos")
-        fig.update_layout(showlegend=False)
-        st.plotly_chart(fig, use_container_width=True)
+    from collections import Counter
 
     dados_para_ranking = []
     if 'dados_url' in st.session_state:
@@ -550,36 +576,21 @@ with abas[1]:
     if 'dados_vods_template' in st.session_state:
         dados_para_ranking += st.session_state['dados_vods_template']
 
-    exibir_ranking_jogos(dados_para_ranking)
-
-# ------------------ Aba 3: Timeline ------------------
-with abas[2]:
-    def exibir_timeline_jogos(dados):
-        if not dados:
-            st.info("Nenhum dado disponível para exibir a timeline.")
-            return
-
-        df = pd.DataFrame(dados)
-        if 'segundo' not in df.columns or 'jogo_detectado' not in df.columns:
-            st.warning("⚠️ Dados incompletos para a timeline.")
-            return
-
-        if 'streamer' not in df.columns:
-            df['streamer'] = 'Desconhecido'
-
-        fig = px.scatter(
-            df,
-            x="segundo",
-            y="jogo_detectado",
-            color="streamer",
-            hover_data=["streamer", "segundo", "url"] if 'url' in df.columns else ["streamer", "segundo"],
-            title="🕒 Timeline de Jogos Detectados na VOD",
-            labels={"segundo": "Tempo (s)", "jogo_detectado": "Jogo"}
-        )
-        fig.update_traces(marker=dict(size=10))
-        fig.update_layout(height=500)
+    st.subheader("🏆 Jogos mais detectados")
+    if dados_para_ranking:
+        df = pd.DataFrame(dados_para_ranking)
+        ranking = df['jogo_detectado'].value_counts().reset_index()
+        ranking.columns = ['Jogo', 'Aparições']
+        st.dataframe(ranking, use_container_width=True)
+        fig = px.bar(ranking, x='Jogo', y='Aparições', text='Aparições', title="Ranking de Jogos")
+        fig.update_layout(showlegend=False)
         st.plotly_chart(fig, use_container_width=True)
+    else:
+        st.info("Nenhum dado disponível.")
 
+# ------------------ ABA 2: Timeline ------------------
+with abas[2]:
+    st.subheader("🕒 Linha do Tempo de Detecção")
     dados_timeline = []
     if 'dados_url' in st.session_state:
         dados_timeline += st.session_state['dados_url']
@@ -588,148 +599,58 @@ with abas[2]:
     if 'dados_lives' in st.session_state:
         dados_timeline += st.session_state['dados_lives']
 
-    exibir_timeline_jogos(dados_timeline)
+    if dados_timeline:
+        df = pd.DataFrame(dados_timeline)
+        if 'segundo' in df.columns and 'jogo_detectado' in df.columns:
+            if 'streamer' not in df.columns:
+                df['streamer'] = 'Desconhecido'
+            fig = px.scatter(df, x="segundo", y="jogo_detectado", color="streamer",
+                             title="Timeline de Detecções",
+                             hover_data=["streamer", "segundo", "url"] if 'url' in df.columns else ["streamer", "segundo"])
+            fig.update_traces(marker=dict(size=10))
+            st.plotly_chart(fig, use_container_width=True)
+        else:
+            st.warning("Dados incompletos.")
+    else:
+        st.info("Nenhuma detecção disponível.")
 
-# ------------------ Aba 4: Resumo de VODs ------------------
+# ------------------ ABA 3: VODs ------------------
 with abas[3]:
-    st.markdown("### 📂 Resumo de VODs no período selecionado")
+    st.subheader("📺 VODs Resumidas")
+
+    col1, _ = st.columns([1, 3])
+    with col1:
+        if st.button("🔄 Carregar resumo de VODs"):
+            from datetime import datetime, timedelta
+            dt_ini = datetime.today() - timedelta(days=7)
+            dt_fim = datetime.today()
+            resumo = buscar_resumo_vods(dt_ini, dt_fim, HEADERS_TWITCH, BASE_URL_TWITCH, TODOS_STREAMERS)
+            st.session_state['vods_resumo'] = resumo
 
     if 'vods_resumo' in st.session_state and st.session_state['vods_resumo']:
         df = pd.DataFrame(st.session_state['vods_resumo'])
         df["data"] = pd.to_datetime(df["data"]).dt.strftime("%d/%m/%Y %H:%M")
         df["link"] = df["url"].apply(lambda x: f"[Abrir VOD]({x})")
         df = df.drop(columns=["url"])
-
-        # Ordenar pela duração
         df = df.sort_values(by="duração (min)", ascending=False)
-
-        # Mostrar tabela interativa
         st.dataframe(df, use_container_width=True)
-
-        # Botão para baixar como CSV
-        csv = df.to_csv(index=False).encode("utf-8")
-        st.download_button(
-            label="⬇️ Baixar como CSV",
-            data=csv,
-            file_name="resumo_vods.csv",
-            mime="text/csv"
-        )
+        st.download_button("⬇️ Baixar CSV", data=df.to_csv(index=False).encode("utf-8"),
+                           file_name="vods_resumo.csv", mime="text/csv")
     else:
-        st.info("📭 Nenhum dado carregado. Clique em **'Verificar VODs (resumo)'**.")
+        st.info("Nenhuma VOD carregada.")
 
-# ------------------ Aba 5: Histórico ------------------
-from storage import carregar_historico, limpar_historico
-
-with abas[4]:  # 📚 Histórico
-    st.markdown("## 📦 Histórico de Detecções Salvas")
-
-    tipos = ["lives", "vods", "template", "url"]
-
-    for tipo in tipos:
-        st.subheader(f"🗂 Histórico de: {tipo.upper()}")
-        df = carregar_historico(tipo)
-        if not df.empty:
-            st.dataframe(df, use_container_width=True)
-            col1, col2 = st.columns(2)
-            with col1:
-                st.download_button(
-                    f"⬇️ Baixar CSV ({tipo})",
-                    data=df.to_csv(index=False).encode("utf-8"),
-                    file_name=f"{tipo}_historico.csv",
-                    mime="text/csv"
-                )
-            with col2:
-                if st.button(f"🗑 Limpar {tipo.upper()}", key=f"limpar_{tipo}"):
-                    limpar_historico(tipo)
-                    st.warning(f"Histórico de {tipo} apagado.")
-        else:
-            st.info(f"Nenhum dado salvo para {tipo}.")
-
-# ------------------ Aba 6: Dashboards Interativos ------------------
-from storage import carregar_historico
-import plotly.express as px
-import pandas as pd
-
+# ------------------ ABA 5: Dashboards ------------------
 with abas[5]:
-    st.markdown("## 📈 Dashboards Interativos de Detecção")
-
-    # Carrega dados salvos
+    st.subheader("📈 Painéis de Detecção")
     dados_template = carregar_historico("template")
     dados_url = carregar_historico("url")
     dados_lives = carregar_historico("lives")
-
-    # Junta tudo
     df_geral = pd.concat([dados_template, dados_url, dados_lives], ignore_index=True)
 
-if df_geral.empty:
-    st.info("📭 Nenhum dado disponível para análise. Execute uma varredura primeiro.")
-else:
-    # Garantir formatação da coluna temporal
-    if "data_hora" in df_geral.columns:
-        df_geral["data_hora"] = pd.to_datetime(df_geral["data_hora"], errors="coerce")
-
-        # Criar coluna de dia da semana manualmente
-        dias_semana = {
-            0: 'segunda-feira',
-            1: 'terça-feira',
-            2: 'quarta-feira',
-            3: 'quinta-feira',
-            4: 'sexta-feira',
-            5: 'sábado',
-            6: 'domingo'
-        }
-        df_geral["dia_semana"] = df_geral["data_hora"].dt.dayofweek.map(dias_semana)
-
-    # --- A partir daqui seguem os gráficos normalmente ---
-    # Exemplo de gráfico: Total de minutos com Pragmatic Play por Streamer
-    st.markdown("### ⏱️ Total de minutos com Pragmatic Play por Streamer")
-
-    minutos_dict = calcular_minutos_por_streamer(df_geral.to_dict(orient="records"), nome_jogo="pragmatic")
-
-    if minutos_dict:
-        df_minutos = pd.DataFrame(list(minutos_dict.items()), columns=["Streamer", "Minutos com Pragmatic"])
-        df_minutos = df_minutos.sort_values(by="Minutos com Pragmatic", ascending=False)
-
-        st.dataframe(df_minutos, use_container_width=True)
-
-        csv = df_minutos.to_csv(index=False).encode("utf-8")
-        st.download_button("⬇️ Baixar CSV de Minutos com Pragmatic", csv, "minutos_pragmatic.csv", "text/csv")
+    if df_geral.empty:
+        st.info("📭 Nenhum dado disponível para análise. Execute uma varredura primeiro.")
     else:
-        st.info("Nenhum jogo Pragmatic Play detectado nos dados.")
-
-
-        # ------------------ Aba 7: Visualização de Dataset ------------------
-import os
-from PIL import Image
-
-with abas[6]:  # "📂 Visualizar Dataset"
-    st.markdown("## 🖼️ Visualização das Imagens do Dataset")
-
-    dataset_dir = "dataset"
-    classes_disponiveis = sorted([d for d in os.listdir(dataset_dir) if os.path.isdir(os.path.join(dataset_dir, d))])
-
-    if not classes_disponiveis:
-        st.error("❌ Nenhuma classe encontrada na pasta /dataset/")
-    else:
-        classe = st.selectbox("📁 Escolha a classe", classes_disponiveis)
-        caminho_classe = os.path.join(dataset_dir, classe)
-        imagens = sorted([f for f in os.listdir(caminho_classe) if f.lower().endswith((".jpg", ".jpeg", ".png"))])
-
-        total = len(imagens)
-        st.write(f"📸 {total} imagens encontradas na classe **{classe}**")
-
-        imagens_por_pagina = st.slider("🧮 Imagens por página", 4, 24, 12)
-        pagina = st.number_input("📄 Página", min_value=1, max_value=(len(imagens) // imagens_por_pagina) + 1, step=1)
-        inicio = (pagina - 1) * imagens_por_pagina
-        fim = inicio + imagens_por_pagina
-
-        colunas = st.columns(4)
-        for i, img_nome in enumerate(imagens[inicio:fim]):
-            caminho_img = os.path.join(caminho_classe, img_nome)
-            imagem = Image.open(caminho_img)
-            with colunas[i % 4]:
-                st.image(imagem, caption=img_nome, use_container_width=True)
-
+        st.write("✅ Dados carregados para análise.")
         
         # --- Gráfico 1: Share of Voice ---
         st.markdown("### 🥧 Share of Voice (Distribuição dos Jogos Detectados)")
@@ -984,6 +905,30 @@ else:
     st.info("Não há dados de pico de audiência.")
 
 # ------------------ SUGERIR NOVOS STREAMERS ------------------
+def sugerir_novos_streamers():
+    sugestoes = []
+    categorias_alvo = ["Slots", "Virtual Casino"]
+
+    try:
+        response = requests.get(
+            f"{BASE_URL_TWITCH}streams?first=100",
+            headers=HEADERS_TWITCH
+        )
+        data = response.json().get("data", [])
+        atuais = set(STREAMERS_INTERESSE)
+
+        for stream in data:
+            game_name = stream.get("game_name", "").lower()
+            login = stream.get("user_login")
+            if any(cat.lower() in game_name for cat in categorias_alvo):
+                if login and login not in atuais:
+                    sugestoes.append(login)
+    except Exception as e:
+        logging.error(f"Erro ao buscar streamers: {e}")
+
+    return sugestoes
+
+
 st.sidebar.markdown("---")
 if st.sidebar.button("🔎 Sugerir novos streamers PT-BR"):
     novos = sugerir_novos_streamers()
@@ -1001,3 +946,42 @@ if st.sidebar.button("🔬 Testar busca de streams"):
     resp = requests.get(test_url, headers=HEADERS_TWITCH)
     st.sidebar.write("🔁 Status:", resp.status_code)
     st.sidebar.json(resp.json())
+
+def buscar_vods_por_streamer_e_periodo(streamer, data_inicio, data_fim):
+    try:
+        df = pd.read_csv("vods.csv", parse_dates=["data"])
+    except FileNotFoundError:
+        st.error("❌ Arquivo 'vods.csv' não encontrado.")
+        return []
+
+    data_inicio = pd.to_datetime(data_inicio)
+    data_fim = pd.to_datetime(data_fim)
+
+    df_filtrado = df[
+        (df["streamer"] == streamer) &
+        (df["data"] >= data_inicio) &
+        (df["data"] <= data_fim)
+    ]
+
+    return df_filtrado.to_dict(orient="records")
+
+
+def analisar_por_periodo(streamer, vods):
+    resultados_finais = []
+
+    for vod in vods:
+        m3u8_url = obter_url_m3u8_twitch(vod["url"])
+        if not m3u8_url:
+            continue
+
+        resultado = varrer_url_customizada_paralela(
+            m3u8_url, st, st.session_state, prever_jogo_em_frame,
+            skip_inicial=0, intervalo=120, max_frames=6
+        )
+
+        if resultado:
+            for r in resultado:
+                r["streamer"] = streamer
+            resultados_finais.extend(resultado)
+
+    return resultados_finais
