@@ -19,7 +19,7 @@ import re
 import gdown
 import subprocess
 from tensorflow.keras.models import load_model
-from storage import salvar_deteccao, carregar_historico, limpar_historico, limpar_todos_historicos
+from storage import salvar_deteccao
 
 # ---------------- OBTER ACCESS TOKEN DA TWITCH ----------------
 def obter_access_token(client_id, client_secret):
