@@ -461,16 +461,21 @@ with col2:
             st.info("Nenhuma VOD encontrada no período.")
 
 
+from ml_utils import varrer_vods_com_modelo  # no topo se ainda não estiver
+
 with col3:
     if st.button("🖼️ Varrer VODs com imagem"):
         dt_ini = datetime.combine(data_inicio, datetime.min.time())
         dt_fim = datetime.combine(data_fim, datetime.max.time())
-        resultados = varrer_vods_com_template(dt_ini, dt_fim, HEADERS_TWITCH, BASE_URL_TWITCH, TODOS_STREAMERS)
+        resultados = varrer_vods_com_modelo(
+            dt_ini, dt_fim, HEADERS_TWITCH, BASE_URL_TWITCH, TODOS_STREAMERS,
+            st.session_state, prever_jogo_em_frame
+        )
         if resultados:
             salvar_deteccao("template", resultados)
-            st.success(f"{len(resultados)} jogos detectados via template.")
+            st.success(f"{len(resultados)} jogos detectados com ML.")
         else:
-            st.info("Nenhum jogo detectado via template.")
+            st.info("Nenhum jogo detectado com ML.")
 
 
 with col4:
