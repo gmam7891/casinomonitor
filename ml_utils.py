@@ -149,6 +149,32 @@ def match_template_from_image(image_path, templates_dir="templates/", threshold=
             if max_val >= threshold:
                 return os.path.splitext(template_file)[0]
 
+        def capturar_frame_ffmpeg_imageio(m3u8_url, output_path, skip_seconds=0):
+    """
+    Captura um frame de uma URL .m3u8 usando FFmpeg e salva como imagem.
+    """
+    try:
+        output_options = [
+            "-ss", str(skip_seconds),
+            "-i", m3u8_url,
+            "-frames:v", "1",
+            "-q:v", "2",  # qualidade
+            output_path
+        ]
+
+        ffmpeg_binary = ffmpeg.get_ffmpeg_exe()
+
+        comando = [ffmpeg_binary] + output_options
+
+        result = subprocess.run(comando, capture_output=True, text=True)
+        if result.returncode != 0:
+            print(f"Erro capturando frame: {result.stderr}")
+            return False
+        return True
+    except Exception as e:
+        print(f"[Erro] capturar_frame_ffmpeg_imageio: {e}")
+        return False
+
         return None
     except Exception as e:
         print(f"[Erro] match_template_from_image: {e}")
