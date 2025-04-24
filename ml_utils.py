@@ -225,18 +225,22 @@ def varrer_url_customizada(m3u8_url, st, session_state, prever_jogo_fn, skip_ini
     resultados = []
     for i in range(max_frames):
         tempo = skip_inicial + i * intervalo
-        frame_path = f"frame_{tempo}.jpg"
-        sucesso = capturar_frame_ffmpeg_imageio(m3u8_url, frame_path, skip_seconds=tempo)
-        if sucesso:
-            resultado, confianca = prever_jogo_fn(frame_path, session_state.get("modelo_ml"))
-            if resultado:
+
+        # Nova forma: capturando frame como imagem em memória
+        frame = capturar_frame_ffmpeg_imageio(m3u8_url, tempo)
+
+        if frame is not None:
+            previsao = prever_jogo_fn(frame, session_state.get("modelo_ml"))
+            if previsao and previsao["jogo"]:
                 resultados.append({
                     "segundo": tempo,
-                    "frame": frame_path,
-                    "jogo_detectado": resultado,
-                    "confianca": confianca
+                    "jogo_detectado": previsao["jogo"],
+                    "confianca": previsao["confianca"]
                 })
+        else:
+            print(f"[AVISO] Não foi possível capturar frame no segundo {tempo}")
     return resultados
+
 
 
 def varrer_vods_com_modelo(dt_inicio, dt_fim, headers, base_url, streamers, session_state, prever_jogo_fn):
