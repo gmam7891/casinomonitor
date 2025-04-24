@@ -395,8 +395,9 @@ with st.sidebar.expander("🎯 Análise de VOD / Período"):
                         st.session_state,
                         prever_jogo_em_frame,
                         varrer_url_customizada_paralela,
-                        obter_url_m3u8_twitch
+                        obter_url_m3u8_twitch  # ✅ agora alinhado
                     )
+
 
                     if resultados:
                         salvar_deteccao("periodo", resultados)
