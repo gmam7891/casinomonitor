@@ -119,23 +119,32 @@ def analisar_por_periodo(streamer, vods, st, session_state, prever_jogo_em_frame
     return resultados_finais
 
 
-def prever_jogo_em_frame(image_path, modelo=None, threshold=0.4):
+def prever_jogo_em_frame(image_input, modelo=None, threshold=0.4):
     try:
         if modelo is None:
-            resultado = match_template_from_image(image_path)
-            return resultado, None
+            # fallback para template matching
+            if isinstance(image_input, str):  # path
+                resultado = match_template_from_image(image_input)
+                return {"jogo": resultado, "confianca": 1.0 if resultado else 0.0}
+            else:
+                return {"jogo": None, "confianca": 0.0}
 
-        img = keras_image.load_img(image_path, target_size=(224, 224))
-        x = keras_image.img_to_array(img)
+        if isinstance(image_input, str):
+            img = keras_image.load_img(image_input, target_size=(224, 224))
+            x = keras_image.img_to_array(img)
+        else:
+            img = cv2.resize(image_input, (224, 224))
+            x = img.astype("float32")
+
         x = mobilenet_v2.preprocess_input(x)
         x = np.expand_dims(x, axis=0)
 
         y_pred = modelo.predict(x)[0][0]
-        resultado = "Pragmatic Play (ML)" if y_pred > threshold else None
-        return resultado, float(y_pred)
+        resultado = "Pragmatic Play" if y_pred > threshold else None
+        return {"jogo": resultado, "confianca": float(y_pred)}
     except Exception as e:
         print(f"[Erro] prever_jogo_em_frame: {e}")
-        return None, None
+        return {"jogo": None, "confianca": 0.0}
 
 
 def match_template_from_image(image_path, templates_dir="templates/", threshold=0.8):
