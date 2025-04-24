@@ -25,7 +25,7 @@ from storage import salvar_deteccao
 from ml_utils import (
     extrair_segundos_da_url_vod,
     buscar_vods_por_streamer_e_periodo,
-    varrer_url_customizada_paralela
+    varrer_url_customizada_paralela,
     analisar_por_periodo
 )
 
