@@ -358,7 +358,7 @@ with st.sidebar.expander("🎯 Análise de VOD / Período"):
                         tempo_inicial = extrair_segundos_da_url_vod(vod_url_individual)
                         resultado = varrer_url_customizada_paralela(
                             m3u8_url, st, st.session_state, prever_jogo_em_frame,
-                            skip_inicial=tempo_inicial, intervalo=20, max_frames=10
+                            skip_inicial=tempo_inicial, intervalo=100, max_frames=300
                         )
                         if resultado:
                             for r in resultado:
