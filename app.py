@@ -389,13 +389,14 @@ with st.sidebar.expander("🎯 Análise de VOD / Período"):
                     st.warning("⚠️ Nenhuma VOD encontrada nesse período.")
                 else:
                     resultados = analisar_por_periodo(
-                    streamer_escolhido,
-                    vods,
-                    st,
-                    st.session_state,
-                    prever_jogo_em_frame,
-                    obter_url_m3u8_twitch
-                )
+                        streamer_escolhido,
+                        vods,
+                        st,
+                        st.session_state,
+                        prever_jogo_em_frame,
+                        varrer_url_customizada_paralela,
+                        obter_url_m3u8_twitch
+                    )
 
 
 
