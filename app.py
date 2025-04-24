@@ -191,10 +191,7 @@ def capturar_frames_paralelamente(vod_urls, segundo_alvo):
     return resultados
 
 # ⚙️ Varredura paralela para URL personalizada com modelo ML
-def varrer_url_customizada_paralela(m3u8_url, st, session_state, prever_jogo_fn, skip_inicial=0, intervalo=5, max_frames=2160):
-    resultados = []
-
-   def processar_frame(m3u8_url, tempo, modelo, nome_jogo_previsto=None):
+def processar_frame(m3u8_url, tempo, modelo, nome_jogo_previsto=None):
     frame = capturar_frame_ffmpeg_imageio(m3u8_url, tempo)
 
     if frame is not None:
@@ -208,8 +205,22 @@ def varrer_url_customizada_paralela(m3u8_url, st, session_state, prever_jogo_fn,
             }
     else:
         print(f"[ERRO] Frame não capturado no segundo {tempo}")
-
     return None
+
+    def varrer_url_customizada_paralela(m3u8_url, st, session_state, prever_jogo_fn, skip_inicial=0, intervalo=5, max_frames=2160):
+    resultados = []
+    tempos = [skip_inicial + i * intervalo for i in range(max_frames)]
+
+    with ThreadPoolExecutor(max_workers=4) as executor:
+        futures = [executor.submit(processar_frame, m3u8_url, tempo, session_state["modelo_ml"]) for tempo in tempos]
+        for future in futures:
+            res = future.result()
+            if res:
+                resultados.append(res)
+
+    session_state["dados_url"] = resultados
+    return resultados
+
 
     tempos = [skip_inicial + i * intervalo for i in range(max_frames)]
 
