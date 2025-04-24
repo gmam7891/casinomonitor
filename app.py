@@ -374,28 +374,35 @@ with st.sidebar.expander("🎯 Análise de VOD / Período"):
     elif tipo_analise == "Por período":
         data_inicio = st.date_input("📅 Data de início", value=datetime.today() - timedelta(days=7))
         data_fim = st.date_input("📅 Data de fim", value=datetime.today())
-
+    
         if st.button("📅 Analisar por Período"):
             with st.spinner(f"🔎 Buscando VODs do streamer {streamer_escolhido} por período..."):
                 vods = buscar_vods_por_streamer_e_periodo(
-                    streamer_escolhido, data_inicio, data_fim,
-                    HEADERS_TWITCH, BASE_URL_TWITCH
+                    streamer_escolhido,
+                    data_inicio,
+                    data_fim,
+                    HEADERS_TWITCH,
+                    BASE_URL_TWITCH
                 )
+    
                 if not vods:
                     st.warning("⚠️ Nenhuma VOD encontrada nesse período.")
                 else:
                     resultados = analisar_por_periodo(
-                        streamer_escolhido, vods,
-                        st, st.session_state,
-                        prever_jogo_em_frame, varrer_url_customizada_paralela,
+                        streamer_escolhido,
+                        vods,
+                        st,
+                        st.session_state,
+                        prever_jogo_em_frame,
+                        varrer_url_customizada_paralela,
                         obter_url_m3u8_twitch
                     )
+    
                     if resultados:
                         salvar_deteccao("periodo", resultados)
                         st.success("✅ Análise por período concluída e salva!")
                     else:
                         st.warning("⚠️ Nenhuma detecção relevante encontrada.")
-
 
     def buscar_vods_por_streamer_e_periodo(streamer, data_inicio, data_fim):
         try:
