@@ -217,23 +217,10 @@ def varrer_url_customizada_paralela(m3u8_url, st, session_state, prever_jogo_fn,
             executor.submit(processar_frame, m3u8_url, tempo, session_state["modelo_ml"])
             for tempo in tempos
         ]
-        for i, future in enumerate(futures):
-            tempo = tempos[i]
+        for future in futures:
             res = future.result()
-            
-            # Mesmo que não haja detecção, salva a confiança (ou 0.0)
             if res:
-                resultados.append({
-                    "segundo": res.get("segundo", tempo),
-                    "jogo_detectado": res.get("jogo", "Nenhum"),
-                    "confianca": res.get("confianca", 0.0)
-                })
-            else:
-                resultados.append({
-                    "segundo": tempo,
-                    "jogo_detectado": "Nenhum",
-                    "confianca": 0.0
-                })
+                resultados.append(res)
 
     session_state["dados_url"] = resultados
     return resultados
@@ -721,14 +708,8 @@ with abas[5]:
         # --- Gráfico 3: Evolução Temporal ---
         st.markdown("### 📈 Evolução Temporal das Detecções")
 
-       if "data_hora" in df_geral.columns and "jogo_detectado" in df_geral.columns:
-            df_geral["data_hora"] = pd.to_datetime(df_geral["data_hora"], errors="coerce")
-
-            evolucao = (
-                df_geral.groupby([pd.Grouper(key="data_hora", freq="D"), "jogo_detectado"])
-                .size()
-                .reset_index(name="Detecções")
-            )
+        if "data_hora" in df_geral.columns and "jogo_detectado" in df_geral.columns:
+            evolucao = df_geral.groupby([pd.Grouper(key="data_hora", freq="D"), "jogo_detectado"]).size().reset_index(name="Detecções")
 
             fig3 = px.line(
                 evolucao,
@@ -738,8 +719,6 @@ with abas[5]:
                 title="📅 Detecções por Jogo ao Longo do Tempo"
             )
             st.plotly_chart(fig3, use_container_width=True)
-        else:
-            st.info("Dados temporais insuficientes para gerar evolução.")
 
         # --- Gráfico 4: Tempo Médio por Jogo ---
         st.markdown("### ⏱ Tempo Médio de Detecção por Jogo")
