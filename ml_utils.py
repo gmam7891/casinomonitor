@@ -4,6 +4,10 @@ import logging
 import traceback
 from datetime import datetime, timezone
 from collections import Counter
+import subprocess
+from PIL import Image
+import numpy as np
+import io
 
 import cv2
 import requests
@@ -159,27 +163,44 @@ def match_template_from_image(image_path, templates_dir="templates/", threshold=
         return None
 
 
-def capturar_frame_ffmpeg_imageio(m3u8_url, output_path, skip_seconds=0):
+def capturar_frame_ffmpeg_imageio(m3u8_url, segundo=0):
     try:
-        output_options = [
-            "-ss", str(skip_seconds),
+        comando = [
+            "ffmpeg",
+            "-reconnect", "1",
+            "-reconnect_streamed", "1",
+            "-reconnect_delay_max", "2",
+            "-stimeout", "5000000",
+            "-y",
+            "-ss", str(segundo),
             "-i", m3u8_url,
             "-frames:v", "1",
-            "-q:v", "2",
-            output_path
+            "-f", "image2pipe",
+            "-vcodec", "mjpeg",
+            "pipe:1"
         ]
 
-        ffmpeg_binary = ffmpeg.get_ffmpeg_exe()
-        comando = [ffmpeg_binary] + output_options
+        resultado = subprocess.run(
+            comando,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=30
+        )
 
-        result = subprocess.run(comando, capture_output=True, text=True)
-        if result.returncode != 0:
-            print(f"Erro capturando frame: {result.stderr}")
-            return False
-        return True
+        if resultado.returncode != 0:
+            print(f"[FFMPEG ERRO] Frame {segundo}s – código {resultado.returncode}")
+            print(resultado.stderr.decode())
+            return None
+
+        imagem = Image.open(io.BytesIO(resultado.stdout)).convert("RGB")
+        return np.array(imagem)
+
+    except subprocess.TimeoutExpired:
+        print(f"[TIMEOUT] Frame {segundo}s demorou demais para processar.")
+        return None
     except Exception as e:
-        print(f"[Erro] capturar_frame_ffmpeg_imageio: {e}")
-        return False
+        print(f"[EXCEÇÃO] Frame {segundo}s: {e}")
+        return None
 
 
 def verificar_jogo_em_live(streamer, headers, base_url):
