@@ -971,3 +971,6 @@ def buscar_vods_por_streamer_e_periodo(streamer, data_inicio, data_fim):
     ]
 
     return df_filtrado.to_dict(orient="records")
+
+
+
