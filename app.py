@@ -23,10 +23,12 @@ from tensorflow.keras.models import load_model
 from storage import salvar_deteccao
 
 from ml_utils import (
-    extrair_segundos_da_url_vod,
-    buscar_vods_por_streamer_e_periodo,
-    analisar_por_periodo
+    prever_jogo_em_frame,
+    varrer_url_customizada_paralela,
+    obter_url_m3u8_twitch,
+    varrer_vods_com_modelo,  # se precisar também
 )
+
 
 
 # ---------------- OBTER ACCESS TOKEN DA TWITCH ----------------
