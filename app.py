@@ -196,7 +196,7 @@ def varrer_url_customizada_paralela(m3u8_url, st, session_state, prever_jogo_fn,
 
     def processar_frame(tempo):
         frame_path = f"frame_{tempo}.jpg"
-        sucesso = capturar_frame_ffmpeg_imageio(m3u8_url, frame_path, skip_seconds=tempo)
+        frame = capturar_frame_ffmpeg_imageio(m3u8_url, tempo)
         if sucesso:
             resultado, confianca = prever_jogo_fn(frame_path, session_state.get("modelo_ml"))
             if resultado:
