@@ -220,6 +220,37 @@ def processar_frame(m3u8_url, tempo, modelo, nome_jogo_previsto=None):
     session_state["dados_url"] = resultados
     return resultados
 
+def varrer_url_customizada_paralela(
+    m3u8_url,
+    st,
+    session_state,
+    prever_jogo_em_frame,
+    skip_inicial=0,
+    intervalo=20,
+    max_frames=10
+):
+    modelo = st.session_state.get("modelo_ml")
+    if modelo is None:
+        st.error("⚠️ Modelo não carregado.")
+        return []
+
+    tempos = [skip_inicial + i * intervalo for i in range(max_frames)]
+
+    resultados = []
+
+    with ThreadPoolExecutor(max_workers=4) as executor:
+        futures = [
+            executor.submit(processar_frame, m3u8_url, tempo, modelo)
+            for tempo in tempos
+        ]
+        for future in futures:
+            res = future.result()
+            if res:
+                resultados.append(res)
+
+    session_state["dados_url"] = resultados
+    return resultados
+
 # 📂 Diretórios e arquivos fixos
 STREAMERS_FILE = "streamers.txt"
 DADOS_DIR = "dados"
