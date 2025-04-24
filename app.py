@@ -720,8 +720,6 @@ with abas[5]:
 
         # --- Gráfico 3: Evolução Temporal ---
         st.markdown("### 📈 Evolução Temporal das Detecções")
-        if "data_hora" in df_geral.columns:
-            df_geral["data_hora"] = pd.to_datetime(df_geral["data_hora"], errors="coerce")
 
         if "data_hora" in df_geral.columns and "jogo_detectado" in df_geral.columns:
             evolucao = df_geral.groupby([pd.Grouper(key="data_hora", freq="D"), "jogo_detectado"]).size().reset_index(name="Detecções")
