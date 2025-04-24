@@ -1,7 +1,6 @@
 import sys
 import os
 sys.path.append(os.path.dirname(__file__))
-from concurrent.futures import ThreadPoolExecutor
 
 from datetime import datetime, timedelta
 import streamlit as st
@@ -192,38 +191,22 @@ def capturar_frames_paralelamente(vod_urls, segundo_alvo):
     return resultados
 
 # ⚙️ Varredura paralela para URL personalizada com modelo ML
-def processar_frame(m3u8_url, tempo, modelo, nome_jogo_previsto=None):
-    frame = capturar_frame_ffmpeg_imageio(m3u8_url, tempo)
-
-    if frame is not None:
-        previsao = modelo(frame)
-        if previsao and previsao["jogo"]:
-            print(f"[{tempo}s] 🎰 Jogo detectado: {previsao['jogo']}")
-            return {
-                "segundo": tempo,
-                "jogo": previsao["jogo"],
-                "confianca": previsao["confianca"]
-            }
-    else:
-        print(f"[ERRO] Frame não capturado no segundo {tempo}")
-    return None
-
-def varrer_url_customizada_paralela(m3u8_url, st, session_state, prever_jogo_fn, skip_inicial=0, intervalo=3, max_frames=3600):
+def varrer_url_customizada_paralela(m3u8_url, st, session_state, prever_jogo_fn, skip_inicial=0, intervalo=5, max_frames=2160):
     resultados = []
-    tempos = [skip_inicial + i * intervalo for i in range(max_frames)]
 
-    with ThreadPoolExecutor(max_workers=4) as executor:
-        futures = [
-            executor.submit(processar_frame, m3u8_url, tempo, session_state["modelo_ml"])
-            for tempo in tempos
-        ]
-        for future in futures:
-            res = future.result()
-            if res:
-                resultados.append(res)
-
-    session_state["dados_url"] = resultados
-    return resultados
+    def processar_frame(tempo):
+        frame_path = f"frame_{tempo}.jpg"
+        sucesso = capturar_frame_ffmpeg_imageio(m3u8_url, frame_path, skip_seconds=tempo)
+        if sucesso:
+            resultado, confianca = prever_jogo_fn(frame_path, session_state.get("modelo_ml"))
+            if resultado:
+                return {
+                    "segundo": tempo,
+                    "frame": frame_path,
+                    "jogo_detectado": resultado,
+                    "confianca": confianca
+                }
+        return None
 
     tempos = [skip_inicial + i * intervalo for i in range(max_frames)]
 
