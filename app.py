@@ -398,11 +398,11 @@ with st.sidebar.expander("🎯 Análise de VOD / Período"):
                         obter_url_m3u8_twitch
                     )
         
-                        if resultados:
-                            salvar_deteccao("periodo", resultados)
-                            st.success("✅ Análise por período concluída e salva!")
-                        else:
-                            st.warning("⚠️ Nenhuma detecção relevante encontrada.")
+                    if resultados:
+                        salvar_deteccao("periodo", resultados)
+                        st.success("✅ Análise por período concluída e salva!")
+                    else:
+                        st.warning("⚠️ Nenhuma detecção relevante encontrada.")
 
 
 # ------------------ EXIBIÇÃO DE RESULTADOS (MELHORADA) ------------------
