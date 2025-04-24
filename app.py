@@ -388,7 +388,7 @@ with st.sidebar.expander("🎯 Análise de VOD / Período"):
                 if not vods:
                     st.warning("⚠️ Nenhuma VOD encontrada nesse período.")
                 else:
-                    resultados = analisar_por_periodo(
+                   resultados = analisar_por_periodo(
                         streamer_escolhido,
                         vods,
                         st,
