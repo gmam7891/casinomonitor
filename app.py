@@ -194,19 +194,22 @@ def capturar_frames_paralelamente(vod_urls, segundo_alvo):
 def varrer_url_customizada_paralela(m3u8_url, st, session_state, prever_jogo_fn, skip_inicial=0, intervalo=5, max_frames=2160):
     resultados = []
 
-    def processar_frame(tempo):
-        frame_path = f"frame_{tempo}.jpg"
-        frame = capturar_frame_ffmpeg_imageio(m3u8_url, tempo)
-        if sucesso:
-            resultado, confianca = prever_jogo_fn(frame_path, session_state.get("modelo_ml"))
-            if resultado:
-                return {
-                    "segundo": tempo,
-                    "frame": frame_path,
-                    "jogo_detectado": resultado,
-                    "confianca": confianca
-                }
-        return None
+   def processar_frame(m3u8_url, tempo, modelo, nome_jogo_previsto=None):
+    frame = capturar_frame_ffmpeg_imageio(m3u8_url, tempo)
+
+    if frame is not None:
+        previsao = modelo(frame)
+        if previsao and previsao["jogo"]:
+            print(f"[{tempo}s] 🎰 Jogo detectado: {previsao['jogo']}")
+            return {
+                "segundo": tempo,
+                "jogo": previsao["jogo"],
+                "confianca": previsao["confianca"]
+            }
+    else:
+        print(f"[ERRO] Frame não capturado no segundo {tempo}")
+
+    return None
 
     tempos = [skip_inicial + i * intervalo for i in range(max_frames)]
 
