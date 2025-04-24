@@ -208,7 +208,7 @@ def processar_frame(m3u8_url, tempo, modelo, nome_jogo_previsto=None):
         print(f"[ERRO] Frame não capturado no segundo {tempo}")
     return None
 
-def varrer_url_customizada_paralela(m3u8_url, st, session_state, prever_jogo_fn, skip_inicial=0, intervalo=5, max_frames=2160):
+def varrer_url_customizada_paralela(m3u8_url, st, session_state, prever_jogo_fn, skip_inicial=0, intervalo=3, max_frames=3600):
     resultados = []
     tempos = [skip_inicial + i * intervalo for i in range(max_frames)]
 
