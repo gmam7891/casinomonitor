@@ -971,24 +971,3 @@ def buscar_vods_por_streamer_e_periodo(streamer, data_inicio, data_fim):
     ]
 
     return df_filtrado.to_dict(orient="records")
-
-
-def analisar_por_periodo(streamer, vods):
-    resultados_finais = []
-
-    for vod in vods:
-        m3u8_url = obter_url_m3u8_twitch(vod["url"])
-        if not m3u8_url:
-            continue
-
-        resultado = varrer_url_customizada_paralela(
-            m3u8_url, st, st.session_state, prever_jogo_em_frame,
-            skip_inicial=0, intervalo=20, max_frames=10
-        )
-
-        if resultado:
-            for r in resultado:
-                r["streamer"] = streamer
-            resultados_finais.extend(resultado)
-
-    return resultados_finais
