@@ -390,7 +390,7 @@ with st.sidebar.expander("🎯 Análise de VOD / Período"):
         else:
             resultados = analisar_por_periodo(
                 streamer_escolhido,
-                 vods,
+                vods,
                 st,
                 st.session_state,
                 prever_jogo_em_frame,
