@@ -349,7 +349,6 @@ with st.sidebar.expander("🎯 Análise de VOD / Período"):
     intervalo = st.number_input("⏱️ Intervalo entre frames (s)", min_value=10, max_value=600, value=60)
     max_frames = st.number_input("🖼️ Total de frames a capturar", min_value=5, max_value=100, value=30)
 
-
     if tipo_analise == "VOD específica (URL)":
         if st.button("🎯 Analisar esta VOD"):
             if vod_url_individual:
