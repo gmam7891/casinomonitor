@@ -191,7 +191,7 @@ def capturar_frames_paralelamente(vod_urls, segundo_alvo):
     return resultados
 
 # ⚙️ Varredura paralela para URL personalizada com modelo ML
-def varrer_url_customizada_paralela(m3u8_url, st, session_state, prever_jogo_fn, skip_inicial=0, intervalo=5, max_frames=2160):
+def varrer_url_customizada_paralela(m3u8_url, st, session_state, prever_jogo_fn, skip_inicial=0, intervalo=20, max_frames=10):
     resultados = []
 
     def processar_frame(tempo):
@@ -980,7 +980,7 @@ def analisar_por_periodo(streamer, vods):
 
         resultado = varrer_url_customizada_paralela(
             m3u8_url, st, st.session_state, prever_jogo_em_frame,
-            skip_inicial=0, intervalo=5, max_frames=2160
+            skip_inicial=0, intervalo=20, max_frames=10
         )
 
         if resultado:
