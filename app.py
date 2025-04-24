@@ -721,11 +721,14 @@ with abas[5]:
         # --- Gráfico 3: Evolução Temporal ---
         st.markdown("### 📈 Evolução Temporal das Detecções")
 
-        if "data_hora" in df_geral.columns:
+       if "data_hora" in df_geral.columns and "jogo_detectado" in df_geral.columns:
             df_geral["data_hora"] = pd.to_datetime(df_geral["data_hora"], errors="coerce")
-    
-        evolucao = df_geral.groupby([pd.Grouper(key="data_hora", freq="D"), "jogo_detectado"])\
-            .size().reset_index(name="Detecções")
+
+            evolucao = (
+                df_geral.groupby([pd.Grouper(key="data_hora", freq="D"), "jogo_detectado"])
+                .size()
+                .reset_index(name="Detecções")
+            )
 
             fig3 = px.line(
                 evolucao,
@@ -735,6 +738,8 @@ with abas[5]:
                 title="📅 Detecções por Jogo ao Longo do Tempo"
             )
             st.plotly_chart(fig3, use_container_width=True)
+        else:
+            st.info("Dados temporais insuficientes para gerar evolução.")
 
         # --- Gráfico 4: Tempo Médio por Jogo ---
         st.markdown("### ⏱ Tempo Médio de Detecção por Jogo")
