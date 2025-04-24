@@ -218,22 +218,22 @@ def varrer_url_customizada_paralela(m3u8_url, st, session_state, prever_jogo_fn,
             for tempo in tempos
         ]
         for i, future in enumerate(futures):
-    tempo = tempos[i]
-    res = future.result()
-    
-    # Mesmo que não haja detecção, salva a confiança (ou 0.0)
-    if res:
-        resultados.append({
-            "segundo": res.get("segundo", tempo),
-            "jogo_detectado": res.get("jogo", "Nenhum"),
-            "confianca": res.get("confianca", 0.0)
-        })
-    else:
-        resultados.append({
-            "segundo": tempo,
-            "jogo_detectado": "Nenhum",
-            "confianca": 0.0
-        })
+            tempo = tempos[i]
+            res = future.result()
+            
+            # Mesmo que não haja detecção, salva a confiança (ou 0.0)
+            if res:
+                resultados.append({
+                    "segundo": res.get("segundo", tempo),
+                    "jogo_detectado": res.get("jogo", "Nenhum"),
+                    "confianca": res.get("confianca", 0.0)
+                })
+            else:
+                resultados.append({
+                    "segundo": tempo,
+                    "jogo_detectado": "Nenhum",
+                    "confianca": 0.0
+                })
 
     session_state["dados_url"] = resultados
     return resultados
