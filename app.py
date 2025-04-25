@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 from datetime import datetime, timedelta
-from ml_utils_corrigido import processar_frame, prever_jogo_em_frame, capturar_frame_ffmpeg_imageio
+from ml_utils import processar_frame, prever_jogo_em_frame, capturar_frame_ffmpeg_imageio
 from concurrent.futures import ThreadPoolExecutor
 import streamlink
 import os
@@ -112,4 +112,4 @@ with st.sidebar.expander("🎯 Análise de VOD / Período"):
                 st.error("❌ Arquivo vods.csv não encontrado.")
 
 st.markdown("---")
-st.markdown("🧠 Modelo carregado automaticamente no início via `ml_utils_corrigido.py`")
+st.markdown("🧠 Modelo carregado automaticamente no início via `ml_utils.py`")
