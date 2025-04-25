@@ -195,35 +195,20 @@ def capturar_frames_paralelamente(vod_urls, segundo_alvo):
 
 # ⚙️ Varredura paralela para URL personalizada com modelo ML
 def processar_frame(m3u8_url, tempo, modelo, nome_jogo_previsto=None):
-    print(f"[DEBUG] 🎬 Capturando frame no segundo {tempo}")
     frame = capturar_frame_ffmpeg_imageio(m3u8_url, segundo=tempo)
 
-    if frame is None:
-        print(f"[ERRO] ❌ Frame não capturado no segundo {tempo}")
-        return None
-
-    previsao = modelo(frame)
-
-    print(f"[DEBUG] 🧠 Previsão no segundo {tempo}: {previsao}")
-
-    if previsao and isinstance(previsao, dict):
-        confianca = previsao.get("confianca", 0)
-        jogo = previsao.get("jogo", "desconhecido")
-
-        if confianca > 0.5:  # ⚠️ pode ajustar o threshold aqui
-            print(f"[{tempo}s] ✅ Jogo detectado: {jogo} ({confianca:.2f})")
+    if frame is not None:
+        previsao = modelo(frame)
+        if previsao and previsao["jogo"]:
+            print(f"[{tempo}s] 🎰 Jogo detectado: {previsao['jogo']}")
             return {
                 "segundo": tempo,
-                "jogo_detectado": jogo,
-                "confianca": confianca
+                "jogo": previsao["jogo"],
+                "confianca": previsao["confianca"]
             }
-        else:
-            print(f"[{tempo}s] ⚠️ Confiança baixa ({confianca:.2f}), ignorado")
     else:
-        print(f"[{tempo}s] ⚠️ Resultado inesperado da previsão: {previsao}")
-
+        print(f"[ERRO] Frame não capturado no segundo {tempo}")
     return None
-
 
     tempos = [skip_inicial + i * intervalo for i in range(max_frames)]
 
