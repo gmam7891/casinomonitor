@@ -5,10 +5,14 @@ sys.path.append(os.path.dirname(__file__))
 from datetime import datetime, timedelta
 import streamlit as st
 import pandas as pd
+import datetime
 import logging
 import requests
 from dotenv import load_dotenv
 load_dotenv()
+
+print("TWITCH_CLIENT_ID:", os.getenv("TWITCH_CLIENT_ID"))
+print("TWITCH_CLIENT_SECRET:", os.getenv("TWITCH_CLIENT_SECRET"))
 
 import tensorflow as tf
 import time
@@ -17,22 +21,18 @@ import gdown
 import subprocess
 from tensorflow.keras.models import load_model
 from storage import salvar_deteccao
-from concurrent.futures import ThreadPoolExecutor
+
 
 from ml_utils import (
-    match_template_from_image,
-    capturar_frame_ffmpeg_imageio,
     prever_jogo_em_frame,
-    verificar_jogo_em_live,
-    varrer_url_customizada,
-    varrer_vods_com_modelo,
-    buscar_vods_twitch_por_periodo,
-    buscar_vods_por_streamer_e_periodo,
     obter_url_m3u8_twitch,
-    processar_frame
+    varrer_vods_com_modelo,  # se precisar também
+    extrair_segundos_da_url_vod
 )
 
-# ---------------- HEADERS E URL BASE DA TWITCH ----------------
+
+
+# ---------------- OBTER ACCESS TOKEN DA TWITCH ----------------
 def obter_access_token(client_id, client_secret):
     url = "https://id.twitch.tv/oauth2/token"
     data = {
@@ -48,6 +48,7 @@ def obter_access_token(client_id, client_secret):
         st.error("Erro ao obter access_token:")
         st.code(str(e))
         st.stop()
+
 # ---------------- OpenCV em ambiente headless ----------------
 try:
     import cv2
@@ -61,8 +62,18 @@ except ImportError:
         st.stop()
 
 # ---------------- Importar módulos internos ----------------
-    from ml_training import treinar_modelo 
-    
+from ml_training import treinar_modelo
+from ml_utils import (
+    match_template_from_image,
+    capturar_frame_ffmpeg_imageio,
+    prever_jogo_em_frame,
+    verificar_jogo_em_live,
+    varrer_url_customizada,
+    varrer_vods_com_modelo,
+    buscar_vods_twitch_por_periodo,
+    buscar_vods_por_streamer_e_periodo
+)
+
 # ---------------- CONFIGURAÇÃO GERAL ----------------
 st.set_page_config(page_title="Monitor Cassino PP", layout="wide")
 logging.basicConfig(level=logging.INFO, format='[%(levelname)s] %(asctime)s - %(message)s')
@@ -86,9 +97,6 @@ HEADERS_TWITCH = {
     'Authorization': f'Bearer {ACCESS_TOKEN}'
 }
 BASE_URL_TWITCH = 'https://api.twitch.tv/helix/'
-
-if "modelo_ml" not in st.session_state:
-    st.session_state["modelo_ml"] = tf.keras.models.load_model("modelo.h5")
 
 MODEL_PATH = "modelo/modelo_pragmatic.keras"
 MODEL_URL = "https://drive.google.com/uc?id=1i_zEMwUkTfu9L5HGNdrIs4OPCTN6Q8Zr"
