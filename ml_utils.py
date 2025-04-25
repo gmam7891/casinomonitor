@@ -307,3 +307,24 @@ def obter_url_m3u8_twitch(vod_url):
     except Exception as e:
         st.error(f"❌ Erro ao obter URL m3u8: {e}")
         return None
+
+def processar_frame(m3u8_url, tempo, session_state):
+    frame = capturar_frame_ffmpeg_imageio(m3u8_url, segundo=tempo)
+
+    if frame is None:
+        print(f"[ERRO] Frame não capturado no segundo {tempo}")
+        return None
+
+    previsao = prever_jogo_em_frame(frame, session_state.get("modelo_ml"))
+
+    if previsao and previsao["jogo"]:
+        print(f"[{tempo}s] 🎰 Jogo detectado: {previsao['jogo']}")
+        return {
+            "segundo": tempo,
+            "jogo": previsao["jogo"],
+            "confianca": previsao["confianca"],
+            "frame": frame
+        }
+
+    return None
+
