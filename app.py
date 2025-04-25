@@ -383,20 +383,19 @@ with st.sidebar.expander("🎯 Análise de VOD / Período"):
     tipo_analise = st.radio("Tipo de análise", ["VOD específica (URL)", "Por período"])
     vod_url_individual = st.text_input("📺 URL da VOD", placeholder="https://www.twitch.tv/videos/...")
 
-    intervalo = st.number_input("⏱️ Intervalo entre frames (s)", min_value=10, max_value=600, value=60)
-    max_frames = st.number_input("🖼️ Total de frames a capturar", min_value=5, max_value=100, value=30)
-
     if tipo_analise == "VOD específica (URL)":
         if st.button("🎯 Analisar esta VOD"):
             if vod_url_individual:
                 with st.spinner("🔍 Analisando VOD..."):
-                    m3u8_url = obter_url_m3u8_twitch(vod_url_individual)
-                    if m3u8_url:
-                        tempo_inicial = extrair_segundos_da_url_vod(vod_url_individual)
-                        resultado = varrer_url_customizada_paralela(
-                            m3u8_url, st, st.session_state, prever_jogo_em_frame,
-                            skip_inicial=tempo_inicial, intervalo=100, max_frames=300
-                        )
+                    resultado = varrer_url_customizada_paralela(
+                        m3u8_url,
+                        st,
+                        st.session_state,
+                        prever_jogo_em_frame,
+                        skip_inicial=0,        # começa do 0
+                        intervalo=60,          # a cada 60s
+                        max_frames=240         # cobre 4 horas
+                    )
                         if resultado:
                             for r in resultado:
                                 r["streamer"] = streamer_escolhido
@@ -471,6 +470,7 @@ def analisar_por_periodo(
             varrer_url_customizada_paralela,
             obter_url_m3u8_twitch
         )
+
         
         if resultados:
             salvar_deteccao("periodo", resultados)
