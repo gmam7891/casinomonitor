@@ -30,9 +30,6 @@ from ml_utils import (
     buscar_vods_por_streamer_e_periodo
 )
 
-print("TWITCH_CLIENT_ID:", os.getenv("TWITCH_CLIENT_ID"))
-print("TWITCH_CLIENT_SECRET:", os.getenv("TWITCH_CLIENT_SECRET"))
-
 # ---------------- HEADERS E URL BASE DA TWITCH ----------------
 def obter_access_token(client_id, client_secret):
     url = "https://id.twitch.tv/oauth2/token"
