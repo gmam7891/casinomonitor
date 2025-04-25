@@ -119,7 +119,7 @@ def analisar_por_periodo(streamer, vods, st, session_state, prever_jogo_em_frame
     return resultados_finais
 
 
-def prever_jogo_em_frame(image_input, modelo=None, threshold=0.4):
+def prever_jogo_em_frame(image_input, modelo=None, threshold=0.2):
     try:
         if modelo is None:
             # fallback para template matching
@@ -140,6 +140,9 @@ def prever_jogo_em_frame(image_input, modelo=None, threshold=0.4):
         x = np.expand_dims(x, axis=0)
 
         y_pred = modelo.predict(x)[0][0]
+
+        print(f"[DEBUG] Score de previsão (y_pred): {y_pred}")
+        
         resultado = "Pragmatic Play" if y_pred > threshold else None
         return {"jogo": resultado, "confianca": float(y_pred)}
     except Exception as e:
