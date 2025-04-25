@@ -195,3 +195,11 @@ def buscar_vods_por_streamer_e_periodo(streamer, data_inicio, data_fim, headers,
             })
 
     return resultado
+
+def match_template_from_image(*args, **kwargs):
+    print("[DEBUG] match_template_from_image chamado (mock)")
+    return None
+
+def varrer_url_customizada(*args, **kwargs):
+    print("[DEBUG] varrer_url_customizada chamado (mock)")
+    return []
