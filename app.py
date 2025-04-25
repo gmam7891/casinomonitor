@@ -17,6 +17,7 @@ import gdown
 import subprocess
 from tensorflow.keras.models import load_model
 from storage import salvar_deteccao
+from concurrent.futures import ThreadPoolExecutor
 
 from ml_utils import (
     match_template_from_image,
@@ -26,7 +27,9 @@ from ml_utils import (
     varrer_url_customizada,
     varrer_vods_com_modelo,
     buscar_vods_twitch_por_periodo,
-    buscar_vods_por_streamer_e_periodo
+    buscar_vods_por_streamer_e_periodo,
+    obter_url_m3u8_twitch,
+    processar_frame
 )
 
 # ---------------- HEADERS E URL BASE DA TWITCH ----------------
