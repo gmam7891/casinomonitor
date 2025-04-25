@@ -384,7 +384,7 @@ with st.sidebar.expander("🎯 Análise de VOD / Período"):
     vod_url_individual = st.text_input("📺 URL da VOD", placeholder="https://www.twitch.tv/videos/...")
 
     if tipo_analise == "VOD específica (URL)":
-        if st.button("🎯 Analisar esta VOD"):
+        if st.button("Analisar VOD Streamer"):
             if vod_url_individual:
                 with st.spinner("🔍 Analisando VOD..."):
                     resultado = varrer_url_customizada_paralela(
