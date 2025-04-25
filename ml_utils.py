@@ -96,19 +96,32 @@ def buscar_vods_por_streamer_e_periodo(streamer, data_inicio, data_fim, headers,
     return todos_vods
 
 
-def analisar_por_periodo(streamer, vods, st, session_state, prever_jogo_em_frame, varrer_url_customizada_paralela, obter_url_m3u8_twitch):
-    st.write("🛠️ Rodando análise por período")
-    st.write("🔎 VODs recebidas:", vods)
+def analisar_por_periodo(
+    streamer,
+    vods,
+    st,
+    session_state,
+    prever_jogo_em_frame,
+    varrer_url_customizada_paralela,
+    obter_url_m3u8_twitch
+):
     resultados_finais = []
 
-    for vod in vods:
+    for idx, vod in enumerate(vods):
+        st.info(f"📺 Analisando VOD {idx+1}/{len(vods)}...")
+
         m3u8_url = obter_url_m3u8_twitch(vod["url"])
         if not m3u8_url:
             continue
 
         resultado = varrer_url_customizada_paralela(
-            m3u8_url, st, session_state, prever_jogo_em_frame,
-            skip_inicial=0, intervalo=120, max_frames=6
+            m3u8_url,
+            st,
+            session_state,
+            prever_jogo_em_frame,
+            skip_inicial=0,
+            intervalo=60,
+            max_frames=240
         )
 
         if resultado:
@@ -117,6 +130,7 @@ def analisar_por_periodo(streamer, vods, st, session_state, prever_jogo_em_frame
             resultados_finais.extend(resultado)
 
     return resultados_finais
+
 
 
 def prever_jogo_em_frame(image_input, modelo=None, threshold=0.2):
