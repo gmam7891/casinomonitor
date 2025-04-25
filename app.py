@@ -153,8 +153,6 @@ if "modelo_ml" not in st.session_state:
         except Exception as e:
             st.error(f"Erro ao carregar modelo: {e}")
 
-
-
 # ---------------- FUNÇÕES AUXILIARES ----------------
 import os
 import subprocess
@@ -1057,6 +1055,5 @@ def buscar_vods_por_streamer_e_periodo(streamer, data_inicio, data_fim):
     ]
 
     return df_filtrado.to_dict(orient="records")
-
 
 
