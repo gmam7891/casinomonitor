@@ -193,34 +193,23 @@ def capturar_frames_paralelamente(vod_urls, segundo_alvo):
         resultados = [future.result() for future in futures]
     return resultados
 
-# ⚙️ Varredura paralela para URL personalizada com modelo ML
-def processar_frame(m3u8_url, tempo, modelo, nome_jogo_previsto=None):
+def processar_frame(m3u8_url, tempo, session_state):
     frame = capturar_frame_ffmpeg_imageio(m3u8_url, segundo=tempo)
 
     if frame is not None:
-        previsao = modelo(frame)
+        previsao = prever_jogo_em_frame(frame)
         if previsao and previsao["jogo"]:
             print(f"[{tempo}s] 🎰 Jogo detectado: {previsao['jogo']}")
             return {
                 "segundo": tempo,
                 "jogo": previsao["jogo"],
-                "confianca": previsao["confianca"]
+                "confianca": previsao["confianca"],
+                "frame": frame
             }
     else:
         print(f"[ERRO] Frame não capturado no segundo {tempo}")
     return None
 
-    tempos = [skip_inicial + i * intervalo for i in range(max_frames)]
-
-    with ThreadPoolExecutor(max_workers=4) as executor:
-        futures = [executor.submit(processar_frame, tempo) for tempo in tempos]
-        for future in futures:
-            res = future.result()
-            if res:
-                resultados.append(res)
-
-    session_state["dados_url"] = resultados
-    return resultados
 
 def varrer_url_customizada_paralela(
     m3u8_url,
@@ -239,10 +228,9 @@ def varrer_url_customizada_paralela(
     tempos = [skip_inicial + i * intervalo for i in range(max_frames)]
 
     resultados = []
-
     with ThreadPoolExecutor(max_workers=4) as executor:
         futures = [
-            executor.submit(processar_frame, m3u8_url, tempo, modelo)
+            executor.submit(processar_frame, m3u8_url, tempo, session_state)
             for tempo in tempos
         ]
         for future in futures:
@@ -252,6 +240,7 @@ def varrer_url_customizada_paralela(
 
     session_state["dados_url"] = resultados
     return resultados
+
 
 # 📂 Diretórios e arquivos fixos
 STREAMERS_FILE = "streamers.txt"
