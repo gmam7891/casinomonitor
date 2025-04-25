@@ -5,6 +5,7 @@ import streamlink
 import requests
 from imageio_ffmpeg import get_ffmpeg_exe
 import subprocess
+from datetime import datetime
 
 # 🎯 Captura um frame da VOD no segundo especificado
 def capturar_frame_ffmpeg_imageio(m3u8_url, segundo):
@@ -107,7 +108,7 @@ def varrer_vods_com_modelo(vods, st, session_state, prever_jogo_em_frame, captur
     session_state["dados_periodo"] = resultados
     return resultados
 
-
+# 📚 Busca VODs de vários streamers por período
 def buscar_vods_twitch_por_periodo(data_inicio, data_fim, headers, base_url, streamers):
     resultado = []
 
@@ -118,7 +119,7 @@ def buscar_vods_twitch_por_periodo(data_inicio, data_fim, headers, base_url, str
             print(f"[ERRO] Não foi possível obter ID do streamer: {streamer}")
             continue
 
-        user_data = resp_user.json()["data"]
+        user_data = resp_user.json().get("data", [])
         if not user_data:
             continue
 
@@ -130,8 +131,7 @@ def buscar_vods_twitch_por_periodo(data_inicio, data_fim, headers, base_url, str
             print(f"[ERRO] Não foi possível obter VODs de {streamer}")
             continue
 
-        videos_data = resp_videos.json()["data"]
-
+        videos_data = resp_videos.json().get("data", [])
         for vod in videos_data:
             vod_created_at = datetime.fromisoformat(vod["created_at"].replace('Z', '+00:00'))
 
@@ -144,3 +144,54 @@ def buscar_vods_twitch_por_periodo(data_inicio, data_fim, headers, base_url, str
 
     return resultado
 
+# 🔍 Verifica se o streamer está ao vivo e o título da live
+def verificar_jogo_em_live(streamer, headers, base_url):
+    try:
+        url = f"{base_url}/streams?user_login={streamer}"
+        resp = requests.get(url, headers=headers)
+        data = resp.json()
+
+        if "data" in data and len(data["data"]) > 0:
+            titulo = data["data"][0].get("title", "").lower()
+            return {
+                "ao_vivo": True,
+                "titulo": titulo
+            }
+        return {"ao_vivo": False, "titulo": ""}
+    except Exception as e:
+        print(f"[ERRO] verificar_jogo_em_live: {e}")
+        return {"ao_vivo": False, "titulo": ""}
+
+# 📚 Busca VODs de UM streamer por período
+def buscar_vods_por_streamer_e_periodo(streamer, data_inicio, data_fim, headers, base_url):
+    resultado = []
+
+    user_url = f"{base_url}/users?login={streamer}"
+    resp_user = requests.get(user_url, headers=headers)
+    if resp_user.status_code != 200:
+        print(f"[ERRO] Não foi possível obter ID do streamer: {streamer}")
+        return resultado
+
+    user_data = resp_user.json().get("data", [])
+    if not user_data:
+        return resultado
+
+    user_id = user_data[0]["id"]
+    videos_url = f"{base_url}/videos?user_id={user_id}&type=archive&first=100"
+    resp_videos = requests.get(videos_url, headers=headers)
+    if resp_videos.status_code != 200:
+        print(f"[ERRO] Não foi possível obter VODs do streamer: {streamer}")
+        return resultado
+
+    videos_data = resp_videos.json().get("data", [])
+    for vod in videos_data:
+        vod_created_at = datetime.fromisoformat(vod["created_at"].replace('Z', '+00:00'))
+
+        if data_inicio <= vod_created_at <= data_fim:
+            resultado.append({
+                "streamer": streamer,
+                "url": f"https://www.twitch.tv/videos/{vod['id']}",
+                "data": vod_created_at
+            })
+
+    return resultado
