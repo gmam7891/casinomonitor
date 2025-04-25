@@ -35,7 +35,6 @@ from ml_utils import (
 # ---------------- HEADERS E URL BASE DA TWITCH ----------------
 TWITCH_CLIENT_ID = os.getenv("TWITCH_CLIENT_ID")
 TWITCH_CLIENT_SECRET = os.getenv("TWITCH_CLIENT_SECRET")
-ACCESS_TOKEN = obter_access_token(TWITCH_CLIENT_ID, TWITCH_CLIENT_SECRET)
 
 HEADERS_TWITCH = {
     "Client-ID": TWITCH_CLIENT_ID,
