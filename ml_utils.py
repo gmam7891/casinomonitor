@@ -24,15 +24,15 @@ def capturar_frame_ffmpeg_imageio(m3u8_url, segundo):
         processo = subprocess.run(comando, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True)
         if processo.stdout:
             frame = np.frombuffer(processo.stdout, np.uint8)
-            frame = frame.reshape((720, 1280, 3))  # ajuste se necessário
+            frame = frame.reshape((720, 1280, 3))  # ajuste conforme sua VOD
             return frame
     except Exception as e:
         print(f"[FFMPEG ERRO] Frame {segundo}s – {e}")
         return None
 
-# 🧠 Realiza predição com o modelo carregado
+# 🧠 Predição com modelo carregado
 def prever_jogo_em_frame(frame):
-    modelo/modelo_pragmatic.keras
+    modelo = tf.keras.models.load_model("modelo.h5")
     if modelo is None:
         print("[ERRO] Modelo não carregado.")
         return None
@@ -42,38 +42,31 @@ def prever_jogo_em_frame(frame):
     frame = tf.expand_dims(frame, axis=0)
 
     pred = modelo.predict(frame)[0]
-    print(f"[DEBUG] Predição: {pred[0]}")
     return {
         "jogo_detectado": "pragmaticplay" if pred[0] > 0.5 else "outros",
         "confianca": float(pred[0])
     }
 
-# 🔄 Processa um frame em tempo X e retorna a predição
-def processar_frame(m3u8_url, tempo, session_state):
+# 🔄 Processa um frame de um ponto do vídeo
+def processar_frame(m3u8_url, tempo):
     frame = capturar_frame_ffmpeg_imageio(m3u8_url, segundo=tempo)
     if frame is not None:
         previsao = prever_jogo_em_frame(frame)
         if previsao:
-            print(f"[{tempo}s] 🎰 Jogo detectado: {previsao['jogo_detectado']}")
             return {
                 "segundo": tempo,
-                **previsao,
-                "frame": frame
+                **previsao
             }
-    else:
-        print(f"[ERRO] Frame não capturado no segundo {tempo}")
     return None
 
-# 🔗 Extrai a URL .m3u8 de uma VOD da Twitch
+# 🔗 Pega a .m3u8 a partir da VOD
 def obter_url_m3u8_twitch(url_vod):
     try:
         streams = streamlink.streams(url_vod)
         if "best" in streams:
             return streams["best"].url
-        else:
-            print("[ERRO] Não foi possível encontrar a qualidade 'best'")
     except Exception as e:
-        print(f"[ERRO] Falha ao obter .m3u8 da VOD: {e}")
+        print(f"[ERRO] .m3u8: {e}")
     return None
 
 # ⏱️ Extrai os segundos do timestamp ?t= em uma VOD da Twitch
