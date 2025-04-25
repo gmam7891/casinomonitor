@@ -220,10 +220,10 @@ def varrer_url_customizada_paralela(
     session_state,
     prever_jogo_em_frame,
     skip_inicial=0,
-    intervalo=20,
-    max_frames=10
+    intervalo=60,
+    max_frames=60
 ):
-    modelo = st.session_state.get("modelo_ml")
+    modelo = session_state.get("modelo_ml")
     if modelo is None:
         st.error("⚠️ Modelo não carregado.")
         return []
@@ -231,17 +231,28 @@ def varrer_url_customizada_paralela(
     tempos = [skip_inicial + i * intervalo for i in range(max_frames)]
 
     resultados = []
+    progresso = st.progress(0, text="🚀 Iniciando varredura...")
+    total_frames = len(tempos)
+
     with ThreadPoolExecutor(max_workers=4) as executor:
-        futures = [
-            executor.submit(processar_frame, m3u8_url, tempo, session_state)
+        futures = {
+            executor.submit(processar_frame, m3u8_url, tempo, session_state): tempo
             for tempo in tempos
-        ]
-        for future in futures:
+        }
+
+        for idx, future in enumerate(as_completed(futures)):
             res = future.result()
             if res:
                 resultados.append(res)
+            
+            progresso.progress(
+                (idx + 1) / total_frames,
+                text=f"🔎 Processando frame {idx + 1}/{total_frames}..."
+            )
 
     session_state["dados_url"] = resultados
+    progresso.empty()
+    st.success(f"✅ Varredura concluída: {len(resultados)} frames detectados!")
     return resultados
 
 
