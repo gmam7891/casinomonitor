@@ -457,9 +457,9 @@ with st.sidebar.expander("🎯 Análise de VOD / Período"):
                 st.error(f"❌ Erro ao executar análise por período: {e}")
                 raise
 
-        st.error(f"❌ Erro ao executar análise por período: {e}")
-        raise
-      
+                st.error(f"❌ Erro ao executar análise por período: {e}")
+                raise
+              
 
 # ------------------ EXIBIÇÃO DE RESULTADOS (MELHORADA) ------------------
 if 'dados_url' in st.session_state:
