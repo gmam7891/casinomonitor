@@ -106,8 +106,6 @@ def varrer_vods_com_modelo(vods, st, session_state, prever_jogo_em_frame, captur
     session_state["dados_periodo"] = resultados
     return resultados
 
-import requests
-from datetime import datetime
 
 def buscar_vods_twitch_por_periodo(data_inicio, data_fim, headers, base_url, streamers):
     resultado = []
