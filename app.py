@@ -62,17 +62,17 @@ except ImportError:
         st.stop()
 
 # ---------------- Importar módulos internos ----------------
-from ml_training import treinar_modelo
-from ml_utils import (
-    match_template_from_image,
-    capturar_frame_ffmpeg_imageio,
-    prever_jogo_em_frame,
-    verificar_jogo_em_live,
-    varrer_url_customizada,
-    varrer_vods_com_modelo,
-    buscar_vods_twitch_por_periodo,
-    buscar_vods_por_streamer_e_periodo
-)
+    from ml_training import treinar_modelo
+    from ml_utils import (
+        match_template_from_image,
+        capturar_frame_ffmpeg_imageio,
+        prever_jogo_em_frame,
+        verificar_jogo_em_live,
+        varrer_url_customizada,
+        varrer_vods_com_modelo,
+        buscar_vods_twitch_por_periodo,
+        buscar_vods_por_streamer_e_periodo
+    )
 
 # ---------------- CONFIGURAÇÃO GERAL ----------------
 st.set_page_config(page_title="Monitor Cassino PP", layout="wide")
