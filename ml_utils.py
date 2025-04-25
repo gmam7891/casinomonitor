@@ -32,7 +32,7 @@ def capturar_frame_ffmpeg_imageio(m3u8_url, segundo):
 
 # 🧠 Realiza predição com o modelo carregado
 def prever_jogo_em_frame(frame):
-    modelo = tf.keras.models.load_model("modelo.h5")
+    modelo/modelo_pragmatic.keras
     if modelo is None:
         print("[ERRO] Modelo não carregado.")
         return None
