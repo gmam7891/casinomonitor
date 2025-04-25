@@ -106,31 +106,6 @@ def varrer_vods_com_modelo(vods, st, session_state, prever_jogo_em_frame, captur
     session_state["dados_periodo"] = resultados
     return resultados
 
-# Final atual do seu ml_utils.py:
-
-def varrer_vods_com_modelo(vods, st, session_state, prever_jogo_em_frame, capturar_frame, intervalo=20, max_frames=10):
-    resultados = []
-    for vod in vods:
-        m3u8_url = obter_url_m3u8_twitch(vod["url"])
-        if not m3u8_url:
-            continue
-        for i in range(max_frames):
-            tempo = i * intervalo
-            frame = capturar_frame(m3u8_url, segundo=tempo)
-            if frame is None:
-                continue
-            resultado = prever_jogo_em_frame(frame)
-            if resultado:
-                resultado["streamer"] = vod.get("streamer", "")
-                resultado["vod_url"] = vod["url"]
-                resultado["segundo"] = tempo
-                resultados.append(resultado)
-
-    session_state["dados_periodo"] = resultados
-    return resultados
-
-# 🔥 COLE AQUI A NOVA FUNÇÃO 🔥
-
 import requests
 from datetime import datetime
 
