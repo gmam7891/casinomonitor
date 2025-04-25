@@ -196,19 +196,22 @@ def capturar_frames_paralelamente(vod_urls, segundo_alvo):
 def processar_frame(m3u8_url, tempo, session_state):
     frame = capturar_frame_ffmpeg_imageio(m3u8_url, segundo=tempo)
 
-    if frame is not None:
-        previsao = prever_jogo_em_frame(frame)
-        if previsao and previsao["jogo"]:
-            print(f"[{tempo}s] 🎰 Jogo detectado: {previsao['jogo']}")
-            return {
-                "segundo": tempo,
-                "jogo": previsao["jogo"],
-                "confianca": previsao["confianca"],
-                "frame": frame
-            }
-    else:
+    if frame is None:
         print(f"[ERRO] Frame não capturado no segundo {tempo}")
+        return None
+
+    previsao = prever_jogo_em_frame(frame)
+    if previsao and previsao["jogo"]:
+        print(f"[{tempo}s] 🎰 Jogo detectado: {previsao['jogo']}")
+        return {
+            "segundo": tempo,
+            "jogo": previsao["jogo"],
+            "confianca": previsao["confianca"],
+            "frame": frame
+        }
+
     return None
+
 
 
 def varrer_url_customizada_paralela(
