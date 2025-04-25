@@ -396,7 +396,7 @@ with st.sidebar.expander("🎯 Análise de VOD / Período"):
                         intervalo=60,          # a cada 60s
                         max_frames=240         # cobre 4 horas
                     )
-if st.button("🎯 Analisar esta VOD"):
+if st.button("🎯 Analisar VOD Streamer"):
     if vod_url_individual:
         with st.spinner("🔍 Obtendo link da VOD..."):
             m3u8_url = obter_url_m3u8_twitch(vod_url_individual)
