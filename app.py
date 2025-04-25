@@ -214,7 +214,7 @@ def processar_frame(m3u8_url, tempo, modelo, nome_jogo_previsto=None):
             print(f"[{tempo}s] ✅ Jogo detectado: {jogo} ({confianca:.2f})")
             return {
                 "segundo": tempo,
-                "jogo": jogo,
+                "jogo_detectado": jogo,
                 "confianca": confianca
             }
         else:
