@@ -24,13 +24,15 @@ from storage import salvar_deteccao
 
 
 from ml_utils import (
-    prever_jogo_em_frame,
-    obter_url_m3u8_twitch,
-    varrer_vods_com_modelo,
-    extrair_segundos_da_url_vod,
-    buscar_vods_twitch_por_periodo  # << ADICIONE ESTA LINHA
+        match_template_from_image,
+        capturar_frame_ffmpeg_imageio,
+        prever_jogo_em_frame,
+        verificar_jogo_em_live,
+        varrer_url_customizada,
+        varrer_vods_com_modelo,
+        buscar_vods_twitch_por_periodo,
+        buscar_vods_por_streamer_e_periodo
 )
-
 
 # ---------------- HEADERS E URL BASE DA TWITCH ----------------
 def obter_access_token(client_id, client_secret):
@@ -62,16 +64,7 @@ except ImportError:
 
 # ---------------- Importar módulos internos ----------------
     from ml_training import treinar_modelo
-    from ml_utils import (
-        match_template_from_image,
-        capturar_frame_ffmpeg_imageio,
-        prever_jogo_em_frame,
-        verificar_jogo_em_live,
-        varrer_url_customizada,
-        varrer_vods_com_modelo,
-        buscar_vods_twitch_por_periodo,
-        buscar_vods_por_streamer_e_periodo
-)
+    
 
 
 # ---------------- CONFIGURAÇÃO GERAL ----------------
