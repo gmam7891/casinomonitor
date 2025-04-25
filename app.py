@@ -26,9 +26,11 @@ from storage import salvar_deteccao
 from ml_utils import (
     prever_jogo_em_frame,
     obter_url_m3u8_twitch,
-    varrer_vods_com_modelo,  # se precisar também
-    extrair_segundos_da_url_vod
+    varrer_vods_com_modelo,
+    extrair_segundos_da_url_vod,
+    buscar_vods_twitch_por_periodo  # << ADICIONE ESTA LINHA
 )
+
 
 
 
