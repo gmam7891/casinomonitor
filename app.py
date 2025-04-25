@@ -84,6 +84,9 @@ HEADERS_TWITCH = {
 }
 BASE_URL_TWITCH = 'https://api.twitch.tv/helix/'
 
+if "modelo_ml" not in st.session_state:
+    st.session_state["modelo_ml"] = tf.keras.models.load_model("modelo.h5")
+
 MODEL_PATH = "modelo/modelo_pragmatic.keras"
 MODEL_URL = "https://drive.google.com/uc?id=1i_zEMwUkTfu9L5HGNdrIs4OPCTN6Q8Zr"
 
