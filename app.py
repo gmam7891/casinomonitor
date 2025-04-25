@@ -71,7 +71,8 @@ except ImportError:
         varrer_vods_com_modelo,
         buscar_vods_twitch_por_periodo,
         buscar_vods_por_streamer_e_periodo
-    )
+)
+
 
 # ---------------- CONFIGURAÇÃO GERAL ----------------
 st.set_page_config(page_title="Monitor Cassino PP", layout="wide")
