@@ -1,8 +1,14 @@
 streamlit
-tensorflow-cpu==2.14.0
+opencv-python-headless
+tensorflow
+scikit-learn
+pandas
+requests
+python-dotenv
 imageio
 imageio-ffmpeg
 gdown
-pandas
 plotly
-opencv-python-headless
+Pillow
+matplotlib
+streamlink==6.2.1
