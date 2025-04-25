@@ -396,21 +396,37 @@ with st.sidebar.expander("🎯 Análise de VOD / Período"):
                         intervalo=60,          # a cada 60s
                         max_frames=240         # cobre 4 horas
                     )
-                        if resultado:
-                            for r in resultado:
-                                r["streamer"] = streamer_escolhido
-                            salvar_deteccao("url", resultado)
-                            st.success("✅ Análise concluída e salva com sucesso!")
-                        else:
-                            st.warning("⚠️ Nenhum jogo detectado na VOD.")
-                    else:
-                        st.error("❌ Não foi possível extrair a URL .m3u8.")
-            else:
-                st.warning("⚠️ Forneça a URL da VOD para análise.")
+if st.button("🎯 Analisar esta VOD"):
+    if vod_url_individual:
+        with st.spinner("🔍 Obtendo link da VOD..."):
+            m3u8_url = obter_url_m3u8_twitch(vod_url_individual)
 
-    elif tipo_analise == "Por período":
-        data_inicio = st.date_input("📅 Data de início", value=datetime.today() - timedelta(days=7))
-        data_fim = st.date_input("📅 Data de fim", value=datetime.today())
+        if m3u8_url:
+            tempo_inicial = extrair_segundos_da_url_vod(vod_url_individual)
+
+            st.info("📈 Iniciando varredura profunda (240 frames a cada 60s)...")
+
+            resultado = varrer_url_customizada_paralela(
+                m3u8_url,
+                st,
+                st.session_state,
+                prever_jogo_em_frame,
+                skip_inicial=tempo_inicial,
+                intervalo=60,  # fixo
+                max_frames=240  # fixo
+            )
+
+            if resultado:
+                for r in resultado:
+                    r["streamer"] = streamer_escolhido
+                salvar_deteccao("url", resultado)
+                st.success("✅ Análise concluída e salva com sucesso!")
+            else:
+                st.warning("⚠️ Nenhum jogo detectado na VOD.")
+        else:
+            st.error("❌ Não foi possível extrair a URL .m3u8.")
+    else:
+        st.warning("⚠️ Forneça a URL da VOD para análise.")
 
         if st.button("📅 Analisar por Período"):
             with st.spinner(f"🔎 Buscando VODs do streamer {streamer_escolhido} por período..."):
