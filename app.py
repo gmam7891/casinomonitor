@@ -17,7 +17,6 @@ import gdown
 import subprocess
 from tensorflow.keras.models import load_model
 from storage import salvar_deteccao
-from ml_training import treinar_modelo
 
 from ml_utils import (
     match_template_from_image,
