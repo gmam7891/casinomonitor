@@ -153,6 +153,30 @@ if "modelo_ml" not in st.session_state:
         except Exception as e:
             st.error(f"Erro ao carregar modelo: {e}")
 
+import tensorflow as tf
+import numpy as np
+
+def prever_jogo_em_frame(frame):
+    modelo = st.session_state.get("modelo_ml")
+    if modelo is None:
+        print("[ERRO] Modelo não carregado.")
+        return None
+
+    # Pré-processamento básico — ajuste se necessário
+    frame = tf.image.resize(frame, (224, 224))  # ou o tamanho de entrada do seu modelo
+    frame = tf.cast(frame, tf.float32) / 255.0
+    frame = tf.expand_dims(frame, axis=0)
+
+    pred = modelo.predict(frame)[0]
+    classes = ["outros", "pragmaticplay"]  # ajuste conforme seu treino
+
+    idx = np.argmax(pred)
+    return {
+        "jogo": classes[idx],
+        "confianca": float(pred[idx])
+    }
+
+
 # ---------------- FUNÇÕES AUXILIARES ----------------
 import os
 import subprocess
