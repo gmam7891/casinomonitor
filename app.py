@@ -21,6 +21,7 @@ import gdown
 import subprocess
 from tensorflow.keras.models import load_model
 from storage import salvar_deteccao
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 
 from ml_utils import (
