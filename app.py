@@ -33,16 +33,21 @@ from ml_utils import (
 
 
 # ---------------- HEADERS E URL BASE DA TWITCH ----------------
-TWITCH_CLIENT_ID = os.getenv("TWITCH_CLIENT_ID")
-TWITCH_CLIENT_SECRET = os.getenv("TWITCH_CLIENT_SECRET")
-
-HEADERS_TWITCH = {
-    "Client-ID": TWITCH_CLIENT_ID,
-    "Authorization": f"Bearer {ACCESS_TOKEN}"
-}
-
-BASE_URL_TWITCH = "https://api.twitch.tv/helix"
-
+def obter_access_token(client_id, client_secret):
+    url = "https://id.twitch.tv/oauth2/token"
+    data = {
+        "client_id": client_id,
+        "client_secret": client_secret,
+        "grant_type": "client_credentials"
+    }
+    try:
+        resp = requests.post(url, data=data)
+        resp.raise_for_status()
+        return resp.json().get("access_token")
+    except Exception as e:
+        st.error("Erro ao obter access_token:")
+        st.code(str(e))
+        st.stop()
 # ---------------- OpenCV em ambiente headless ----------------
 try:
     import cv2
