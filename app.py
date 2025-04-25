@@ -452,10 +452,10 @@ with st.sidebar.expander("🎯 Análise de VOD / Período"):
                     st.success("✅ Análise por período concluída e salva!")
                 else:
                     st.warning("⚠️ Nenhuma detecção relevante encontrada.")
-
-  except Exception as e:
-            st.error(f"❌ Erro ao executar análise por período: {e}")
-            raise
+            
+            except Exception as e:
+                st.error(f"❌ Erro ao executar análise por período: {e}")
+                raise
       
 
 # ------------------ EXIBIÇÃO DE RESULTADOS (MELHORADA) ------------------
