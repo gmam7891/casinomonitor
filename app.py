@@ -434,8 +434,6 @@ with st.sidebar.expander("🎯 Análise de VOD / Período"):
                     BASE_URL_TWITCH
                 )
         
-     # (coloque no topo do seu arquivo)
-
 if not vods:
     st.warning("⚠️ Nenhuma VOD encontrada nesse período.")
 else:
