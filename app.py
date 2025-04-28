@@ -379,7 +379,6 @@ with st.sidebar.expander("🧠 Modelo de Detecção"):
         else:
             st.warning("⚠️ Falha no treinamento do modelo.")
 
-from datetime import datetime, timedelta
 
 with st.sidebar.expander("🎯 Análise de VOD / Período"):
     streamer_escolhido = st.selectbox("👤 Escolha o streamer", carregar_streamers())
@@ -420,45 +419,44 @@ with st.sidebar.expander("🎯 Análise de VOD / Período"):
             else:
                 st.warning("⚠️ Forneça a URL da VOD para análise.")
 
-  elif tipo_analise == "Por período":
-    data_inicio = st.date_input("📅 Data de início", value=datetime.today() - timedelta(days=7))
-    data_fim = st.date_input("📅 Data de fim", value=datetime.today())
+    elif tipo_analise == "Por período":
+        data_inicio = st.date_input("📅 Data de início", value=datetime.today() - timedelta(days=7))
+        data_fim = st.date_input("📅 Data de fim", value=datetime.today())
 
-    if st.button("📅 Analisar VODs por Período"):
-        with st.spinner(f"🔎 Buscando VODs do streamer {streamer_escolhido} por período..."):
-            vods = buscar_vods_por_streamer_e_periodo(
-                streamer_escolhido,
-                data_inicio,
-                data_fim,
-                HEADERS_TWITCH,
-                BASE_URL_TWITCH
-            )
+        if st.button("📅 Analisar VODs por Período"):
+            with st.spinner(f"🔎 Buscando VODs do streamer {streamer_escolhido} por período..."):
+                vods = buscar_vods_por_streamer_e_periodo(
+                    streamer_escolhido,
+                    data_inicio,
+                    data_fim,
+                    HEADERS_TWITCH,
+                    BASE_URL_TWITCH
+                )
 
-            if not vods:
-                st.warning("⚠️ Nenhuma VOD encontrada nesse período.")
-            else:
-                try:
-                    resultados = analisar_por_periodo(
-                        streamer_escolhido,
-                        vods,
-                        st,
-                        st.session_state,
-                        prever_jogo_em_frame,
-                        varrer_url_customizada_paralela,
-                        obter_url_m3u8_twitch
-                    )
+                if not vods:
+                    st.warning("⚠️ Nenhuma VOD encontrada nesse período.")
+                else:
+                    try:
+                        resultados = analisar_por_periodo(
+                            streamer_escolhido,
+                            vods,
+                            st,
+                            st.session_state,
+                            prever_jogo_em_frame,
+                            varrer_url_customizada_paralela,
+                            obter_url_m3u8_twitch
+                        )
 
-                    if resultados:
-                        salvar_deteccao("periodo", resultados)
-                        st.success("✅ Análise por período concluída e salva!")
-                    else:
-                        st.warning("⚠️ Nenhuma detecção relevante encontrada.")
+                        if resultados:
+                            salvar_deteccao("periodo", resultados)
+                            st.success("✅ Análise por período concluída e salva!")
+                        else:
+                            st.warning("⚠️ Nenhuma detecção relevante encontrada.")
 
-                except Exception as e:
-                    st.error("❌ Ocorreu um erro durante a análise.")
-                    with st.expander("📄 Detalhes técnicos do erro"):
-                        st.code(traceback.format_exc())
-
+                    except Exception as e:
+                        st.error("❌ Ocorreu um erro durante a análise.")
+                        with st.expander("📄 Detalhes técnicos do erro"):
+                            st.code(traceback.format_exc())
 
 # ------------------ EXIBIÇÃO DE RESULTADOS (MELHORADA) ------------------
 if 'dados_url' in st.session_state:
