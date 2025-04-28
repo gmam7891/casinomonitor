@@ -434,30 +434,30 @@ with st.sidebar.expander("🎯 Análise de VOD / Período"):
                     BASE_URL_TWITCH
                 )
         
-if not vods:
-    st.warning("⚠️ Nenhuma VOD encontrada nesse período.")
-else:
-    try:
-        resultados = analisar_por_periodo(
-            streamer_escolhido,
-            vods,
-            st,
-            st.session_state,
-            prever_jogo_em_frame,
-            varrer_url_customizada_paralela,
-            obter_url_m3u8_twitch
-        )
-
-        if resultados:
-            salvar_deteccao("periodo", resultados)
-            st.success("✅ Análise por período concluída e salva!")
+        if not vods:
+            st.warning("⚠️ Nenhuma VOD encontrada nesse período.")
         else:
-            st.warning("⚠️ Nenhuma detecção relevante encontrada.")
-
-    except Exception as e:
-        st.error("❌ Ocorreu um erro durante a análise.")
-        with st.expander("📄 Detalhes técnicos do erro"):
-            st.code(traceback.format_exc())
+            try:
+                resultados = analisar_por_periodo(
+                    streamer_escolhido,
+                    vods,
+                    st,
+                    st.session_state,
+                    prever_jogo_em_frame,
+                    varrer_url_customizada_paralela,
+                    obter_url_m3u8_twitch
+                )
+        
+                if resultados:
+                    salvar_deteccao("periodo", resultados)
+                    st.success("✅ Análise por período concluída e salva!")
+                else:
+                    st.warning("⚠️ Nenhuma detecção relevante encontrada.")
+        
+            except Exception as e:
+                st.error("❌ Ocorreu um erro durante a análise.")
+                with st.expander("📄 Detalhes técnicos do erro"):
+                    st.code(traceback.format_exc())
 
 
 # ------------------ EXIBIÇÃO DE RESULTADOS (MELHORADA) ------------------
