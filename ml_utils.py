@@ -133,7 +133,7 @@ def analisar_por_periodo(
 
 
 
-def prever_jogo_em_frame(image_input, modelo=None, threshold=0.2):
+def prever_jogo_em_frame(image_input, modelo=None, threshold=0.05):
     try:
         if modelo is None:
             # fallback para template matching
