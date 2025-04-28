@@ -458,6 +458,7 @@ with st.sidebar.expander("🎯 Análise de VOD / Período"):
                         with st.expander("📄 Detalhes técnicos do erro"):
                             st.code(traceback.format_exc())
 
+
 # ------------------ EXIBIÇÃO DE RESULTADOS (MELHORADA) ------------------
 if 'dados_url' in st.session_state:
     st.markdown("### 🎰 Resultados da VOD personalizada")
@@ -1005,22 +1006,53 @@ if st.sidebar.button("🔬 Testar busca de streams"):
     st.sidebar.write("🔁 Status:", resp.status_code)
     st.sidebar.json(resp.json())
 
-def buscar_vods_por_streamer_e_periodo(streamer, data_inicio, data_fim):
+def buscar_vods_por_streamer_e_periodo(streamer_login, data_inicio, data_fim, headers, base_url):
+    """Busca VODs de um streamer da Twitch pelo login e período."""
     try:
-        df = pd.read_csv("vods.csv", parse_dates=["data"])
-    except FileNotFoundError:
-        st.error("❌ Arquivo 'vods.csv' não encontrado.")
+        url_user = f"{base_url}users?login={streamer_login}"
+        resp_user = requests.get(url_user, headers=headers)
+        resp_user.raise_for_status()
+        user_data = resp_user.json().get("data", [])
+        
+        if not user_data:
+            st.error(f"Streamer '{streamer_login}' não encontrado.")
+            return []
+        
+        user_id = user_data[0]["id"]
+
+        url_vods = f"{base_url}videos?user_id={user_id}&type=archive&first=100"
+        resp_vods = requests.get(url_vods, headers=headers)
+        resp_vods.raise_for_status()
+        vods_data = resp_vods.json().get("data", [])
+
+        resultados = []
+        for vod in vods_data:
+            created_at = pd.to_datetime(vod["created_at"])
+            if data_inicio <= created_at <= data_fim:
+                resultados.append({
+                    "id_vod": vod["id"],
+                    "url": vod["url"],
+                    "data": created_at,
+                    "duração_segundos": parse_duration(vod["duration"])
+                })
+        
+        return resultados
+
+    except Exception as e:
+        st.error(f"❌ Erro ao buscar VODs: {e}")
         return []
 
-    data_inicio = pd.to_datetime(data_inicio)
-    data_fim = pd.to_datetime(data_fim)
+# Função auxiliar para converter a duração do VOD para segundos
 
-    df_filtrado = df[
-        (df["streamer"] == streamer) &
-        (df["data"] >= data_inicio) &
-        (df["data"] <= data_fim)
-    ]
-
-    return df_filtrado.to_dict(orient="records")
-
-
+def parse_duration(duration_str):
+    """Converte '2h15m30s' para 8130 segundos."""
+    horas = minutos = segundos = 0
+    matches = re.findall(r'(\d+)(h|m|s)', duration_str)
+    for valor, unidade in matches:
+        if unidade == 'h':
+            horas = int(valor)
+        elif unidade == 'm':
+            minutos = int(valor)
+        elif unidade == 's':
+            segundos = int(valor)
+    return horas * 3600 + minutos * 60 + segundos
