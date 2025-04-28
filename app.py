@@ -8,6 +8,7 @@ import pandas as pd
 import datetime
 import logging
 import requests
+import traceback
 from dotenv import load_dotenv
 load_dotenv()
 
@@ -433,7 +434,7 @@ with st.sidebar.expander("🎯 Análise de VOD / Período"):
                     BASE_URL_TWITCH
                 )
         
-   import traceback  # (coloque no topo do seu arquivo)
+     # (coloque no topo do seu arquivo)
 
 if not vods:
     st.warning("⚠️ Nenhuma VOD encontrada nesse período.")
