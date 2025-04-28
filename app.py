@@ -455,7 +455,7 @@ with st.sidebar.expander("🎯 Análise de VOD / Período"):
 
                     except Exception as e:
                         st.error("❌ Ocorreu um erro durante a análise.")
-                        with st.expander(e)("📄 Detalhes técnicos do erro"):
+                        with st.expander("📄 Detalhes técnicos do erro"):
                             st.code(traceback.format_exc())
 
 # ------------------ EXIBIÇÃO DE RESULTADOS (MELHORADA) ------------------
