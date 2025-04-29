@@ -695,10 +695,22 @@ with abas[5]:
     dados_lives = carregar_historico("lives")
     df_geral = pd.concat([dados_template, dados_url, dados_lives], ignore_index=True)
 
-    if df_geral.empty:
-        st.info("📭 Nenhum dado disponível para análise. Execute uma varredura primeiro.")
-    else:
-        st.write("✅ Dados carregados para análise.")
+   from datetime import timedelta
+
+# Corrigir horário e aplicar filtro de data
+    if "data_hora" in df_geral.columns:
+        df_geral["data_brasilia"] = df_geral["data_hora"] - timedelta(hours=3)
+    
+    # Garantir que as variáveis de data existam
+    data_inicio = pd.to_datetime(data_inicio)
+    data_fim = pd.to_datetime(data_fim)
+    
+    # Criar df_filtrado
+    df_filtrado = df_geral[
+        (df_geral["data_brasilia"] >= data_inicio) &
+        (df_geral["data_brasilia"] <= data_fim)
+    ]
+
         
        # --- Gráfico 1: Share of Voice ---
 st.markdown("### 🥧 Share of Voice (Distribuição dos Jogos Detectados)")
