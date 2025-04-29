@@ -828,46 +828,47 @@ with abas[5]:
         st.plotly_chart(fig_horas, use_container_width=True)
 
         # --- Análise por Categoria (com novas categorias definidas) ---
-if "categoria" in df_filtrado.columns:
-    st.markdown("### 🎲 Distribuição das Principais Categorias")
+        if "categoria" in df_filtrado.columns:
+            st.markdown("### 🌸 Distribuição das Principais Categorias")
+        
+            # Função para mapear a categoria original
+            def mapear_categoria(cat):
+                if pd.isna(cat):
+                    return None
+                cat = cat.lower()
+                if "virtual casino" in cat or "virtual" in cat:
+                    return "Virtual Casino"
+                elif "just chatting" in cat or "chatting" in cat:
+                    return "Just Chatting"
+                elif "slots" in cat:
+                    return "Slots"
+                elif "roleta" in cat or "roulette" in cat:
+                    return "Roleta"
+                elif "blackjack" in cat or "black jack" in cat:
+                    return "Black Jack"
+                else:
+                    return None  # Ignora categorias não previstas
+        
+            # Aplicar mapeamento
+            df_filtrado["categoria_simplificada"] = df_filtrado["categoria"].apply(mapear_categoria)
+        
+            # Filtrar apenas categorias válidas
+            df_categorias = df_filtrado[df_filtrado["categoria_simplificada"].notna()]
+        
+            # Contar
+            categorias = df_categorias["categoria_simplificada"].value_counts().reset_index()
+            categorias.columns = ["Categoria", "Total"]
+        
+            # Gráfico
+            fig_categorias = px.pie(
+                categorias,
+                names="Categoria",
+                values="Total",
+                title="🌸 Distribuição entre Virtual Casino, Just Chatting, Slots, Roleta e Black Jack",
+                color_discrete_sequence=["#FF7F0E", "#1F77B4", "#2CA02C", "#D62728", "#9467BD"]
+            )
+            st.plotly_chart(fig_categorias, use_container_width=True)
 
-    # Função para mapear a categoria original
-    def mapear_categoria(cat):
-        if pd.isna(cat):
-            return None
-        cat = cat.lower()
-        if "virtual casino" in cat or "virtual" in cat:
-            return "Virtual Casino"
-        elif "just chatting" in cat or "chatting" in cat:
-            return "Just Chatting"
-        elif "slots" in cat:
-            return "Slots"
-        elif "roleta" in cat or "roulette" in cat:
-            return "Roleta"
-        elif "blackjack" in cat or "black jack" in cat:
-            return "Black Jack"
-        else:
-            return None  # Ignora categorias não previstas
-
-    # Aplicar mapeamento
-    df_filtrado["categoria_simplificada"] = df_filtrado["categoria"].apply(mapear_categoria)
-
-    # Filtrar apenas categorias válidas
-    df_categorias = df_filtrado[df_filtrado["categoria_simplificada"].notna()]
-
-    # Contar
-    categorias = df_categorias["categoria_simplificada"].value_counts().reset_index()
-    categorias.columns = ["Categoria", "Total"]
-
-    # Gráfico
-    fig_categorias = px.pie(
-        categorias,
-        names="Categoria",
-        values="Total",
-        title="🎲 Distribuição entre Virtual Casino, Just Chatting, Slots, Roleta e Black Jack",
-        color_discrete_sequence=["#FF7F0E", "#1F77B4", "#2CA02C", "#D62728", "#9467BD"]  # cores diferentes para cada
-    )
-    st.plotly_chart(fig_categorias, use_container_width=True)
 
 # ------------------ SUGERIR NOVOS STREAMERS ------------------
 def sugerir_novos_streamers():
