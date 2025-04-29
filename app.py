@@ -9,6 +9,7 @@ import datetime
 import logging
 import requests
 import traceback
+import plotly.express as px
 from dotenv import load_dotenv
 load_dotenv()
 
