@@ -699,6 +699,7 @@ from datetime import timedelta
 
 # Corrigir horário e aplicar filtro de data
 if "data_hora" in df_geral.columns:
+    df_geral["data_hora"] = pd.to_datetime(df_geral["data_hora"], errors="coerce")
     df_geral["data_brasilia"] = df_geral["data_hora"] - timedelta(hours=3)
 
 # Garantir que as variáveis de data existam
