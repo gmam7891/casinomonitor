@@ -695,28 +695,28 @@ with abas[5]:
     dados_lives = carregar_historico("lives")
     df_geral = pd.concat([dados_template, dados_url, dados_lives], ignore_index=True)
 
-from datetime import timedelta
+    from datetime import timedelta
 
-# Corrigir horário e aplicar filtro de data
-if "data_hora" in df_geral.columns:
-    df_geral["data_hora"] = pd.to_datetime(df_geral["data_hora"], errors="coerce")
-    df_geral["data_brasilia"] = df_geral["data_hora"] - timedelta(hours=3)
-
-# Garantir que as variáveis de data existam
-if "data_inicio" not in locals():
-    data_inicio = df_geral["data_brasilia"].min()
-if "data_fim" not in locals():
-    data_fim = df_geral["data_brasilia"].max()
-
-# Converter caso estejam como string
-data_inicio = pd.to_datetime(data_inicio)
-data_fim = pd.to_datetime(data_fim)
-
-# Criar df_filtrado
-df_filtrado = df_geral[
-    (df_geral["data_brasilia"] >= data_inicio) &
-    (df_geral["data_brasilia"] <= data_fim)
-]
+    # Corrigir horário e aplicar filtro de data
+    if "data_hora" in df_geral.columns:
+        df_geral["data_hora"] = pd.to_datetime(df_geral["data_hora"], errors="coerce")
+        df_geral["data_brasilia"] = df_geral["data_hora"] - timedelta(hours=3)
+    
+    # Garantir que as variáveis de data existam
+    if "data_inicio" not in locals():
+        data_inicio = df_geral["data_brasilia"].min()
+    if "data_fim" not in locals():
+        data_fim = df_geral["data_brasilia"].max()
+    
+    # Converter caso estejam como string
+    data_inicio = pd.to_datetime(data_inicio)
+    data_fim = pd.to_datetime(data_fim)
+    
+    # Criar df_filtrado
+    df_filtrado = df_geral[
+        (df_geral["data_brasilia"] >= data_inicio) &
+        (df_geral["data_brasilia"] <= data_fim)
+    ]
 
 # --- Gráfico 1: Share of Voice ---
 st.markdown("### 🥧 Share of Voice (Distribuição dos Jogos Detectados)")
