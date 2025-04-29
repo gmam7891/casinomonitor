@@ -695,135 +695,158 @@ with abas[5]:
     dados_lives = carregar_historico("lives")
     df_geral = pd.concat([dados_template, dados_url, dados_lives], ignore_index=True)
 
-    from datetime import timedelta
+    if df_geral.empty:
+        st.info("📭 Nenhum dado disponível para análise. Execute uma varredura primeiro.")
+    else:
+        st.write("✅ Dados carregados para análise.")
+        
+        # --- Gráfico 1: Share of Voice ---
+        st.markdown("### 🥧 Share of Voice (Distribuição dos Jogos Detectados)")
 
-    # Corrigir horário e aplicar filtro de data
-    if "data_hora" in df_geral.columns:
-        df_geral["data_hora"] = pd.to_datetime(df_geral["data_hora"], errors="coerce")
-        df_geral["data_brasilia"] = df_geral["data_hora"] - timedelta(hours=3)
-    
-    # Garantir que as variáveis de data existam
-    if "data_inicio" not in locals():
-        data_inicio = df_geral["data_brasilia"].min()
-    if "data_fim" not in locals():
-        data_fim = df_geral["data_brasilia"].max()
-    
-    # Converter caso estejam como string
-    data_inicio = pd.to_datetime(data_inicio)
-    data_fim = pd.to_datetime(data_fim)
-    
-    # Criar df_filtrado
-    df_filtrado = df_geral[
-        (df_geral["data_brasilia"] >= data_inicio) &
-        (df_geral["data_brasilia"] <= data_fim)
-    ]
+        if "jogo_detectado" in df_geral.columns:
+            ranking = df_geral["jogo_detectado"].value_counts().reset_index()
+            ranking.columns = ["Jogo", "Aparições"]
 
-# --- Gráfico 1: Share of Voice ---
-st.markdown("### 🥧 Share of Voice (Distribuição dos Jogos Detectados)")
+            fig1 = px.pie(
+                ranking,
+                names="Jogo",
+                values="Aparições",
+                title="Distribuição dos Jogos Detectados"
+            )
+            st.plotly_chart(fig1, use_container_width=True)
 
-if "jogo_detectado" in df_filtrado.columns:
-    ranking = df_filtrado["jogo_detectado"].value_counts().reset_index()
-    ranking.columns = ["Jogo", "Aparições"]
+        # --- Gráfico 2: Detecções por Streamer ---
+        st.markdown("### 🧍‍♂️ Comparativo: Total de Detecções por Streamer")
 
-    fig1 = px.pie(
-        ranking,
-        names="Jogo",
-        values="Aparições",
-        title="Distribuição dos Jogos Detectados"
-    )
-    st.plotly_chart(fig1, use_container_width=True)
+        if "streamer" in df_geral.columns and "jogo_detectado" in df_geral.columns:
+            comparativo = df_geral.groupby("streamer")["jogo_detectado"].count().reset_index()
+            comparativo.columns = ["Streamer", "Total de Detecções"]
+            comparativo = comparativo.sort_values(by="Total de Detecções", ascending=False)
 
-# --- Gráfico 2: Detecções por Streamer ---
-...
+            fig2 = px.bar(
+                comparativo,
+                x="Streamer",
+                y="Total de Detecções",
+                title="🎯 Total de Jogos Detectados por Streamer",
+                text_auto=True
+            )
+            st.plotly_chart(fig2, use_container_width=True)
 
-# --- Gráfico 2: Detecções por Streamer ---
-st.markdown("### 🧟‍♂️ Comparativo: Total de Detecções por Streamer")
+        # --- Gráfico 3: Evolução Temporal ---
+        st.markdown("### 📈 Evolução Temporal das Detecções")
+        
+        if "data_hora" in df_geral.columns and "jogo_detectado" in df_geral.columns:
+            # ✅ Conversão segura para datetime
+            df_geral["data_hora"] = pd.to_datetime(df_geral["data_hora"], errors="coerce")
+        
+            evolucao = (
+                df_geral.groupby([pd.Grouper(key="data_hora", freq="D"), "jogo_detectado"])
+                .size()
+                .reset_index(name="Detecções")
+            )
+        
+            fig3 = px.line(
+                evolucao,
+                x="data_hora",
+                y="Detecções",
+                color="jogo_detectado",
+                title="📅 Detecções por Jogo ao Longo do Tempo"
+            )
+            st.plotly_chart(fig3, use_container_width=True)
+        else:
+            st.info("Dados temporais insuficientes para gerar evolução.")
 
-if "streamer" in df_filtrado.columns and "jogo_detectado" in df_filtrado.columns:
-    comparativo = df_filtrado.groupby("streamer")["jogo_detectado"].count().reset_index()
-    comparativo.columns = ["Streamer", "Total de Detecções"]
-    comparativo = comparativo.sort_values(by="Total de Detecções", ascending=False)
 
-    fig2 = px.bar(
-        comparativo,
-        x="Streamer",
-        y="Total de Detecções",
-        title="🎯 Total de Jogos Detectados por Streamer",
+        # --- Gráfico 4: Tempo Médio por Jogo ---
+        st.markdown("### ⏱ Tempo Médio de Detecção por Jogo")
+
+        if "jogo_detectado" in df_geral.columns and "segundo" in df_geral.columns:
+            media_tempo = df_geral.groupby("jogo_detectado")["segundo"].mean().reset_index()
+            media_tempo.columns = ["Jogo", "Tempo Médio (s)"]
+            media_tempo = media_tempo.sort_values(by="Tempo Médio (s)", ascending=False)
+
+            fig4 = px.bar(
+                media_tempo,
+                x="Jogo",
+                y="Tempo Médio (s)",
+                text_auto=".2f",
+                title="⏱ Tempo Médio de Detecção por Jogo"
+            )
+            st.plotly_chart(fig4, use_container_width=True)
+
+
+        # --- Gráfico 5: Top Streamers por Jogo ---
+        st.markdown("### 🧍‍♂️🎮 Streamers com mais detecções por Jogo")
+
+        if "jogo_detectado" in df_geral.columns and "streamer" in df_geral.columns:
+            top_streamers_jogo = (
+            df_geral.groupby(["jogo_detectado", "streamer"])
+            .size()
+            .reset_index(name="Detecções")
+            )
+
+            fig5 = px.bar(
+            top_streamers_jogo,
+            x="jogo_detectado",
+            y="Detecções",
+            color="streamer",
+            title="Top Streamers por Jogo Detectado",
+            barmode="group"
+            )
+            st.plotly_chart(fig5, use_container_width=True)
+        else:
+            st.info("Não há dados suficientes para exibir Top Streamers por Jogo.")
+
+# --- Gráfico 6: Distribuição por Dia da Semana ---
+st.markdown("### 📆 Detecções por Dia da Semana")
+
+if "data_hora" in df_geral.columns and "jogo_detectado" in df_geral.columns:
+    # --- Correção de Fuso: Ajustar para Horário de Brasília ---
+    df_geral["data_brasilia"] = df_geral["data_hora"] - timedelta(hours=3)
+
+    # Criar coluna de dia da semana usando data corrigida
+    dias_semana = {
+        0: 'segunda-feira',
+        1: 'terça-feira',
+        2: 'quarta-feira',
+        3: 'quinta-feira',
+        4: 'sexta-feira',
+        5: 'sábado',
+        6: 'domingo'
+    }
+    df_geral["dia_semana"] = df_geral["data_brasilia"].dt.dayofweek.map(dias_semana)
+
+    distrib_dia = df_geral["dia_semana"].value_counts().reindex([
+        "segunda-feira", "terça-feira", "quarta-feira",
+        "quinta-feira", "sexta-feira", "sábado", "domingo"
+    ]).fillna(0).reset_index()
+
+    distrib_dia.columns = ["Dia", "Detecções"]
+
+    fig6 = px.bar(
+        distrib_dia,
+        x="Dia",
+        y="Detecções",
+        title="📆 Total de Detecções por Dia da Semana",
         text_auto=True
     )
-    st.plotly_chart(fig2, use_container_width=True)
-
-# --- Gráfico 3: Evolução Temporal ---
-st.markdown("### 📈 Evolução Temporal das Detecções")
-
-if "data_brasilia" in df_filtrado.columns and "jogo_detectado" in df_filtrado.columns:
-    df_filtrado["data_brasilia"] = pd.to_datetime(df_filtrado["data_brasilia"], errors="coerce")
-    evolucao = (
-        df_filtrado.groupby([pd.Grouper(key="data_brasilia", freq="D"), "jogo_detectado"])
-        .size()
-        .reset_index(name="Detecções")
-    )
-
-    fig3 = px.line(
-        evolucao,
-        x="data_brasilia",
-        y="Detecções",
-        color="jogo_detectado",
-        title="📅 Detecções por Jogo ao Longo do Tempo"
-    )
-    st.plotly_chart(fig3, use_container_width=True)
-
-# --- Gráfico 4: Tempo Médio por Jogo ---
-st.markdown("### ⏱ Tempo Médio de Detecção por Jogo")
-
-if "jogo_detectado" in df_filtrado.columns and "segundo" in df_filtrado.columns:
-    media_tempo = df_filtrado.groupby("jogo_detectado")["segundo"].mean().reset_index()
-    media_tempo.columns = ["Jogo", "Tempo Médio (s)"]
-    media_tempo = media_tempo.sort_values(by="Tempo Médio (s)", ascending=False)
-
-    fig4 = px.bar(
-        media_tempo,
-        x="Jogo",
-        y="Tempo Médio (s)",
-        text_auto=".2f",
-        title="⏱ Tempo Médio de Detecção por Jogo"
-    )
-    st.plotly_chart(fig4, use_container_width=True)
-
-# --- Gráfico 5: Top Streamers por Jogo ---
-st.markdown("### 🧟‍♂️🎮 Streamers com mais detecções por Jogo")
-
-if "jogo_detectado" in df_filtrado.columns and "streamer" in df_filtrado.columns:
-    top_streamers_jogo = (
-        df_filtrado.groupby(["jogo_detectado", "streamer"])
-        .size()
-        .reset_index(name="Detecções")
-    )
-
-    fig5 = px.bar(
-        top_streamers_jogo,
-        x="jogo_detectado",
-        y="Detecções",
-        color="streamer",
-        title="Top Streamers por Jogo Detectado",
-        barmode="group"
-    )
-    st.plotly_chart(fig5, use_container_width=True)
+    st.plotly_chart(fig6, use_container_width=True)
+else:
+    st.info("Dados temporais insuficientes para gerar distribuição semanal.")
 
 # --- Gráfico 7: Mapa de Calor Jogo x Dia da Semana ---
 st.markdown("### 🔥 Mapa de Calor: Jogos por Dia da Semana")
 
-if "data_brasilia" in df_filtrado.columns and "jogo_detectado" in df_filtrado.columns:
-    df_filtrado["dia_semana"] = df_filtrado["data_brasilia"].dt.day_name(locale='pt_BR')
-    ordem_dias = [
-        "segunda-feira", "terça-feira", "quarta-feira",
-        "quinta-feira", "sexta-feira", "sábado", "domingo"
-    ]
+if "data_hora" in df_geral.columns and "jogo_detectado" in df_geral.columns:
+    # Reaproveita df_geral["dia_semana"] já criado
     matriz = (
-        df_filtrado.groupby(["jogo_detectado", "dia_semana"])
+        df_geral.groupby(["jogo_detectado", "dia_semana"])
         .size()
         .unstack(fill_value=0)
-        .reindex(columns=ordem_dias, fill_value=0)
+        .reindex(columns=[
+            "segunda-feira", "terça-feira", "quarta-feira",
+            "quinta-feira", "sexta-feira", "sábado", "domingo"
+        ], fill_value=0)
     )
 
     fig7 = px.imshow(
@@ -834,17 +857,21 @@ if "data_brasilia" in df_filtrado.columns and "jogo_detectado" in df_filtrado.co
         title="🔥 Frequência de Jogos por Dia da Semana"
     )
     st.plotly_chart(fig7, use_container_width=True)
+else:
+    st.info("Dados temporais insuficientes para gerar mapa de calor.")
 
-# --- Gráfico 8: Tendência de Crescimento por Jogo ---
+            # --- Gráfico 8: Tendência de Crescimento por Jogo ---
+        
 st.markdown("### 📈 Tendência de Crescimento por Jogo (Média Móvel 3 dias)")
 
-if "data_brasilia" in df_filtrado.columns and "jogo_detectado" in df_filtrado.columns:
+if "data_hora" in df_geral.columns and "jogo_detectado" in df_geral.columns:
     tendencia = (
-        df_filtrado.groupby([pd.Grouper(key="data_brasilia", freq="D"), "jogo_detectado"])
+        df_geral.groupby([pd.Grouper(key="data_hora", freq="D"), "jogo_detectado"])
         .size()
         .reset_index(name="Detecções")
     )
 
+    # Aplica média móvel de 3 dias por jogo
     tendencia["MediaMovel"] = (
         tendencia.groupby("jogo_detectado")["Detecções"]
         .transform(lambda x: x.rolling(window=3, min_periods=1).mean())
@@ -852,18 +879,20 @@ if "data_brasilia" in df_filtrado.columns and "jogo_detectado" in df_filtrado.co
 
     fig8 = px.line(
         tendencia,
-        x="data_brasilia",
+        x="data_hora",
         y="MediaMovel",
         color="jogo_detectado",
         title="📈 Tendência de Detecção dos Jogos (Média Móvel)"
     )
     st.plotly_chart(fig8, use_container_width=True)
+else:
+    st.info("Dados temporais insuficientes para gerar tendência.")
 
-# --- Gráfico 9: Média de Viewers por Jogo ---
+   # --- Gráfico 9: Média de Viewers por Jogo ---
 st.markdown("### 👀 Média de Viewers por Jogo Detectado")
 
-if "jogo_detectado" in df_filtrado.columns and "viewers" in df_filtrado.columns:
-    media_viewers = df_filtrado.groupby("jogo_detectado")["viewers"].mean().reset_index()
+if "jogo_detectado" in df_geral.columns and "viewers" in df_geral.columns:
+    media_viewers = df_geral.groupby("jogo_detectado")["viewers"].mean().reset_index()
     media_viewers.columns = ["Jogo", "Viewers Médios"]
     media_viewers = media_viewers.sort_values(by="Viewers Médios", ascending=False)
 
@@ -875,12 +904,14 @@ if "jogo_detectado" in df_filtrado.columns and "viewers" in df_filtrado.columns:
         title="👀 Audiência Média por Jogo Detectado"
     )
     st.plotly_chart(fig9, use_container_width=True)
+else:
+    st.info("Nenhum dado com número de viewers disponível ainda.")
 
 # --- Gráfico 10: Média de Viewers por Streamer ---
 st.markdown("### 🎥 Streamers com Maior Audiência Média")
 
-if "streamer" in df_filtrado.columns and "viewers" in df_filtrado.columns:
-    media_streamers = df_filtrado.groupby("streamer")["viewers"].mean().reset_index()
+if "streamer" in df_geral.columns and "viewers" in df_geral.columns:
+    media_streamers = df_geral.groupby("streamer")["viewers"].mean().reset_index()
     media_streamers.columns = ["Streamer", "Viewers Médios"]
     media_streamers = media_streamers.sort_values(by="Viewers Médios", ascending=False)
 
@@ -892,30 +923,34 @@ if "streamer" in df_filtrado.columns and "viewers" in df_filtrado.columns:
         title="🎥 Audiência Média por Streamer"
     )
     st.plotly_chart(fig10, use_container_width=True)
+else:
+    st.info("Nenhum dado de viewers por streamer disponível.")
 
 # --- Gráfico 11: Evolução dos Viewers ao Longo do Tempo ---
 st.markdown("### ⏱️ Evolução dos Viewers nas Detecções")
 
-if "data_brasilia" in df_filtrado.columns and "viewers" in df_filtrado.columns:
-    df_viewers = df_filtrado.copy()
-    df_viewers["data_brasilia"] = pd.to_datetime(df_viewers["data_brasilia"])
+if "data_hora" in df_geral.columns and "viewers" in df_geral.columns:
+    df_viewers = df_geral.copy()
+    df_viewers["data_hora"] = pd.to_datetime(df_viewers["data_hora"])
     evolucao_viewers = (
-        df_viewers.groupby(pd.Grouper(key="data_brasilia", freq="D"))["viewers"].mean().reset_index()
+        df_viewers.groupby(pd.Grouper(key="data_hora", freq="D"))["viewers"].mean().reset_index()
     )
 
     fig11 = px.line(
         evolucao_viewers,
-        x="data_brasilia",
+        x="data_hora",
         y="viewers",
         title="⏱️ Audiência Média ao Longo do Tempo"
     )
     st.plotly_chart(fig11, use_container_width=True)
+else:
+    st.info("Sem dados temporais suficientes para mostrar evolução de viewers.")
 
 # --- Gráfico 12: Pico de Audiência por Streamer ---
 st.markdown("### 🔝 Pico de Audiência por Streamer")
 
-if "streamer" in df_filtrado.columns and "viewers" in df_filtrado.columns:
-    pico_streamers = df_filtrado.groupby("streamer")["viewers"].max().reset_index()
+if "streamer" in df_geral.columns and "viewers" in df_geral.columns:
+    pico_streamers = df_geral.groupby("streamer")["viewers"].max().reset_index()
     pico_streamers.columns = ["Streamer", "Pico de Viewers"]
     pico_streamers = pico_streamers.sort_values(by="Pico de Viewers", ascending=False)
 
@@ -927,6 +962,8 @@ if "streamer" in df_filtrado.columns and "viewers" in df_filtrado.columns:
         title="🔝 Maior Número de Viewers por Streamer"
     )
     st.plotly_chart(fig12, use_container_width=True)
+else:
+    st.info("Não há dados de pico de audiência.")
 
 # ------------------ SUGERIR NOVOS STREAMERS ------------------
 def sugerir_novos_streamers():
