@@ -695,8 +695,6 @@ with abas[5]:
     dados_lives = carregar_historico("lives")
     df_geral = pd.concat([dados_template, dados_url, dados_lives], ignore_index=True)
 
-   from datetime import timedelta
-
 # Corrigir horário e aplicar filtro de data
     if "data_hora" in df_geral.columns:
         df_geral["data_brasilia"] = df_geral["data_hora"] - timedelta(hours=3)
