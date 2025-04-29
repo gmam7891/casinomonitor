@@ -33,6 +33,26 @@ from ml_utils import (
     analisar_por_periodo  # <- adicionar isso aqui
 )
 
+def salvar_deteccao(tipo, resultados):
+    try:
+        # Corrigir horário de Brasília antes de salvar
+        df = pd.DataFrame(resultados)
+
+        # Adicionar coluna de horário de inferência se ainda não existir
+        if 'hora_inferencia_brasilia' not in df.columns:
+            df['hora_inferencia_brasilia'] = (datetime.utcnow() - timedelta(hours=3)).strftime('%Y-%m-%d %H:%M:%S')
+
+        # Atualizar resultados para salvar
+        resultados_corrigidos = df.to_dict(orient='records')
+
+        # Agora salva normalmente (por exemplo salvando CSV ou qualquer outra lógica que já tinha)
+        output_file = f"resultados_{tipo}.csv"
+        df.to_csv(output_file, index=False)
+
+        print(f"✅ Resultados salvos no arquivo: {output_file}")
+
+    except Exception as e:
+        print(f"❌ Erro ao salvar detecção: {e}")
 
 # ---------------- OBTER ACCESS TOKEN DA TWITCH ----------------
 def obter_access_token(client_id, client_secret):
