@@ -699,20 +699,6 @@ with abas[5]:
         st.info("📭 Nenhum dado disponível para análise. Execute uma varredura primeiro.")
     else:
         st.write("✅ Dados carregados para análise.")
-
-    # Corrigir horário e filtrar pelas datas selecionadas
-if "data_hora" in df_geral.columns:
-    df_geral["data_brasilia"] = df_geral["data_hora"] - timedelta(hours=3)
-
-    # Converter inputs em datetime
-    data_inicio = pd.to_datetime(data_inicio)
-    data_fim = pd.to_datetime(data_fim)
-    
-    # Aplicar filtro
-    df_filtrado = df_geral[
-        (df_geral["data_brasilia"] >= data_inicio) &
-        (df_geral["data_brasilia"] <= data_fim)
-    ]
         
        # --- Gráfico 1: Share of Voice ---
 st.markdown("### 🥧 Share of Voice (Distribuição dos Jogos Detectados)")
@@ -920,7 +906,6 @@ if "streamer" in df_filtrado.columns and "viewers" in df_filtrado.columns:
         title="🔝 Maior Número de Viewers por Streamer"
     )
     st.plotly_chart(fig12, use_container_width=True)
-
 
 # ------------------ SUGERIR NOVOS STREAMERS ------------------
 def sugerir_novos_streamers():
