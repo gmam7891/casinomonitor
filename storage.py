@@ -32,3 +32,26 @@ def limpar_historico(tipo):
     nome_arquivo = f"{DADOS_DIR}/{tipo}.csv"
     if os.path.exists(nome_arquivo):
         os.remove(nome_arquivo)
+
+def salvar_deteccao(tipo, resultados):
+    try:
+        # 1. Corrigir horário para Brasília
+        df = pd.DataFrame(resultados)
+
+        # 2. Adicionar horário de Brasília, se ainda não existir
+        if 'hora_inferencia_brasilia' not in df.columns:
+            df['hora_inferencia_brasilia'] = (datetime.utcnow() - timedelta(hours=3)).strftime('%Y-%m-%d %H:%M:%S')
+
+        # 3. Atualizar resultados corrigidos
+        resultados_corrigidos = df.to_dict(orient='records')
+
+        # 4. Salvar CSV
+        output_dir = "resultados"
+        os.makedirs(output_dir, exist_ok=True)
+        output_path = os.path.join(output_dir, f"resultados_{tipo}.csv")
+        df.to_csv(output_path, index=False)
+
+        print(f"✅ Resultados salvos no arquivo: {output_path}")
+
+    except Exception as e:
+        print(f"❌ Erro ao salvar detecção: {e}")
