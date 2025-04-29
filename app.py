@@ -801,7 +801,10 @@ with abas[5]:
 st.markdown("### 📆 Detecções por Dia da Semana")
 
 if "data_hora" in df_geral.columns and "jogo_detectado" in df_geral.columns:
-    # Criar coluna de dia da semana sem uso de locale
+    # --- Correção de Fuso: Ajustar para Horário de Brasília ---
+    df_geral["data_brasilia"] = df_geral["data_hora"] - timedelta(hours=3)
+
+    # Criar coluna de dia da semana usando data corrigida
     dias_semana = {
         0: 'segunda-feira',
         1: 'terça-feira',
@@ -811,7 +814,7 @@ if "data_hora" in df_geral.columns and "jogo_detectado" in df_geral.columns:
         5: 'sábado',
         6: 'domingo'
     }
-    df_geral["dia_semana"] = df_geral["data_hora"].dt.dayofweek.map(dias_semana)
+    df_geral["dia_semana"] = df_geral["data_brasilia"].dt.dayofweek.map(dias_semana)
 
     distrib_dia = df_geral["dia_semana"].value_counts().reindex([
         "segunda-feira", "terça-feira", "quarta-feira",
