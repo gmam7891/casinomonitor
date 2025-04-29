@@ -1,0 +1,101 @@
+# --- analisar_imagens.py ---
+
+import os
+import zipfile
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+from datetime import datetime, timedelta
+from tensorflow.keras.models import load_model
+from tensorflow.keras.preprocessing import image
+
+# --- CONFIGURAÇÕES ---
+PATH_MODELO = "modelo_pragmatic.keras"
+PATH_ZIP = "dataset.zip"
+EXTRACT_PATH = "dataset_extracted"
+THRESHOLD = 0.2  # Threshold de classificação
+
+# --- 1. Extrair o ZIP ---
+print("\nExtraindo dataset...")
+os.makedirs(EXTRACT_PATH, exist_ok=True)
+with zipfile.ZipFile(PATH_ZIP, 'r') as zip_ref:
+    zip_ref.extractall(EXTRACT_PATH)
+
+# --- 2. Carregar o modelo ---
+print("\nCarregando modelo...")
+modelo = load_model(PATH_MODELO)
+
+# --- 3. Função para preparar imagem ---
+def preparar_imagem(img_path):
+    img = image.load_img(img_path, target_size=(224, 224))
+    img_array = image.img_to_array(img)
+    img_array = np.expand_dims(img_array, axis=0)
+    img_array /= 255.0
+    return img_array
+
+# --- 4. Rodar inferência ---
+print("\nAnalisando imagens...")
+resultados = []
+
+dataset_folder = os.path.join(EXTRACT_PATH, "dataset")
+
+for classe in os.listdir(dataset_folder):
+    classe_path = os.path.join(dataset_folder, classe)
+    if not os.path.isdir(classe_path):
+        continue
+
+    for img_file in os.listdir(classe_path):
+        img_path = os.path.join(classe_path, img_file)
+        try:
+            img_processada = preparar_imagem(img_path)
+            score = modelo.predict(img_processada, verbose=0)[0][0]
+            predicao = "pragmaticplay" if score >= THRESHOLD else "outros"
+
+            resultados.append({
+                "Imagem": img_file,
+                "Classe Real": classe,
+                "Score (0-1)": round(float(score), 4),
+                "Classificacao Predita": predicao,
+                "Hora Inferencia Brasilia": (datetime.utcnow() - timedelta(hours=3)).strftime('%Y-%m-%d %H:%M:%S')
+            })
+        except Exception as e:
+            resultados.append({
+                "Imagem": img_file,
+                "Classe Real": classe,
+                "Score (0-1)": "Erro",
+                "Classificacao Predita": f"Erro: {e}",
+                "Hora Inferencia Brasilia": (datetime.utcnow() - timedelta(hours=3)).strftime('%Y-%m-%d %H:%M:%S')
+            })
+
+# --- 5. Gerar resultado final ---
+print("\nAnálise concluída!")
+df_resultados = pd.DataFrame(resultados)
+
+# Criar pasta de resultados se não existir
+os.makedirs("resultados", exist_ok=True)
+
+df_resultados.to_csv("resultados/resultado_inferencia.csv", index=False)
+print("Arquivo de resultados salvo em 'resultados/resultado_inferencia.csv'")
+
+# --- 6. Mostrar exemplo de imagem ---
+print("\nExibindo exemplo de imagem analisada...")
+try:
+    first_class_folder = os.path.join(dataset_folder, os.listdir(dataset_folder)[0])
+    first_image_file = next(
+        (f for f in os.listdir(first_class_folder) if not os.path.isdir(os.path.join(first_class_folder, f))),
+        None
+    )
+
+    if first_image_file:
+        sample_img_path = os.path.join(first_class_folder, first_image_file)
+
+        sample_img = image.load_img(sample_img_path, target_size=(224, 224))
+
+        plt.imshow(sample_img)
+        plt.axis('off')
+        plt.title("Exemplo de imagem analisada")
+        plt.show()
+    else:
+        print("⚠️ Nenhuma imagem encontrada para exibir.")
+except Exception as e:
+    print(f"⚠️ Erro ao tentar mostrar imagem: {e}")
