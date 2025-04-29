@@ -133,7 +133,7 @@ def analisar_por_periodo(
 
 
 
-def prever_jogo_em_frame(image_input, modelo=None, threshold=0.05):
+def prever_jogo_em_frame(image_input, modelo=None, threshold=0.02):
     try:
         if modelo is None:
             # fallback para template matching
@@ -164,7 +164,7 @@ def prever_jogo_em_frame(image_input, modelo=None, threshold=0.05):
         return {"jogo": None, "confianca": 0.0}
 
 
-def match_template_from_image(image_path, templates_dir="templates/", threshold=0.8):
+def match_template_from_image(image_path, templates_dir="templates/", threshold=0.02):
     try:
         img = cv2.imread(image_path)
         if img is None:
