@@ -133,16 +133,13 @@ def analisar_por_periodo(
 
 
 
-def prever_jogo_em_frame(image_input, modelo=None, threshold=0.02):
-    try:
-        if modelo is None:
-            # fallback para template matching
-            if isinstance(image_input, str):  # path
-                resultado = match_template_from_image(image_input)
-                return {"jogo": resultado, "confianca": 1.0 if resultado else 0.0}
-            else:
-                return {"jogo": None, "confianca": 0.0}
-
+def prever_jogo_em_frame(frame):
+    resultado = match_template_from_image(frame)
+    if resultado:
+        return {"jogo": resultado["jogo"], "confianca": resultado["confianca"]}
+    else:
+        return None
+        
         if isinstance(image_input, str):
             img = keras_image.load_img(image_input, target_size=(224, 224))
             x = keras_image.img_to_array(img)
