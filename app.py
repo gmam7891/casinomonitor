@@ -1097,9 +1097,12 @@ def main():
         # seu código de resumo...
 
     elif pagina == "Clusterização de Streamers":
-        df = st.session_state["dados_vods_template"]
-        perfil, resumo = clusterizar_streamers(df)
-        exibir_dashboard_cluster(perfil, resumo)
+        if "dados_vods_template" in st.session_state:
+            df = st.session_state["dados_vods_template"]
+            perfil, resumo = clusterizar_streamers(df)
+            exibir_dashboard_cluster(perfil, resumo)
+        else:
+            st.warning("⚠️ Os dados de VODs ainda não foram carregados. Por favor, vá até a aba de análise primeiro.")
 
 # 🚀 3. EXECUTAR APP
 if __name__ == "__main__":
