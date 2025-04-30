@@ -1097,7 +1097,7 @@ def main():
         # seu código de resumo...
 
     elif pagina == "Clusterização de Streamers":
-        df = carregar_dados_simulados()
+        df = st.session_state["dados_vods_template"]
         perfil, resumo = clusterizar_streamers(df)
         exibir_dashboard_cluster(perfil, resumo)
 
