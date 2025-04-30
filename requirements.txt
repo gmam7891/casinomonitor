@@ -1,6 +1,6 @@
 streamlit
 opencv-python-headless
-tensorflow
+tensorflow-cpu
 scikit-learn
 pandas
 requests
@@ -11,4 +11,3 @@ gdown
 plotly
 Pillow
 matplotlib
-streamlink==6.2.1
