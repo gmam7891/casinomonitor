@@ -1,6 +1,0 @@
-path: /mnt/data/branding_dataset
-train: images
-val: images
-
-nc: 1
-names: ['PragmaticPlay']
