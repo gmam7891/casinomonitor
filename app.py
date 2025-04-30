@@ -23,6 +23,8 @@ import subprocess
 from tensorflow.keras.models import load_model
 from storage import salvar_deteccao
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from cluster_processor import carregar_dados_simulados, clusterizar_streamers
+from cluster_dashboard import exibir_dashboard_cluster
 
 
 from ml_utils import (
@@ -1076,3 +1078,29 @@ def parse_duration(duration_str):
         elif unidade == 's':
             segundos = int(valor)
     return horas * 3600 + minutos * 60 + segundos
+
+# 🔽 2. FUNÇÃO PRINCIPAL DO APP
+def main():
+    st.sidebar.title("Menu")
+    pagina = st.sidebar.radio("Escolha a página:", [
+        "Monitoramento",
+        "Resumo",
+        "Clusterização de Streamers"
+    ])
+
+    if pagina == "Monitoramento":
+        st.title("🔍 Página de monitoramento")
+        # seu código de monitoramento...
+
+    elif pagina == "Resumo":
+        st.title("📊 Resumo geral")
+        # seu código de resumo...
+
+    elif pagina == "Clusterização de Streamers":
+        df = carregar_dados_simulados()
+        perfil, resumo = clusterizar_streamers(df)
+        exibir_dashboard_cluster(perfil, resumo)
+
+# 🚀 3. EXECUTAR APP
+if __name__ == "__main__":
+    main()
