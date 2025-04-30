@@ -124,3 +124,25 @@ def verificar_jogo_em_live(m3u8_url, model=None, templates=None, tempo_offset=30
         return jogo_template
 
     return None
+
+# Verifica se um jogo está sendo jogado em live
+def verificar_jogo_em_live(streamer_login, headers, base_url):
+    try:
+        url = f"{base_url}streams?user_login={streamer_login}"
+        resp = requests.get(url, headers=headers)
+        data = resp.json().get("data", [])
+        if not data:
+            return None
+
+        stream = data[0]
+        categoria = stream.get("game_name", "Desconhecida")
+        viewers = stream.get("viewer_count", 0)
+
+        # Você pode aplicar lógica para detecção de jogo com base na categoria aqui,
+        # ou retornar "indisponível" se quiser combinar com predição de frame.
+        return ("Live detectada", categoria, viewers)
+
+    except Exception as e:
+        print(f"Erro ao verificar live de {streamer_login}: {e}")
+        return None
+
