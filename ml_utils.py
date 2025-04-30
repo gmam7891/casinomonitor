@@ -119,3 +119,23 @@ def varrer_url_combinada(m3u8_url, modelo, templates, intervalo=60, max_frames=6
             })
 
     return resultados
+
+# Verifica jogo em uma stream ao vivo
+def verificar_jogo_em_live(m3u8_url, model=None, templates=None, tempo_offset=30):
+    """
+    Tenta detectar o jogo atual em uma live. Primeiro tenta IA, depois fallback com template.
+    """
+    frame = capturar_frame_ffmpeg_imageio(m3u8_url, tempo_offset)
+    if frame is None:
+        return None
+
+    if model:
+        jogo_ia = prever_jogo_em_frame(frame, model)
+        if jogo_ia:
+            return jogo_ia
+
+    if templates:
+        jogo_template = match_template_from_image(frame, templates)
+        return jogo_template
+
+    return None
