@@ -117,3 +117,4 @@ def verificar_jogo_em_live(streamer_login, headers, base_url):
     except Exception as e:
         print(f"Erro ao verificar live de {streamer_login}: {e}")
         return None
+
