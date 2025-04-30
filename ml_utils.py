@@ -161,26 +161,24 @@ def prever_jogo_em_frame(frame):
         return {"jogo": None, "confianca": 0.0}
 
 
-def match_template_from_image(image_path, templates_dir="templates/", threshold=0.02):
-    try:
-        img = cv2.imread(image_path)
-        if img is None:
-            return None
-        gray_img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+def match_template_from_image(frame):
+    templates = carregar_templates()
+    gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
-        for template_file in os.listdir(templates_dir):
-            template_path = os.path.join(templates_dir, template_file)
-            template = cv2.imread(template_path, 0)
-            if template is None:
-                continue
+    melhores_resultados = []
+    for nome_jogo, template in templates.items():
+        resultado = cv2.matchTemplate(gray_frame, template, cv2.TM_CCOEFF_NORMED)
+        _, confianca, _, _ = cv2.minMaxLoc(resultado)
+        melhores_resultados.append((nome_jogo, confianca))
 
-            res = cv2.matchTemplate(gray_img, template, cv2.TM_CCOEFF_NORMED)
-            _, max_val, _, _ = cv2.minMaxLoc(res)
-
-            if max_val >= threshold:
-                return os.path.splitext(template_file)[0]
-
+    melhores_resultados.sort(key=lambda x: x[1], reverse=True)
+    melhor_jogo, confianca = melhores_resultados[0]
+    
+    if confianca >= 0.6:  # você pode ajustar esse threshold
+        return {"jogo": melhor_jogo, "confianca": round(float(confianca), 2)}
+    else:
         return None
+
     except Exception as e:
         print(f"[Erro] match_template_from_image: {e}")
         return None
