@@ -11,3 +11,5 @@ gdown
 plotly
 Pillow
 matplotlib
+ultralytics
+numpy
