@@ -4,8 +4,10 @@ import os
 import tensorflow as tf
 from PIL import Image
 
+# Caminho onde os templates estão armazenados
 TEMPLATES_DIR = "templates"
 
+# Carrega todos os templates .png do diretório
 def carregar_templates():
     templates = {}
     for filename in os.listdir(TEMPLATES_DIR):
@@ -15,15 +17,17 @@ def carregar_templates():
             templates[nome_jogo] = cv2.imread(path, cv2.IMREAD_GRAYSCALE)
     return templates
 
+# Verifica se algum template bate com o frame
 def match_template_from_image(frame, templates, threshold=0.7):
     frame_gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
     for jogo, template in templates.items():
         res = cv2.matchTemplate(frame_gray, template, cv2.TM_CCOEFF_NORMED)
-        _, max_val, _, _ = cv2.minMaxLoc(res)
+        min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(res)
         if max_val >= threshold:
             return jogo
     return None
 
+# Usa FFmpeg (via imageio-ffmpeg) para capturar frame
 def capturar_frame_ffmpeg_imageio(m3u8_url, tempo_seg):
     import imageio_ffmpeg as ffmpeg
     import subprocess
@@ -48,6 +52,7 @@ def capturar_frame_ffmpeg_imageio(m3u8_url, tempo_seg):
         print(f"Erro ao capturar frame com ffmpeg: {e}")
         return None
 
+# Modelo de IA para prever o jogo a partir de um frame
 def prever_jogo_em_frame(frame, model):
     try:
         imagem = cv2.resize(frame, (224, 224))
@@ -60,6 +65,7 @@ def prever_jogo_em_frame(frame, model):
         print(f"Erro na predição do jogo: {e}")
         return None
 
+# Carrega modelo treinado (Keras)
 def carregar_modelo(path="modelo/modelo_pragmatic.keras"):
     try:
         model = tf.keras.models.load_model(path)
@@ -68,9 +74,11 @@ def carregar_modelo(path="modelo/modelo_pragmatic.keras"):
         print(f"Erro ao carregar o modelo: {e}")
         return None
 
+# Busca VODs da Twitch por streamer e período
 def buscar_vods_por_streamer_e_periodo(streamer, inicio, fim):
-    return []
+    return []  # Função mock, substitua por sua integração real com a API
 
+# Varrer um VOD customizado usando template matching
 def varrer_url_customizada(m3u8_url, intervalo=60, max_frames=10, templates=None):
     resultados = []
     for i in range(max_frames):
@@ -85,6 +93,7 @@ def varrer_url_customizada(m3u8_url, intervalo=60, max_frames=10, templates=None
                 })
     return resultados
 
+# Detecção com modelo de IA
 def varrer_vods_com_modelo(m3u8_url, intervalo=60, max_frames=10, model=None):
     resultados = []
     for i in range(max_frames):
@@ -99,32 +108,8 @@ def varrer_vods_com_modelo(m3u8_url, intervalo=60, max_frames=10, model=None):
                 })
     return resultados
 
-def varrer_url_combinada(m3u8_url, modelo, templates, intervalo=60, max_frames=60, skip_inicial=0):
-    resultados = []
-    for i in range(max_frames):
-        tempo = skip_inicial + i * intervalo
-        frame = capturar_frame_ffmpeg_imageio(m3u8_url, tempo)
-        if frame is None:
-            continue
-
-        jogo = prever_jogo_em_frame(frame, modelo)
-        if not jogo:
-            jogo = match_template_from_image(frame, templates)
-
-        if jogo:
-            resultados.append({
-                "segundo": tempo,
-                "jogo_detectado": jogo,
-                "frame": frame
-            })
-
-    return resultados
-
-# Verifica jogo em uma stream ao vivo
+# Verifica jogo em uma stream ao vivo (live)
 def verificar_jogo_em_live(m3u8_url, model=None, templates=None, tempo_offset=30):
-    """
-    Tenta detectar o jogo atual em uma live. Primeiro tenta IA, depois fallback com template.
-    """
     frame = capturar_frame_ffmpeg_imageio(m3u8_url, tempo_offset)
     if frame is None:
         return None
