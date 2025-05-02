@@ -738,6 +738,26 @@ with abas[5]:
             )
             st.plotly_chart(fig1, use_container_width=True)
 
+        # === FILTRO SEMANAL E SALVAMENTO DE JUST CHATTING E VIRTUAL CASINO ===
+        import os
+        hoje = datetime.date.today()
+        ano, semana, _ = hoje.isocalendar()
+        nome_arquivo = f"dados_semanais/semana_{ano}-{semana}.csv"
+        
+        # Filtrar jogos desejados
+        jogos_interesse = ["Just Chatting", "Virtual Casino"]
+        df_semana = df_geral[df_geral["jogo_detectado"].isin(jogos_interesse)]
+        
+        # Criar pasta se necessário
+        os.makedirs("dados_semanais", exist_ok=True)
+        
+        # Salvar CSV da semana
+        df_semana.to_csv(nome_arquivo, index=False)
+        
+        # Atualiza df_geral com base no filtrado
+        df_geral = df_semana
+        
+
         # --- Gráfico 2: Detecções por Streamer ---
         st.markdown("### 🧍‍♂️ Comparativo: Total de Detecções por Streamer")
 
