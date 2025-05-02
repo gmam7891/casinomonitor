@@ -721,26 +721,56 @@ with abas[2]:
 with abas[3]:
     st.subheader("📺 VODs Resumidas")
 
-    col1, _ = st.columns([1, 3])
-    with col1:
-        if st.button("🔄 Carregar resumo de VODs"):
-            from datetime import datetime, timedelta
-            dt_ini = datetime.today() - timedelta(days=7)
-            dt_fim = datetime.today()
-            resumo = buscar_resumo_vods(dt_ini, dt_fim, HEADERS_TWITCH, BASE_URL_TWITCH, TODOS_STREAMERS)
-            st.session_state['vods_resumo'] = resumo
+    if st.button("📺 Verificar VODs no período"):
+        dt_ini = datetime.combine(data_inicio, datetime.min.time())
+        dt_fim = datetime.combine(data_fim, datetime.max.time())
 
-    if 'vods_resumo' in st.session_state and st.session_state['vods_resumo']:
-        df = pd.DataFrame(st.session_state['vods_resumo'])
-        df["data"] = pd.to_datetime(df["data"]).dt.strftime("%d/%m/%Y %H:%M")
-        df["link"] = df["url"].apply(lambda x: f"[Abrir VOD]({x})")
-        df = df.drop(columns=["url"])
-        df = df.sort_values(by="duração (min)", ascending=False)
-        st.dataframe(df, use_container_width=True)
-        st.download_button("⬇️ Baixar CSV", data=df.to_csv(index=False).encode("utf-8"),
-                           file_name="vods_resumo.csv", mime="text/csv")
-    else:
-        st.info("Nenhuma VOD carregada.")
+        vods = buscar_vods_twitch_por_periodo(
+            dt_ini, dt_fim, HEADERS_TWITCH, BASE_URL_TWITCH, TODOS_STREAMERS
+        )
+
+        if vods:
+            vods_filtradas = [
+                vod for vod in vods if vod.get("categoria") in ["Just Chatting", "Virtual Casino"]
+            ]
+
+            if vods_filtradas:
+                salvar_deteccao("vods", vods_filtradas)
+                st.success(f"{len(vods_filtradas)} VODs salvas com sucesso!")
+
+                df_vods = pd.DataFrame(vods_filtradas)
+                df_vods["data"] = pd.to_datetime(df_vods["data"])
+                df_vods["duração_min"] = df_vods["duração_segundos"] / 60
+
+                st.markdown("### 🎥 Número de VODs por Streamer")
+                contagem_vods = df_vods["streamer"].value_counts().reset_index()
+                contagem_vods.columns = ["Streamer", "Quantidade de VODs"]
+                fig1 = px.bar(contagem_vods, x="Streamer", y="Quantidade de VODs", text_auto=True)
+                st.plotly_chart(fig1, use_container_width=True)
+
+                st.markdown("### ⏱️ Tempo Total de Transmissão (minutos)")
+                duracao_total = df_vods.groupby("streamer")["duração_min"].sum().reset_index()
+                duracao_total = duracao_total.sort_values(by="duração_min", ascending=False)
+                fig2 = px.bar(duracao_total, x="streamer", y="duração_min", text_auto=".1f",
+                              labels={"duração_min": "Minutos"},
+                              title="Total de Duração de VODs por Streamer")
+                st.plotly_chart(fig2, use_container_width=True)
+
+            else:
+                st.warning("⚠️ Nenhuma VOD de Just Chatting ou Virtual Casino encontrada.")
+        else:
+            st.info("Nenhuma VOD encontrada no período.")
+
+    # Exibição manual se já estiverem em cache
+    if 'vods' in st.session_state:
+        df_vods = pd.DataFrame(st.session_state['vods'])
+        df_vods["data"] = pd.to_datetime(df_vods["data"]).dt.strftime("%d/%m/%Y %H:%M")
+        df_vods["link"] = df_vods["url"].apply(lambda x: f"[Abrir VOD]({x})")
+        df_vods = df_vods.drop(columns=["url"])
+        df_vods = df_vods.sort_values(by="duração_min", ascending=False)
+        st.dataframe(df_vods, use_container_width=True)
+        st.download_button("⬇️ Baixar CSV", data=df_vods.to_csv(index=False).encode("utf-8"),
+                           file_name="vods.csv", mime="text/csv")
 
 # ------------------ ABA 5: Dashboards ------------------
 with abas[5]:
