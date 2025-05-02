@@ -1,4 +1,3 @@
-
 import streamlit as st
 import matplotlib.pyplot as plt
 
@@ -7,7 +6,6 @@ def exibir_dashboard_cluster(perfil_df, resumo_clusters_df):
 
     cluster_id = st.sidebar.selectbox("Selecione o cluster", sorted(perfil_df["cluster"].unique()))
 
-    # Gráfico
     st.subheader("🧠 Visualização dos clusters")
     fig, ax = plt.subplots()
     for c in sorted(perfil_df["cluster"].unique()):
@@ -21,12 +19,10 @@ def exibir_dashboard_cluster(perfil_df, resumo_clusters_df):
     ax.legend()
     st.pyplot(fig)
 
-    # Tabela por cluster
     st.subheader(f"📋 Streamers do Cluster {cluster_id}")
     st.dataframe(perfil_df[perfil_df["cluster"] == cluster_id][[
         "streamer", "%PP", "total_frames", "lives_detectadas", "media_segundos_por_live"
     ]].reset_index(drop=True))
 
-    # Resumo geral
     st.subheader("📌 Resumo dos clusters")
     st.dataframe(resumo_clusters_df)
