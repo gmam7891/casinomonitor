@@ -722,23 +722,8 @@ with abas[5]:
         st.info("📭 Nenhum dado disponível para análise. Execute uma varredura primeiro.")
     else:
         st.write("✅ Dados carregados para análise.")
-        
-        # --- Gráfico 1: Share of Voice ---
-        st.markdown("### 🥧 Share of Voice (Distribuição dos Jogos Detectados)")
 
-        if "jogo_detectado" in df_geral.columns:
-            ranking = df_geral["jogo_detectado"].value_counts().reset_index()
-            ranking.columns = ["Jogo", "Aparições"]
-
-            fig1 = px.pie(
-                ranking,
-                names="Jogo",
-                values="Aparições",
-                title="Distribuição dos Jogos Detectados"
-            )
-            st.plotly_chart(fig1, use_container_width=True)
-
-        # === FILTRO SEMANAL E SALVAMENTO DE JUST CHATTING E VIRTUAL CASINO ===
+         # === FILTRO SEMANAL E SALVAMENTO DE JUST CHATTING E VIRTUAL CASINO ===
         import os
         from datetime import date
         hoje = date.today()
@@ -758,7 +743,23 @@ with abas[5]:
         # Atualiza df_geral com base no filtrado
         df_geral = df_semana
         
+        # --- Gráfico 1: Share of Voice ---
+        st.markdown("### 🥧 Share of Voice (Distribuição dos Jogos Detectados)")
 
+        if "jogo_detectado" in df_geral.columns:
+            ranking = df_geral["jogo_detectado"].value_counts().reset_index()
+            ranking.columns = ["Jogo", "Aparições"]
+
+            fig1 = px.pie(
+                ranking,
+                names="Jogo",
+                values="Aparições",
+                title="Distribuição dos Jogos Detectados"
+            )
+            st.plotly_chart(fig1, use_container_width=True)
+
+
+        
         # --- Gráfico 2: Detecções por Streamer ---
         st.markdown("### 🧍‍♂️ Comparativo: Total de Detecções por Streamer")
 
