@@ -740,7 +740,8 @@ with abas[5]:
 
         # === FILTRO SEMANAL E SALVAMENTO DE JUST CHATTING E VIRTUAL CASINO ===
         import os
-        hoje = datetime.date.today()
+        from datetime import date
+        hoje = date.today()
         ano, semana, _ = hoje.isocalendar()
         nome_arquivo = f"dados_semanais/semana_{ano}-{semana}.csv"
         
