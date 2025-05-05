@@ -1172,37 +1172,30 @@ def main():
 
     if pagina == "Monitoramento":
         st.title("🔍 Página de monitoramento")
-        # seu código de monitoramento...
+        # seu código...
 
     elif pagina == "Resumo":
         st.title("📊 Resumo geral")
-        # seu código de resumo...
+        # seu código...
 
-   elif pagina == "Clusterização de Streamers":
+    elif pagina == "Clusterização de Streamers":
         st.title("🧠 Clusterização de Streamers")
-    
+
         if "dados_vods_template" in st.session_state:
             df = st.session_state["dados_vods_template"]
-    
-            # Mostra quantas linhas o DataFrame tem
             st.info(f"📊 Dados carregados: {df.shape[0]} linhas")
-    
-            # Evita travamento de memória
+
             if df.shape[0] > 10000:
-                st.warning("⚠️ Muitos dados carregados. Apenas os 1000 primeiros serão analisados.")
+                st.warning("⚠️ Muitos dados. Apenas os 1000 primeiros serão usados.")
                 df = df.head(1000)
-    
-            # Executa clusterização
+
             perfil, resumo = clusterizar_streamers(df)
-    
-            # Exibe resumo dos clusters
             exibir_dashboard_cluster(perfil, resumo)
-    
-            # Exibe os dados em tabela interativa com limite
+
             import ace_tools as tools
             tools.display_dataframe_to_user(name="Dados Clusterizados", dataframe=perfil.head(200))
         else:
-            st.warning("⚠️ Os dados de VODs ainda não foram carregados. Vá até a aba de análise primeiro.")
+            st.warning("⚠️ Vá até a aba de análise primeiro.")
 
 
 # 🚀 3. EXECUTAR APP
