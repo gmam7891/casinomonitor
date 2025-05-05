@@ -13,3 +13,4 @@ Pillow
 matplotlib
 ultralytics
 numpy
+streamlink
