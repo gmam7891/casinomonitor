@@ -530,7 +530,7 @@ with col2:
             dt_ini, dt_fim, HEADERS_TWITCH, BASE_URL_TWITCH, TODOS_STREAMERS
         )
 
-    vods = buscar_vods_twitch_por_periodo(
+        vods = buscar_vods_twitch_por_periodo(
             dt_ini, dt_fim, HEADERS_TWITCH, BASE_URL_TWITCH, TODOS_STREAMERS
         )
 
