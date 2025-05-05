@@ -530,46 +530,37 @@ with col2:
             dt_ini, dt_fim, HEADERS_TWITCH, BASE_URL_TWITCH, TODOS_STREAMERS
         )
 
-        vods = buscar_vods_twitch_por_periodo(
-            dt_ini, dt_fim, HEADERS_TWITCH, BASE_URL_TWITCH, TODOS_STREAMERS
-        )
+        if vods:
+            # Filtra apenas VODs de interesse
+            vods_filtradas = [
+                vod for vod in vods if vod.get("categoria") in ["Just Chatting", "Virtual Casino"]
+            ]
 
-    if vods:
-        # Filtra apenas as VODs das categorias desejadas
-        vods_filtradas = [
-            vod for vod in vods if vod.get("categoria") in ["Just Chatting", "Virtual Casino"]
-        ]
+            if vods_filtradas:
+                salvar_deteccao("vods", vods_filtradas)
+                st.success(f"{len(vods_filtradas)} VODs salvas com sucesso!")
 
-        if vods_filtradas:
-            salvar_deteccao("vods", vods_filtradas)
-            st.success(f"{len(vods_filtradas)} VODs salvas com sucesso!")
+                df_vods = pd.DataFrame(vods_filtradas)
+                df_vods["data"] = pd.to_datetime(df_vods["data"])
+                df_vods["duração_min"] = df_vods["duração_segundos"] / 60
 
-            df_vods = pd.DataFrame(vods_filtradas)
-            df_vods["data"] = pd.to_datetime(df_vods["data"])
-            df_vods["duração_min"] = df_vods["duração_segundos"] / 60
+                st.markdown("### 🎥 Número de VODs por Streamer")
+                contagem_vods = df_vods["streamer"].value_counts().reset_index()
+                contagem_vods.columns = ["Streamer", "Quantidade de VODs"]
+                fig1 = px.bar(contagem_vods, x="Streamer", y="Quantidade de VODs", text_auto=True)
+                st.plotly_chart(fig1, use_container_width=True)
 
-            # Gráfico 1: Contagem de VODs por streamer
-            st.markdown("### 🎥 Número de VODs por Streamer")
-            contagem_vods = df_vods["streamer"].value_counts().reset_index()
-            contagem_vods.columns = ["Streamer", "Quantidade de VODs"]
-            fig1 = px.bar(contagem_vods, x="Streamer", y="Quantidade de VODs", text_auto=True)
-            st.plotly_chart(fig1, use_container_width=True)
-
-            # Gráfico 2: Tempo total de VODs por streamer
-            st.markdown("### ⏱️ Tempo Total de Transmissão (minutos)")
-            duracao_total = df_vods.groupby("streamer")["duração_min"].sum().reset_index()
-            duracao_total = duracao_total.sort_values(by="duração_min", ascending=False)
-            fig2 = px.bar(duracao_total, x="streamer", y="duração_min", text_auto=".1f",
-                          labels={"duração_min": "Minutos"}, title="Total de Duração de VODs por Streamer")
-            st.plotly_chart(fig2, use_container_width=True)
-
+                st.markdown("### ⏱️ Tempo Total de Transmissão (minutos)")
+                duracao_total = df_vods.groupby("streamer")["duração_min"].sum().reset_index()
+                duracao_total = duracao_total.sort_values(by="duração_min", ascending=False)
+                fig2 = px.bar(duracao_total, x="streamer", y="duração_min", text_auto=".1f",
+                              labels={"duração_min": "Minutos"},
+                              title="Total de Duração de VODs por Streamer")
+                st.plotly_chart(fig2, use_container_width=True)
+            else:
+                st.warning("⚠️ Nenhuma VOD de Just Chatting ou Virtual Casino encontrada.")
         else:
-            st.warning("⚠️ Nenhuma VOD de Just Chatting ou Virtual Casino encontrada.")
-    else:
-        st.info("Nenhuma VOD encontrada no período.")
-
-
-from ml_utils import varrer_vods_com_modelo  # no topo se ainda não estiver
+            st.info("Nenhuma VOD encontrada no período.")
 
 with col3:
     if st.button("🖼️ Varrer VODs com imagem"):
