@@ -523,18 +523,19 @@ with col1:
 
 with col2:
     if st.button("📺 Verificar VODs no período"):
-    dt_ini = datetime.combine(data_inicio, datetime.min.time())
-    dt_fim = datetime.combine(data_fim, datetime.max.time())
-
-    vods = buscar_vods_twitch_por_periodo(
-        dt_ini, dt_fim, HEADERS_TWITCH, BASE_URL_TWITCH, TODOS_STREAMERS
-    )
-
-    if vods:
-        # Filtra apenas as VODs das categorias desejadas
-        vods_filtradas = [
-            vod for vod in vods if vod.get("categoria") in ["Just Chatting", "Virtual Casino"]
-        ]
+        dt_ini = datetime.combine(data_inicio, datetime.min.time())
+        dt_fim = datetime.combine(data_fim, datetime.max.time())
+        vods = buscar_vods_twitch_por_periodo(
+            dt_ini, dt_fim,
+            HEADERS_TWITCH,
+            BASE_URL_TWITCH,
+            TODOS_STREAMERS
+        )
+        if vods:
+            salvar_deteccao("vods", vods)
+            st.success(f"{len(vods)} VODs salvos com sucesso!")
+        else:
+            st.info("Nenhuma VOD encontrada no período.")
 
         if vods_filtradas:
             salvar_deteccao("vods", vods_filtradas)
