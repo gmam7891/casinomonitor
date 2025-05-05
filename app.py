@@ -716,7 +716,7 @@ with abas[2]:
 with abas[3]:
     st.subheader("📺 VODs Resumidas")
 
-    if st.button("📺 Verificar VODs no período"):
+    if st.button("📺 Verificar resumo de VODs"):
         dt_ini = datetime.combine(data_inicio, datetime.min.time())
         dt_fim = datetime.combine(data_fim, datetime.max.time())
 
