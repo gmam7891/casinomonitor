@@ -531,7 +531,7 @@ with col2:
         )
 
     vods = buscar_vods_twitch_por_periodo(
-        dt_ini, dt_fim, HEADERS_TWITCH, BASE_URL_TWITCH, TODOS_STREAMERS
+            dt_ini, dt_fim, HEADERS_TWITCH, BASE_URL_TWITCH, TODOS_STREAMERS
     )
 
     if vods:
