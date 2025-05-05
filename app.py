@@ -565,7 +565,6 @@ with col2:
         st.info("Nenhuma VOD encontrada no período.")
 
 
-from ml_utils import varrer_vods_com_modelo  # no topo se ainda não estiver
 
 with col3:
     if st.button("🖼️ Varrer VODs com imagem"):
