@@ -1184,6 +1184,83 @@ def main():
             exibir_dashboard_cluster(perfil, resumo)
 
             import ace_tools as tools
+
+
+# ---------- PAINEL SEMANAL INTEGRADO ----------
+st.header("📈 Detecções da Semana")
+
+@st.cache_data
+def carregar_dados_semanais():
+    ano, semana, _ = date.today().isocalendar()
+    caminho = f"dados_semanais/semana_{ano}-{semana}.csv"
+    if os.path.exists(caminho):
+        return pd.read_csv(caminho, parse_dates=["data_hora"])
+    return pd.DataFrame()
+
+if st.sidebar.button("🔁 Atualizar dados da semana"):
+    df1 = carregar_historico("lives")
+    df2 = carregar_historico("template")
+    df3 = carregar_historico("url")
+    df = pd.concat([df1, df2, df3], ignore_index=True)
+    jogos_interesse = ["Just Chatting", "Virtual Casino"]
+    df = df[df["jogo_detectado"].isin(jogos_interesse)]
+    ano, semana, _ = date.today().isocalendar()
+    os.makedirs("dados_semanais", exist_ok=True)
+    df.to_csv(f"dados_semanais/semana_{ano}-{semana}.csv", index=False)
+    st.sidebar.success("✅ Dados salvos para a semana atual.")
+
+df_semana = carregar_dados_semanais()
+
+if df_semana.empty:
+    st.info("Nenhum dado disponível para esta semana. Clique na barra lateral para atualizar.")
+else:
+    tipo_analise = st.radio("Visualizar por:", ["Live", "VOD (URL)", "Período", "Dashboard"])
+
+    if tipo_analise == "Live":
+        df_live = df_semana[df_semana["categoria"].notna()]
+        st.subheader("🟥 Detecções em Lives")
+        st.dataframe(df_live)
+
+    elif tipo_analise == "VOD (URL)":
+        df_url = df_semana[df_semana["url"].notna() & df_semana["categoria"].isna()]
+        st.subheader("🎥 Detecções por URL")
+        st.dataframe(df_url)
+
+    elif tipo_analise == "Período":
+        df_periodo = df_semana[df_semana["categoria"].isna() & df_semana["url"].isna()]
+        st.subheader("📅 Detecções por Período")
+        st.dataframe(df_periodo)
+
+    elif tipo_analise == "Dashboard":
+        st.subheader("📊 Painel Semanal de Detecções")
+
+        col1, col2 = st.columns(2)
+        with col1:
+            fig1 = px.histogram(df_semana, x="jogo_detectado", color="streamer", title="Distribuição por Jogo")
+            st.plotly_chart(fig1, use_container_width=True)
+
+        with col2:
+            if "viewers" in df_semana.columns:
+                fig2 = px.box(df_semana, x="streamer", y="viewers", title="Distribuição de Viewers por Streamer")
+                st.plotly_chart(fig2, use_container_width=True)
+
+        df_semana["data_hora"] = pd.to_datetime(df_semana["data_hora"], errors="coerce")
+        fig3 = px.line(
+            df_semana.groupby([pd.Grouper(key="data_hora", freq="D"), "jogo_detectado"]).size().reset_index(name="Detecções"),
+            x="data_hora", y="Detecções", color="jogo_detectado",
+            title="📆 Evolução Diária das Detecções"
+        )
+        st.plotly_chart(fig3, use_container_width=True)
+
+        fig4 = px.pie(df_semana, names="jogo_detectado", title="Distribuição Geral por Jogo")
+        st.plotly_chart(fig4, use_container_width=True)
+
+        fig5 = px.bar(df_semana["streamer"].value_counts().reset_index(),
+                      x="index", y="streamer",
+                      labels={"index": "Streamer", "streamer": "Detecções"},
+                      title="Top Streamers da Semana")
+        st.plotly_chart(fig5, use_container_width=True)
+
             tools.display_dataframe_to_user(name="Dados Clusterizados", dataframe=perfil.head(200))
         else:
             st.warning("⚠️ Vá até a aba de análise primeiro.")
