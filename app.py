@@ -93,8 +93,6 @@ def varredura_automatica():
         df2 = carregar_historico("template")
         df3 = carregar_historico("url")
         df = pd.concat([df1, df2, df3], ignore_index=True)
-        jogos_interesse = ["Just Chatting", "Virtual Casino"]
-        df = df[df["jogo_detectado"].isin(jogos_interesse)]
         ano, semana, _ = date.today().isocalendar()
         os.makedirs("dados_semanais", exist_ok=True)
         df.to_csv(f"dados_semanais/semana_{ano}-{semana}.csv", index=False)
@@ -1224,8 +1222,6 @@ if st.sidebar.button("🔁 Atualizar dados da semana"):
         if col not in df.columns:
             df[col] = pd.NA
 
-    jogos_interesse = ["Just Chatting", "Virtual Casino"]
-    df = df[df["jogo_detectado"].isin(jogos_interesse)]
     ano, semana, _ = date.today().isocalendar()
     os.makedirs("dados_semanais", exist_ok=True)
     df.to_csv(f"dados_semanais/semana_{ano}-{semana}.csv", index=False)
