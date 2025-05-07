@@ -1277,7 +1277,7 @@ else:
                       title="Top Streamers da Semana")
         st.plotly_chart(fig5, use_container_width=True)
 
-            tools.display_dataframe_to_user(name="Dados Clusterizados", dataframe=perfil.head(200))
+        tools.display_dataframe_to_user(name="Dados Clusterizados", dataframe=perfil.head(200))
         else:
             st.warning("⚠️ Vá até a aba de análise primeiro.")
 
