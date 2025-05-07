@@ -58,21 +58,6 @@ def salvar_deteccao(tipo, resultados):
     except Exception as e:
         print(f"❌ Erro ao salvar detecção: {e}")
 
-def varredura_automatica():
-    while True:
-        df1 = carregar_historico("lives")
-        df2 = carregar_historico("template")
-        df3 = carregar_historico("url")
-        df = pd.concat([df1, df2, df3], ignore_index=True)
-        jogos_interesse = ["Just Chatting", "Virtual Casino"]
-        df = df[df["jogo_detectado"].isin(jogos_interesse)]
-        ano, semana, _ = date.today().isocalendar()
-        os.makedirs("dados_semanais", exist_ok=True)
-        df.to_csv(f"dados_semanais/semana_{ano}-{semana}.csv", index=False)
-        print(f"✅ Varredura automática concluída em {datetime.now()}")
-        time.sleep(1800)  # 30 minutos em segundos
-
-
 # ---------------- OBTER ACCESS TOKEN DA TWITCH ----------------
 def obter_access_token(client_id, client_secret):
     url = "https://id.twitch.tv/oauth2/token"
