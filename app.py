@@ -1286,15 +1286,17 @@ else:
         fig4 = px.pie(df_semana, names="jogo_detectado", title="Distribuição Geral por Jogo")
         st.plotly_chart(fig4, use_container_width=True)
 
-        fig5 = px.bar(df_semana["streamer"].value_counts().reset_index(),
-                      x="index", y="streamer",
-                      labels={"index": "Streamer", "streamer": "Detecções"},
-                      title="Top Streamers da Semana")
-        st.plotly_chart(fig5, use_container_width=True)
-        if perfil is not None:
-           tools.display_dataframe_to_user(name="Dados Clusterizados", dataframe=perfil.head(200))
+        if "streamer" in df_semana.columns and not df_semana.empty:
+            contagem = df_semana["streamer"].value_counts().reset_index()
+            contagem.columns = ["Streamer", "Detecções"]
+            fig5 = px.bar(contagem,
+                          x="Streamer", y="Detecções",
+                          labels={"Streamer": "Streamer", "Detecções": "Detecções"},
+                          title="Top Streamers da Semana")
+            st.plotly_chart(fig5, use_container_width=True)
         else:
-            st.warning("⚠️ Vá até a aba de análise primeiro.")
+            st.info("Nenhum dado de streamer disponível para gerar o gráfico Top Streamers.")
+
 
 threading.Thread(target=varredura_automatica, daemon=True).start()
 
