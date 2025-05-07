@@ -9,10 +9,10 @@ import datetime
 import logging
 import requests
 import traceback
-import threading
-import time
 from dotenv import load_dotenv
 load_dotenv()
+import threading
+import time
 
 print("TWITCH_CLIENT_ID:", os.getenv("TWITCH_CLIENT_ID"))
 print("TWITCH_CLIENT_SECRET:", os.getenv("TWITCH_CLIENT_SECRET"))
@@ -86,6 +86,20 @@ except ImportError:
     except Exception as e:
         st.error(f"❌ Falha ao instalar OpenCV automaticamente: {e}")
         st.stop()
+
+def varredura_automatica():
+    while True:
+        df1 = carregar_historico("lives")
+        df2 = carregar_historico("template")
+        df3 = carregar_historico("url")
+        df = pd.concat([df1, df2, df3], ignore_index=True)
+        jogos_interesse = ["Just Chatting", "Virtual Casino"]
+        df = df[df["jogo_detectado"].isin(jogos_interesse)]
+        ano, semana, _ = date.today().isocalendar()
+        os.makedirs("dados_semanais", exist_ok=True)
+        df.to_csv(f"dados_semanais/semana_{ano}-{semana}.csv", index=False)
+        print(f"✅ Varredura automática concluída em {datetime.now()}")
+        time.sleep(1800)
 
 # ---------------- Importar módulos internos ----------------
 from ml_training import treinar_modelo
@@ -1267,6 +1281,7 @@ else:
         else:
             st.warning("⚠️ Vá até a aba de análise primeiro.")
 
+threading.Thread(target=varredura_automatica, daemon=True).start()
 
 # 🚀 3. EXECUTAR APP
 if __name__ == "__main__":
