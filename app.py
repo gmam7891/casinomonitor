@@ -802,10 +802,20 @@ with abas[5]:
 
         jogos_interesse = df_geral["jogo_detectado"].unique()
         os.makedirs("dados_semanais", exist_ok=True)
-        df_semana.to_csv(nome_arquivo, index=False)
-        df_geral = df_semana  # Atualiza com dados filtrados
 
-        # (aqui vêm os gráficos e visualizações...)
+        if "jogo_detectado" in df_geral.columns:
+            df_semana = df_geral[df_geral["jogo_detectado"].isin(jogos_interesse)]
+            if not df_semana.empty:
+                df_semana.to_csv(nome_arquivo, index=False)
+                df_geral = df_semana  # Atualiza com dados filtrados
+                print(f"✅ Dados salvos em {nome_arquivo}")
+            else:
+                print("⚠️ Nenhum dado encontrado para salvar em df_semana.")
+                df_geral = pd.DataFrame()  # Garante que df_geral não quebre abaixo
+        else:
+            print("⚠️ Coluna 'jogo_detectado' não encontrada em df_geral.")
+            df_geral = pd.DataFrame()  # Garante que df_geral não quebre abaixo
+
         
         # --- Gráfico 1: Share of Voice ---
         st.markdown("### 🥧 Share of Voice (Distribuição dos Jogos Detectados)")
