@@ -1238,10 +1238,14 @@ else:
         st.dataframe(df_live)
 
     elif tipo_analise == "VOD (URL)":
+        
+    if "url" in df_semana.columns and "categoria" in df_semana.columns:
         df_url = df_semana[df_semana["url"].notna() & df_semana["categoria"].isna()]
         st.subheader("🎥 Detecções por URL")
         st.dataframe(df_url)
-
+    else:
+        st.warning("⚠️ As colunas 'url' ou 'categoria' não estão disponíveis no DataFrame.")
+        
     elif tipo_analise == "Período":
         df_periodo = df_semana[df_semana["categoria"].isna() & df_semana["url"].isna()]
         st.subheader("📅 Detecções por Período")
