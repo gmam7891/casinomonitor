@@ -800,8 +800,7 @@ with abas[5]:
         ano, semana, _ = hoje.isocalendar()
         nome_arquivo = f"dados_semanais/semana_{ano}-{semana}.csv"
 
-        jogos_interesse = ["Just Chatting", "Virtual Casino"]
-        df_semana = df_geral[df_geral["jogo_detectado"].isin(jogos_interesse)]
+        jogos_interesse = df_geral["jogo_detectado"].unique()
         os.makedirs("dados_semanais", exist_ok=True)
         df_semana.to_csv(nome_arquivo, index=False)
         df_geral = df_semana  # Atualiza com dados filtrados
