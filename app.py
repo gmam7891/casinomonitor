@@ -1218,6 +1218,12 @@ if st.sidebar.button("🔁 Atualizar dados da semana"):
     df2 = carregar_historico("template")
     df3 = carregar_historico("url")
     df = pd.concat([df1, df2, df3], ignore_index=True)
+    
+    colunas_minimas = ["url", "categoria", "jogo_detectado", "streamer", "viewers", "data_hora"]
+    for col in colunas_minimas:
+        if col not in df.columns:
+            df[col] = pd.NA
+
     jogos_interesse = ["Just Chatting", "Virtual Casino"]
     df = df[df["jogo_detectado"].isin(jogos_interesse)]
     ano, semana, _ = date.today().isocalendar()
