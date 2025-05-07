@@ -1248,6 +1248,10 @@ else:
             st.warning("⚠️ As colunas 'url' ou 'categoria' não estão disponíveis no DataFrame.")
         
     elif tipo_analise == "Período":
+        colunas_minimas = ["url", "categoria"]
+        for col in colunas_minimas:
+            if col not in df_semana.columns:
+                df_semana[col] = pd.NA
         df_periodo = df_semana[df_semana["categoria"].isna() & df_semana["url"].isna()]
         st.subheader("📅 Detecções por Período")
         st.dataframe(df_periodo)
