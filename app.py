@@ -1254,6 +1254,12 @@ else:
 
     elif tipo_analise == "Dashboard":
         st.subheader("📊 Painel Semanal de Detecções")
+        colunas_necessarias = ["data_hora", "jogo_detectado", "streamer"]
+        colunas_faltando = [col for col in colunas_necessarias if col not in df_semana.columns]
+        if colunas_faltando:
+            st.warning(f"⚠️ As seguintes colunas estão faltando no DataFrame: {', '.join(colunas_faltando)}. "
+                       f"Atualize os dados da semana ou verifique o arquivo salvo.")
+            st.stop()
 
         col1, col2 = st.columns(2)
         with col1:
