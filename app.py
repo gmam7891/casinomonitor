@@ -1273,15 +1273,14 @@ else:
         st.plotly_chart(fig4, use_container_width=True)
 
         fig5 = px.bar(df_semana["streamer"].value_counts().reset_index(),
-                      x="index", y="streamer",
-                      labels={"index": "Streamer", "streamer": "Detecções"},
-                      title="Top Streamers da Semana")
-        st.plotly_chart(fig5, use_container_width=True)
+              x="index", y="streamer",
+              labels={"index": "Streamer", "streamer": "Detecções"},
+              title="Top Streamers da Semana")
+st.plotly_chart(fig5, use_container_width=True)
 
-            tools.display_dataframe_to_user(name="Dados Clusterizados", dataframe=perfil.head(200))
-        else:
-            st.warning("⚠️ Vá até a aba de análise primeiro.")
-
+    tools.display_dataframe_to_user(name="Dados Clusterizados", dataframe=perfil.head(200))
+else:
+    st.warning("⚠️ Vá até a aba de análise primeiro.")
 
 # 🚀 3. EXECUTAR APP
 if __name__ == "__main__":
