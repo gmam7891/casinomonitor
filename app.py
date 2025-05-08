@@ -39,7 +39,6 @@ from ml_utils import (
 print("TWITCH_CLIENT_ID:", os.getenv("TWITCH_CLIENT_ID"))
 print("TWITCH_CLIENT_SECRET:", os.getenv("TWITCH_CLIENT_SECRET"))
 
-# ---------------- OpenCV em ambiente headless ----------------
 try:
     import cv2
 except ImportError:
@@ -50,11 +49,9 @@ except ImportError:
         st.error(f"❌ Falha ao instalar OpenCV automaticamente: {e}")
         st.stop()
 
-# ---------------- CONFIGURAÇÃO GERAL ----------------
 st.set_page_config(page_title="Monitor Cassino PP", layout="wide")
 logging.basicConfig(level=logging.INFO, format='[%(levelname)s] %(asctime)s - %(message)s')
 
-# ---------------- OBTER ACCESS TOKEN DA TWITCH ----------------
 def obter_access_token(client_id, client_secret):
     url = "https://id.twitch.tv/oauth2/token"
     data = {
@@ -81,7 +78,6 @@ HEADERS_TWITCH = {
 }
 BASE_URL_TWITCH = 'https://api.twitch.tv/helix/'
 
-# ---------------- MODELO ML ----------------
 MODEL_DIR = os.path.join(os.path.dirname(__file__), "modelo")
 MODEL_PATH = os.path.join(MODEL_DIR, "modelo_pragmatic.keras")
 MODEL_URL = "https://drive.google.com/uc?id=1i_zEMwUkTfu9L5HGNdrIs4OPCTN6Q8Zr"
@@ -102,23 +98,17 @@ if "modelo_ml" not in st.session_state:
         except Exception as e:
             st.error(f"Erro ao carregar modelo: {e}")
 
-# 📂 Diretórios e arquivos fixos
 STREAMERS_FILE = "streamers.txt"
 DADOS_DIR = "dados"
 os.makedirs(DADOS_DIR, exist_ok=True)
 
-# 📄 Lê streamers fixos do arquivo local
 def carregar_streamers():
-    """Lê os streamers fixos do arquivo streamers.txt"""
     if not os.path.exists(STREAMERS_FILE):
         with open(STREAMERS_FILE, "w") as f:
-            f.write("jukes\n")  # streamer padrão inicial
+            f.write("jukes\n")
     with open(STREAMERS_FILE, "r") as f:
         return [l.strip() for l in f if l.strip()]
-
-# 💾 Salva detecções em CSV
 def salvar_deteccao(tipo, dados):
-    """Salva dados detectados no diretório /dados como CSV"""
     nome_arquivo = f"{DADOS_DIR}/{tipo}.csv"
     df_novo = pd.DataFrame(dados)
     df_novo["data_hora"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -131,9 +121,7 @@ def salvar_deteccao(tipo, dados):
 
     df.to_csv(nome_arquivo, index=False)
 
-# 🧽 Filtra streamers apenas com idioma português
 def filtrar_streamers_pt(streamers):
-    """Filtra a lista mantendo apenas streamers com idioma 'pt' (português)."""
     streamers_pt = []
     ignorados = []
 
@@ -157,11 +145,7 @@ def filtrar_streamers_pt(streamers):
 
     return streamers_pt
 
-# ---------------- FUNÇÃO: calcular minutos únicos com jogo por streamer ----------------
 def calcular_minutos_por_streamer(dados, nome_jogo="pragmatic"):
-    """
-    Retorna um dicionário com {streamer: minutos únicos com jogo detectado}
-    """
     minutos_por_streamer = {}
     for d in dados:
         if "jogo_detectado" not in d or "segundo" not in d or "streamer" not in d:
@@ -174,11 +158,16 @@ def calcular_minutos_por_streamer(dados, nome_jogo="pragmatic"):
             minutos_por_streamer[streamer].add(minuto)
     return {s: len(mins) for s, mins in minutos_por_streamer.items()}
 
-# ---------------- CARREGAR E FILTRAR STREAMERS FIXOS ----------------
+def carregar_streamers():
+    if not os.path.exists(STREAMERS_FILE):
+        with open(STREAMERS_FILE, "w") as f:
+            f.write("jukes\n")
+    with open(STREAMERS_FILE, "r") as f:
+        return [l.strip() for l in f if l.strip()]
+
 STREAMERS_INTERESSE = carregar_streamers()
 TODOS_STREAMERS = STREAMERS_INTERESSE
 
-# ------------------ SIDEBAR CONFIG ------------------
 with st.sidebar.expander("🎯 Filtros de Data e URL"):
     data_inicio = st.date_input("Data de início", value=datetime.today() - timedelta(days=7))
     data_fim = st.date_input("Data de fim", value=datetime.today())
@@ -288,7 +277,6 @@ if 'dados_url' in st.session_state:
             st.markdown(f"🧠 **Confiança:** {res['confianca']:.2%}")
 
     st.success(f"Total de detecções: {len(st.session_state['dados_url'])}")
-
 
 # ------------------ BOTÕES PRINCIPAIS ------------------
 col1, col2, col3, col4 = st.columns(4)
@@ -429,7 +417,6 @@ abas = st.tabs([
     "🎯 Streamer Focus"
 ])
 
-# ------------------ ABA 0: Detecções ------------------
 with abas[0]:
     st.subheader("🧠 Detecções recentes")
     if 'dados_url' in st.session_state:
@@ -454,7 +441,6 @@ with abas[0]:
                 st.write(f"**Tempo:** {res['segundo']}s")
                 st.write(f"🔗 [Ver VOD]({res['url']})")
 
-# ------------------ ABA 1: Ranking ------------------
 with abas[1]:
     from collections import Counter
 
@@ -476,7 +462,6 @@ with abas[1]:
     else:
         st.info("Nenhum dado disponível.")
 
-# ------------------ ABA 2: Timeline ------------------
 with abas[2]:
     st.subheader("🕒 Linha do Tempo de Detecção")
     dados_timeline = []
@@ -507,7 +492,6 @@ with abas[2]:
     else:
         st.info("Nenhuma detecção disponível.")
 
-# ------------------ ABA 3: VODs ------------------
 with abas[3]:
     st.subheader("📺 VODs Resumidas")
 
@@ -561,7 +545,6 @@ with abas[3]:
         st.download_button("⬇️ Baixar CSV", data=df_vods.to_csv(index=False).encode("utf-8"),
                            file_name="vods.csv", mime="text/csv")
 
-# ------------------ ABA 5: Dashboards ------------------
 with abas[5]:
     st.subheader("📈 Painéis de Detecção")
     dados_template = carregar_historico("template")
@@ -575,7 +558,6 @@ with abas[5]:
         st.write("✅ Dados carregados para análise.")
 
         # === FILTRO SEMANAL E SALVAMENTO DE JUST CHATTING E VIRTUAL CASINO ===
-        from datetime import date
         hoje = date.today()
         ano, semana, _ = hoje.isocalendar()
         nome_arquivo = f"dados_semanais/semana_{ano}-{semana}.csv"
@@ -587,7 +569,7 @@ with abas[5]:
             df_semana = df_geral[df_geral["jogo_detectado"].isin(jogos_interesse)]
             if not df_semana.empty:
                 df_semana.to_csv(nome_arquivo, index=False)
-                df_geral = df_semana  # Atualiza com dados filtrados
+                df_geral = df_semana
                 print(f"✅ Dados salvos em {nome_arquivo}")
             else:
                 print("⚠️ Nenhum dado encontrado para salvar em df_semana.")
@@ -668,6 +650,8 @@ with abas[5]:
                 title="⏱ Tempo Médio de Detecção por Jogo"
             )
             st.plotly_chart(fig4, use_container_width=True)
+        else:
+            st.info("Dados insuficientes para gerar o gráfico de tempo médio.")
 
         # --- Gráfico 5: Top Streamers por Jogo ---
         st.markdown("### 🧍‍♂️🎮 Streamers com mais detecções por Jogo")
@@ -750,6 +734,7 @@ with abas[5]:
             st.plotly_chart(fig7, use_container_width=True)
         else:
             st.info("Dados temporais insuficientes para gerar mapa de calor.")
+
 
         # --- Gráfico 8: Tendência de Crescimento por Jogo ---
         st.markdown("### 📈 Tendência de Crescimento por Jogo (Média Móvel 3 dias)")
@@ -996,7 +981,7 @@ if st.sidebar.button("🔁 Atualizar dados da semana"):
     df2 = carregar_historico("template")
     df3 = carregar_historico("url")
     df = pd.concat([df1, df2, df3], ignore_index=True)
-    
+
     colunas_minimas = ["url", "categoria", "jogo_detectado", "streamer", "viewers", "data_hora"]
     for col in colunas_minimas:
         if col not in df.columns:
@@ -1082,21 +1067,6 @@ threading.Thread(target=varredura_automatica, daemon=True).start()
 # 🚀 3. EXECUTAR APP
 if __name__ == "__main__":
     main()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
