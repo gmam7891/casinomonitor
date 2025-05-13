@@ -93,6 +93,8 @@ def varredura_automatica():
         df2 = carregar_historico("template")
         df3 = carregar_historico("url")
         df = pd.concat([df1, df2, df3], ignore_index=True)
+        jogos_interesse = ["Just Chatting", "Virtual Casino"]
+        df = df[df["jogo_detectado"].isin(jogos_interesse)]
         ano, semana, _ = date.today().isocalendar()
         os.makedirs("dados_semanais", exist_ok=True)
         df.to_csv(f"dados_semanais/semana_{ano}-{semana}.csv", index=False)
@@ -380,6 +382,10 @@ with st.sidebar.expander("🎯 Filtros de Data e URL"):
     url_custom = st.text_input("URL personalizada (VOD .m3u8 ou com ?t=...)")
     segundo_alvo = st.number_input("Segundo para captura manual", min_value=0, max_value=99999, value=0)
 
+# ✅ NOVO: Checkbox de filtro por categoria
+with st.sidebar.expander("⚙️ Filtro de Categoria"):
+    usar_filtro_virtual_casino = st.checkbox("Filtrar apenas 'Virtual Casino'", value=False)
+
 with st.sidebar.expander("🔧 Utilitários Twitch"):
     col1, col2 = st.columns(2)
     with col1:
@@ -415,7 +421,7 @@ with st.sidebar.expander("🧠 Modelo de Detecção"):
         else:
             st.warning("⚠️ Falha no treinamento do modelo.")
 
-
+# ------------------ AÇÃO: Análise de VOD por Período ------------------
 with st.sidebar.expander("🎯 Análise de VOD / Período"):
     streamer_escolhido = st.selectbox("👤 Escolha o streamer", carregar_streamers())
     tipo_analise = st.radio("Tipo de análise", ["VOD específica (URL)", "Por período"])
@@ -468,7 +474,11 @@ with st.sidebar.expander("🎯 Análise de VOD / Período"):
                     HEADERS_TWITCH,
                     BASE_URL_TWITCH
                 )
-    
+
+            # ✅ Aplica filtro se checkbox estiver marcado
+            if usar_filtro_virtual_casino:
+                vods = [vod for vod in vods if vod.get("categoria") == "Virtual Casino"]
+
             if not vods:
                 st.warning("⚠️ Nenhuma VOD encontrada nesse período.")
             else:
@@ -482,17 +492,42 @@ with st.sidebar.expander("🎯 Análise de VOD / Período"):
                         varrer_url_customizada_paralela,
                         obter_url_m3u8_twitch
                     )
-    
+
                     if resultados:
                         salvar_deteccao("periodo", resultados)
                         st.success("✅ Análise por período concluída e salva!")
                     else:
                         st.warning("⚠️ Nenhuma detecção relevante encontrada.")
-    
+
                 except Exception as e:
                     st.error("❌ Ocorreu um erro durante a análise.")
                     st.exception(e)
 
+# ------------------ AÇÃO: Verificar Lives Agora (aplicação do filtro) ------------------
+if st.button("🔍 Verificar lives agora"):
+    resultados = []
+
+    for streamer in TODOS_STREAMERS:
+        res = verificar_jogo_em_live(streamer, HEADERS_TWITCH, BASE_URL_TWITCH)
+        if res and len(res) == 3:
+            jogo, categoria, viewers = res
+            resultados.append({
+                "streamer": streamer,
+                "jogo_detectado": jogo,
+                "categoria": categoria,
+                "viewers": viewers,
+                "timestamp": datetime.now()
+            })
+
+    # ✅ Aplica filtro se marcado
+    if usar_filtro_virtual_casino:
+        resultados = [r for r in resultados if r.get("categoria") == "Virtual Casino"]
+
+    if resultados:
+        salvar_deteccao("lives", resultados)
+        st.success(f"{len(resultados)} detecções salvas com sucesso!")
+    else:
+        st.info("Nenhum jogo detectado ao vivo.")
 
 
 # ------------------ EXIBIÇÃO DE RESULTADOS (MELHORADA) ------------------
@@ -546,9 +581,7 @@ with col2:
 
         if vods:
             # Filtra apenas VODs de interesse
-            vods_filtradas = [
-                vod for vod in vods if vod.get("categoria") in ["Just Chatting", "Virtual Casino"]
-            ]
+            vods_filtradas = vods
 
             if vods_filtradas:
                 salvar_deteccao("vods", vods_filtradas)
@@ -739,9 +772,7 @@ with abas[3]:
         )
 
         if vods:
-            vods_filtradas = [
-                vod for vod in vods if vod.get("categoria") in ["Just Chatting", "Virtual Casino"]
-            ]
+            vods_filtradas = vods
 
             if vods_filtradas:
                 salvar_deteccao("vods", vods_filtradas)
@@ -800,8 +831,7 @@ with abas[5]:
         ano, semana, _ = hoje.isocalendar()
         nome_arquivo = f"dados_semanais/semana_{ano}-{semana}.csv"
 
-        jogos_interesse = ["Just Chatting", "Virtual Casino"]
-        df_semana = df_geral[df_geral["jogo_detectado"].isin(jogos_interesse)]
+        df_semana = df_geral
         os.makedirs("dados_semanais", exist_ok=True)
         df_semana.to_csv(nome_arquivo, index=False)
         df_geral = df_semana  # Atualiza com dados filtrados
@@ -1216,12 +1246,7 @@ if st.sidebar.button("🔁 Atualizar dados da semana"):
     df2 = carregar_historico("template")
     df3 = carregar_historico("url")
     df = pd.concat([df1, df2, df3], ignore_index=True)
-    
-    colunas_minimas = ["url", "categoria", "jogo_detectado", "streamer", "viewers", "data_hora"]
-    for col in colunas_minimas:
-        if col not in df.columns:
-            df[col] = pd.NA
-
+    df = df[df["jogo_detectado"].isin(jogos_interesse)]
     ano, semana, _ = date.today().isocalendar()
     os.makedirs("dados_semanais", exist_ok=True)
     df.to_csv(f"dados_semanais/semana_{ano}-{semana}.csv", index=False)
@@ -1240,13 +1265,10 @@ else:
         st.dataframe(df_live)
 
     elif tipo_analise == "VOD (URL)":
-        if "url" in df_semana.columns and "categoria" in df_semana.columns:
-            df_url = df_semana[df_semana["url"].notna() & df_semana["categoria"].isna()]
-            st.subheader("🎥 Detecções por URL")
-            st.dataframe(df_url)
-        else:
-            st.warning("⚠️ As colunas 'url' ou 'categoria' não estão disponíveis no DataFrame.")
-        
+        df_url = df_semana[df_semana["url"].notna() & df_semana["categoria"].isna()]
+        st.subheader("🎥 Detecções por URL")
+        st.dataframe(df_url)
+
     elif tipo_analise == "Período":
         df_periodo = df_semana[df_semana["categoria"].isna() & df_semana["url"].isna()]
         st.subheader("📅 Detecções por Período")
@@ -1254,12 +1276,6 @@ else:
 
     elif tipo_analise == "Dashboard":
         st.subheader("📊 Painel Semanal de Detecções")
-        colunas_necessarias = ["data_hora", "jogo_detectado", "streamer"]
-        colunas_faltando = [col for col in colunas_necessarias if col not in df_semana.columns]
-        if colunas_faltando:
-            st.warning(f"⚠️ As seguintes colunas estão faltando no DataFrame: {', '.join(colunas_faltando)}. "
-                       f"Atualize os dados da semana ou verifique o arquivo salvo.")
-            st.stop()
 
         col1, col2 = st.columns(2)
         with col1:
@@ -1287,10 +1303,13 @@ else:
                       labels={"index": "Streamer", "streamer": "Detecções"},
                       title="Top Streamers da Semana")
         st.plotly_chart(fig5, use_container_width=True)
-        if perfil is not None:
-           tools.display_dataframe_to_user(name="Dados Clusterizados", dataframe=perfil.head(200))
+
+        if "perfil" in locals():
+            tools.display_dataframe_to_user(name="Dados Clusterizados", dataframe=perfil.head(200))
         else:
             st.warning("⚠️ Vá até a aba de análise primeiro.")
+
+
 
 threading.Thread(target=varredura_automatica, daemon=True).start()
 
