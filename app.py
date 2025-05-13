@@ -601,7 +601,7 @@ with col2:
                 st.markdown("### 🎥 Número de VODs por Streamer")
                 contagem_vods = df_vods["streamer"].value_counts().reset_index()
                 contagem_vods.columns = ["Streamer", "Quantidade de VODs"]
-                fig1 = px.bar(contagem_vods, x="Streamer", y="Quantidade de VODs", text_auto=True)
+                fig1 = px.bar(contagem_vods, x="Streamer", y="Quantidade de VODs", text="Quantidade de VODs")
                 st.plotly_chart(fig1, use_container_width=True)
 
                 st.markdown("### ⏱️ Tempo Total de Transmissão (minutos)")
