@@ -738,15 +738,16 @@ with abas[3]:
         )
 
         if vods:
-           vods_filtradas = vods
-
+            vods_filtradas = vods
+        
             if vods_filtradas:
                 salvar_deteccao("vods", vods_filtradas)
                 st.success(f"{len(vods_filtradas)} VODs salvas com sucesso!")
-
+        
                 df_vods = pd.DataFrame(vods_filtradas)
                 df_vods["data"] = pd.to_datetime(df_vods["data"])
                 df_vods["duração_min"] = df_vods["duração_segundos"] / 60
+
 
                 st.markdown("### 🎥 Número de VODs por Streamer")
                 contagem_vods = df_vods["streamer"].value_counts().reset_index()
