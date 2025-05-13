@@ -608,9 +608,10 @@ with col2:
                 st.markdown("### ⏱️ Tempo Total de Transmissão (minutos)")
                 duracao_total = df_vods.groupby("streamer")["duração_min"].sum().reset_index()
                 duracao_total = duracao_total.sort_values(by="duração_min", ascending=False)
-                fig2 = px.bar(duracao_total, x="streamer", y="duração_min", text_auto=".1f",
+                fig2 = px.bar(duracao_total, x="streamer", y="duração_min", text="duração_min",
                               labels={"duração_min": "Minutos"},
                               title="Total de Duração de VODs por Streamer")
+
                 st.plotly_chart(fig2, use_container_width=True)
             else:
                 st.warning("⚠️ Nenhuma VOD disponível ou detectável neste período.")
