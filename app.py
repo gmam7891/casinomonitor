@@ -551,7 +551,7 @@ if 'dados_url' in st.session_state:
 col1, col2, col3, col4 = st.columns(4)
 
 with col1:
-    if st.button("🔍 Verificar lives agora"):
+    if st.button("🔍 Verificar lives agora", key="verificar_lives_btn"):
         resultados = []
 
         for streamer in TODOS_STREAMERS:
