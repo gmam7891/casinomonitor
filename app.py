@@ -511,7 +511,7 @@ if st.button("🔍 Verificar lives agora"):
         st.info("Nenhum jogo detectado ao vivo.")
 
 # ------------------ BOTÃO: Verificar resumo de VODs ------------------
-if st.button("📺 Verificar resumo de VODs", key="verificar_resumo_vods_btn"):
+if st.button("📺 Verificar resumo de VODs"):
     dt_ini = datetime.combine(data_inicio, datetime.min.time())
     dt_fim = datetime.combine(data_fim, datetime.max.time())
 
@@ -551,7 +551,7 @@ if 'dados_url' in st.session_state:
 col1, col2, col3, col4 = st.columns(4)
 
 with col1:
-    if st.button("🔍 Verificar lives agora", key="verificar_lives_btn"):
+    if st.button("🔍 Verificar lives agora"):
         resultados = []
 
         for streamer in TODOS_STREAMERS:
@@ -1238,7 +1238,7 @@ st.header("📈 Detecções da Semana")
 
 @st.cache_data
 def carregar_dados_semanais():
-    ano, semana, _ = datetime.today().isocalendar()
+    ano, semana, _ = date.today().isocalendar()
     caminho = f"dados_semanais/semana_{ano}-{semana}.csv"
     if os.path.exists(caminho):
         return pd.read_csv(caminho, parse_dates=["data_hora"])
