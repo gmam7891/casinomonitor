@@ -106,8 +106,9 @@ def varredura_automatica():
                 })
 
         if resultados_lives:
-            salvar_deteccao("lives", resultados_lives)
-            print(f"✅ {len(resultados_lives)} lives detectadas e salvas.")
+            salvar_deteccao("lives_auto", resultados_lives)
+            print(f"✅ {len(resultados_lives)} lives automáticas detectadas e salvas.")
+
         else:
             print("ℹ️ Nenhuma live detectada.")
 
