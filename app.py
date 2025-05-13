@@ -793,18 +793,16 @@ with abas[5]:
     else:
         st.write("✅ Dados carregados para análise.")
 
-        # === FILTRO SEMANAL E SALVAMENTO DE JUST CHATTING E VIRTUAL CASINO ===
+        # === SALVAMENTO SEMANAL DE TODOS OS JOGOS DETECTADOS ===
         from datetime import date
         hoje = date.today()
         ano, semana, _ = hoje.isocalendar()
         nome_arquivo = f"dados_semanais/semana_{ano}-{semana}.csv"
-
-        df_semana = df_geral[df_geral["jogo_detectado"].isin(jogos_interesse)]
+        
         os.makedirs("dados_semanais", exist_ok=True)
-        df_semana.to_csv(nome_arquivo, index=False)
-        df_geral = df_semana  # Atualiza com dados filtrados
+        df_geral.to_csv(nome_arquivo, index=False)
+        # df_geral permanece completo — sem filtragem
 
-        # (aqui vêm os gráficos e visualizações...)
         
         # --- Gráfico 1: Share of Voice ---
         st.markdown("### 🥧 Share of Voice (Distribuição dos Jogos Detectados)")
