@@ -511,7 +511,7 @@ if st.button("🔍 Verificar lives agora"):
         st.info("Nenhum jogo detectado ao vivo.")
 
 # ------------------ BOTÃO: Verificar resumo de VODs ------------------
-if st.button("📺 Verificar resumo de VODs"):
+if st.button("📺 Verificar resumo de VODs", key="verificar_resumo_vods_btn"):
     dt_ini = datetime.combine(data_inicio, datetime.min.time())
     dt_fim = datetime.combine(data_fim, datetime.max.time())
 
