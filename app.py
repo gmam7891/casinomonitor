@@ -9,10 +9,10 @@ import datetime
 import logging
 import requests
 import traceback
-import threading
-import time
 from dotenv import load_dotenv
 load_dotenv()
+import threading
+import time
 
 print("TWITCH_CLIENT_ID:", os.getenv("TWITCH_CLIENT_ID"))
 print("TWITCH_CLIENT_SECRET:", os.getenv("TWITCH_CLIENT_SECRET"))
@@ -58,21 +58,6 @@ def salvar_deteccao(tipo, resultados):
     except Exception as e:
         print(f"❌ Erro ao salvar detecção: {e}")
 
-def varredura_automatica():
-    while True:
-        df1 = carregar_historico("lives")
-        df2 = carregar_historico("template")
-        df3 = carregar_historico("url")
-        df = pd.concat([df1, df2, df3], ignore_index=True)
-        jogos_interesse = ["Just Chatting", "Virtual Casino"]
-        df = df[df["jogo_detectado"].isin(jogos_interesse)]
-        ano, semana, _ = date.today().isocalendar()
-        os.makedirs("dados_semanais", exist_ok=True)
-        df.to_csv(f"dados_semanais/semana_{ano}-{semana}.csv", index=False)
-        print(f"✅ Varredura automática concluída em {datetime.now()}")
-        time.sleep(1800)  # 30 minutos em segundos
-
-
 # ---------------- OBTER ACCESS TOKEN DA TWITCH ----------------
 def obter_access_token(client_id, client_secret):
     url = "https://id.twitch.tv/oauth2/token"
@@ -101,6 +86,18 @@ except ImportError:
     except Exception as e:
         st.error(f"❌ Falha ao instalar OpenCV automaticamente: {e}")
         st.stop()
+
+def varredura_automatica():
+    while True:
+        df1 = carregar_historico("lives")
+        df2 = carregar_historico("template")
+        df3 = carregar_historico("url")
+        df = pd.concat([df1, df2, df3], ignore_index=True)
+        ano, semana, _ = date.today().isocalendar()
+        os.makedirs("dados_semanais", exist_ok=True)
+        df.to_csv(f"dados_semanais/semana_{ano}-{semana}.csv", index=False)
+        print(f"✅ Varredura automática concluída em {datetime.now()}")
+        time.sleep(1800)
 
 # ---------------- Importar módulos internos ----------------
 from ml_training import treinar_modelo
@@ -1219,8 +1216,12 @@ if st.sidebar.button("🔁 Atualizar dados da semana"):
     df2 = carregar_historico("template")
     df3 = carregar_historico("url")
     df = pd.concat([df1, df2, df3], ignore_index=True)
-    jogos_interesse = ["Just Chatting", "Virtual Casino"]
-    df = df[df["jogo_detectado"].isin(jogos_interesse)]
+    
+    colunas_minimas = ["url", "categoria", "jogo_detectado", "streamer", "viewers", "data_hora"]
+    for col in colunas_minimas:
+        if col not in df.columns:
+            df[col] = pd.NA
+
     ano, semana, _ = date.today().isocalendar()
     os.makedirs("dados_semanais", exist_ok=True)
     df.to_csv(f"dados_semanais/semana_{ano}-{semana}.csv", index=False)
@@ -1239,10 +1240,13 @@ else:
         st.dataframe(df_live)
 
     elif tipo_analise == "VOD (URL)":
-        df_url = df_semana[df_semana["url"].notna() & df_semana["categoria"].isna()]
-        st.subheader("🎥 Detecções por URL")
-        st.dataframe(df_url)
-
+        if "url" in df_semana.columns and "categoria" in df_semana.columns:
+            df_url = df_semana[df_semana["url"].notna() & df_semana["categoria"].isna()]
+            st.subheader("🎥 Detecções por URL")
+            st.dataframe(df_url)
+        else:
+            st.warning("⚠️ As colunas 'url' ou 'categoria' não estão disponíveis no DataFrame.")
+        
     elif tipo_analise == "Período":
         df_periodo = df_semana[df_semana["categoria"].isna() & df_semana["url"].isna()]
         st.subheader("📅 Detecções por Período")
@@ -1250,6 +1254,12 @@ else:
 
     elif tipo_analise == "Dashboard":
         st.subheader("📊 Painel Semanal de Detecções")
+        colunas_necessarias = ["data_hora", "jogo_detectado", "streamer"]
+        colunas_faltando = [col for col in colunas_necessarias if col not in df_semana.columns]
+        if colunas_faltando:
+            st.warning(f"⚠️ As seguintes colunas estão faltando no DataFrame: {', '.join(colunas_faltando)}. "
+                       f"Atualize os dados da semana ou verifique o arquivo salvo.")
+            st.stop()
 
         col1, col2 = st.columns(2)
         with col1:
@@ -1273,18 +1283,16 @@ else:
         st.plotly_chart(fig4, use_container_width=True)
 
         fig5 = px.bar(df_semana["streamer"].value_counts().reset_index(),
-              x="index", y="streamer",
-              labels={"index": "Streamer", "streamer": "Detecções"},
-              title="Top Streamers da Semana")
+                      x="index", y="streamer",
+                      labels={"index": "Streamer", "streamer": "Detecções"},
+                      title="Top Streamers da Semana")
         st.plotly_chart(fig5, use_container_width=True)
-        
-        tools.display_dataframe_to_user(name="Dados Clusterizados", dataframe=perfil.head(200))
-        
-    if "perfil" in locals():
-        tools.display_dataframe_to_user(name="Dados Clusterizados", dataframe=perfil.head(200))
-    else:
-        st.warning("⚠️ Vá até a aba de análise primeiro.")
+        if perfil is not None:
+           tools.display_dataframe_to_user(name="Dados Clusterizados", dataframe=perfil.head(200))
+        else:
+            st.warning("⚠️ Vá até a aba de análise primeiro.")
 
+threading.Thread(target=varredura_automatica, daemon=True).start()
 
 # 🚀 3. EXECUTAR APP
 if __name__ == "__main__":
