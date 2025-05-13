@@ -1238,7 +1238,7 @@ st.header("📈 Detecções da Semana")
 
 @st.cache_data
 def carregar_dados_semanais():
-    ano, semana, _ = date.today().isocalendar()
+    ano, semana, _ = datetime.today().isocalendar()
     caminho = f"dados_semanais/semana_{ano}-{semana}.csv"
     if os.path.exists(caminho):
         return pd.read_csv(caminho, parse_dates=["data_hora"])
