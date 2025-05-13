@@ -9,10 +9,10 @@ import datetime
 import logging
 import requests
 import traceback
-from dotenv import load_dotenv
-load_dotenv()
 import threading
 import time
+from dotenv import load_dotenv
+load_dotenv()
 
 print("TWITCH_CLIENT_ID:", os.getenv("TWITCH_CLIENT_ID"))
 print("TWITCH_CLIENT_SECRET:", os.getenv("TWITCH_CLIENT_SECRET"))
@@ -58,6 +58,21 @@ def salvar_deteccao(tipo, resultados):
     except Exception as e:
         print(f"❌ Erro ao salvar detecção: {e}")
 
+def varredura_automatica():
+    while True:
+        df1 = carregar_historico("lives")
+        df2 = carregar_historico("template")
+        df3 = carregar_historico("url")
+        df = pd.concat([df1, df2, df3], ignore_index=True)
+        jogos_interesse = ["Just Chatting", "Virtual Casino"]
+        df = df[df["jogo_detectado"].isin(jogos_interesse)]
+        ano, semana, _ = date.today().isocalendar()
+        os.makedirs("dados_semanais", exist_ok=True)
+        df.to_csv(f"dados_semanais/semana_{ano}-{semana}.csv", index=False)
+        print(f"✅ Varredura automática concluída em {datetime.now()}")
+        time.sleep(1800)  # 30 minutos em segundos
+
+
 # ---------------- OBTER ACCESS TOKEN DA TWITCH ----------------
 def obter_access_token(client_id, client_secret):
     url = "https://id.twitch.tv/oauth2/token"
@@ -86,20 +101,6 @@ except ImportError:
     except Exception as e:
         st.error(f"❌ Falha ao instalar OpenCV automaticamente: {e}")
         st.stop()
-
-def varredura_automatica():
-    while True:
-        df1 = carregar_historico("lives")
-        df2 = carregar_historico("template")
-        df3 = carregar_historico("url")
-        df = pd.concat([df1, df2, df3], ignore_index=True)
-        jogos_interesse = ["Just Chatting", "Virtual Casino"]
-        df = df[df["jogo_detectado"].isin(jogos_interesse)]
-        ano, semana, _ = date.today().isocalendar()
-        os.makedirs("dados_semanais", exist_ok=True)
-        df.to_csv(f"dados_semanais/semana_{ano}-{semana}.csv", index=False)
-        print(f"✅ Varredura automática concluída em {datetime.now()}")
-        time.sleep(1800)
 
 # ---------------- Importar módulos internos ----------------
 from ml_training import treinar_modelo
@@ -375,18 +376,32 @@ def calcular_minutos_por_streamer(dados, nome_jogo="pragmatic"):
 STREAMERS_INTERESSE = carregar_streamers()
 TODOS_STREAMERS = STREAMERS_INTERESSE
 
-# ------------------ SIDEBAR: Filtros Gerais ------------------
+# ------------------ SIDEBAR REFACTORED ------------------
 with st.sidebar.expander("🎯 Filtros de Data e URL"):
     data_inicio = st.date_input("Data de início", value=datetime.today() - timedelta(days=7))
     data_fim = st.date_input("Data de fim", value=datetime.today())
     url_custom = st.text_input("URL personalizada (VOD .m3u8 ou com ?t=...)")
     segundo_alvo = st.number_input("Segundo para captura manual", min_value=0, max_value=99999, value=0)
 
-# ✅ NOVO: Checkbox para controlar se o filtro por 'Virtual Casino' deve ser aplicado
-with st.sidebar.expander("⚙️ Filtro por Categoria"):
-    usar_filtro_virtual_casino = st.checkbox("🔘 Analisar apenas a categoria 'Virtual Casino'", value=False)
+with st.sidebar.expander("🔧 Utilitários Twitch"):
+    col1, col2 = st.columns(2)
+    with col1:
+        if st.button("🔍 Testar conexão"):
+            test_url = "https://api.twitch.tv/helix/streams?first=1"
+            resp = requests.get(test_url, headers=HEADERS_TWITCH)
+            st.write("Status:", resp.status_code)
+            try:
+                st.json(resp.json())
+            except Exception as e:
+                st.error(f"Erro ao converter resposta: {e}")
+    with col2:
+        if st.button("🎲 Testar categoria"):
+            nome_categoria = "Virtual Casino"
+            url = f"{BASE_URL_TWITCH}games?name={nome_categoria}"
+            resp = requests.get(url, headers=HEADERS_TWITCH)
+            st.write("🔁 Status:", resp.status_code)
+            st.json(resp.json())
 
-# ------------------ MODELO ML ------------------
 with st.sidebar.expander("🧠 Modelo de Detecção"):
     if "modelo_ml" in st.session_state:
         st.success("✅ Modelo ML carregado")
@@ -403,7 +418,7 @@ with st.sidebar.expander("🧠 Modelo de Detecção"):
         else:
             st.warning("⚠️ Falha no treinamento do modelo.")
 
-# ------------------ ANÁLISE DE VOD / PERÍODO ------------------
+
 with st.sidebar.expander("🎯 Análise de VOD / Período"):
     streamer_escolhido = st.selectbox("👤 Escolha o streamer", carregar_streamers())
     tipo_analise = st.radio("Tipo de análise", ["VOD específica (URL)", "Por período"])
@@ -418,6 +433,7 @@ with st.sidebar.expander("🎯 Análise de VOD / Período"):
 
                 if m3u8_url:
                     tempo_inicial = extrair_segundos_da_url_vod(vod_url_individual)
+
                     st.info("📈 Iniciando varredura profunda (240 frames a cada 60s)...")
 
                     resultado = varrer_url_customizada_paralela(
@@ -455,11 +471,7 @@ with st.sidebar.expander("🎯 Análise de VOD / Período"):
                     HEADERS_TWITCH,
                     BASE_URL_TWITCH
                 )
-
-            # ✅ Aplicar filtro se marcado
-            if usar_filtro_virtual_casino:
-                vods = [vod for vod in vods if vod.get("categoria") == "Virtual Casino"]
-
+    
             if not vods:
                 st.warning("⚠️ Nenhuma VOD encontrada nesse período.")
             else:
@@ -473,64 +485,17 @@ with st.sidebar.expander("🎯 Análise de VOD / Período"):
                         varrer_url_customizada_paralela,
                         obter_url_m3u8_twitch
                     )
-
+    
                     if resultados:
                         salvar_deteccao("periodo", resultados)
                         st.success("✅ Análise por período concluída e salva!")
                     else:
                         st.warning("⚠️ Nenhuma detecção relevante encontrada.")
-
+    
                 except Exception as e:
                     st.error("❌ Ocorreu um erro durante a análise.")
                     st.exception(e)
 
-# ------------------ BOTÃO: Verificar lives agora ------------------
-if st.button("🔍 Verificar lives agora"):
-    resultados = []
-
-    for streamer in TODOS_STREAMERS:
-        res = verificar_jogo_em_live(streamer, HEADERS_TWITCH, BASE_URL_TWITCH)
-        if res and len(res) == 3:
-            jogo, categoria, viewers = res
-            resultados.append({
-                "streamer": streamer,
-                "jogo_detectado": jogo,
-                "categoria": categoria,
-                "viewers": viewers,
-                "timestamp": datetime.now()
-            })
-
-    # ✅ Aplicar filtro se checkbox marcado
-    if usar_filtro_virtual_casino:
-        resultados = [r for r in resultados if r.get("categoria") == "Virtual Casino"]
-
-    if resultados:
-        salvar_deteccao("lives", resultados)
-        st.success(f"{len(resultados)} detecções salvas com sucesso!")
-    else:
-        st.info("Nenhum jogo detectado ao vivo.")
-
-# ------------------ BOTÃO: Verificar resumo de VODs ------------------
-if st.button("📺 Verificar resumo de VODs"):
-    dt_ini = datetime.combine(data_inicio, datetime.min.time())
-    dt_fim = datetime.combine(data_fim, datetime.max.time())
-
-    vods = buscar_vods_twitch_por_periodo(
-        dt_ini, dt_fim, HEADERS_TWITCH, BASE_URL_TWITCH, TODOS_STREAMERS
-    )
-
-    # ✅ Aplicar filtro se necessário
-    vods_filtradas = vods
-    if usar_filtro_virtual_casino:
-        vods_filtradas = [vod for vod in vods if vod.get("categoria") == "Virtual Casino"]
-
-    if vods_filtradas:
-        salvar_deteccao("vods", vods_filtradas)
-        st.success(f"{len(vods_filtradas)} VODs salvas com sucesso!")
-
-        # aqui seguiria com a exibição dos gráficos, dataframes, etc.
-    else:
-        st.warning("⚠️ Nenhuma VOD com filtro aplicado encontrada.")
 
 
 # ------------------ EXIBIÇÃO DE RESULTADOS (MELHORADA) ------------------
@@ -551,7 +516,7 @@ if 'dados_url' in st.session_state:
 col1, col2, col3, col4 = st.columns(4)
 
 with col1:
-    if st.button("🔍 Verificar lives agora", key="verificar_lives_btn"):
+    if st.button("🔍 Verificar lives agora"):
         resultados = []
 
         for streamer in TODOS_STREAMERS:
@@ -584,7 +549,9 @@ with col2:
 
         if vods:
             # Filtra apenas VODs de interesse
-            vods_filtradas = vods
+            vods_filtradas = [
+                vod for vod in vods if vod.get("categoria") in ["Just Chatting", "Virtual Casino"]
+            ]
 
             if vods_filtradas:
                 salvar_deteccao("vods", vods_filtradas)
@@ -775,7 +742,9 @@ with abas[3]:
         )
 
         if vods:
-            vods_filtradas = vods
+            vods_filtradas = [
+                vod for vod in vods if vod.get("categoria") in ["Just Chatting", "Virtual Casino"]
+            ]
 
             if vods_filtradas:
                 salvar_deteccao("vods", vods_filtradas)
@@ -834,7 +803,8 @@ with abas[5]:
         ano, semana, _ = hoje.isocalendar()
         nome_arquivo = f"dados_semanais/semana_{ano}-{semana}.csv"
 
-        df_semana = df_geral
+        jogos_interesse = ["Just Chatting", "Virtual Casino"]
+        df_semana = df_geral[df_geral["jogo_detectado"].isin(jogos_interesse)]
         os.makedirs("dados_semanais", exist_ok=True)
         df_semana.to_csv(nome_arquivo, index=False)
         df_geral = df_semana  # Atualiza com dados filtrados
@@ -1249,6 +1219,7 @@ if st.sidebar.button("🔁 Atualizar dados da semana"):
     df2 = carregar_historico("template")
     df3 = carregar_historico("url")
     df = pd.concat([df1, df2, df3], ignore_index=True)
+    jogos_interesse = ["Just Chatting", "Virtual Casino"]
     df = df[df["jogo_detectado"].isin(jogos_interesse)]
     ano, semana, _ = date.today().isocalendar()
     os.makedirs("dados_semanais", exist_ok=True)
@@ -1302,19 +1273,18 @@ else:
         st.plotly_chart(fig4, use_container_width=True)
 
         fig5 = px.bar(df_semana["streamer"].value_counts().reset_index(),
-                      x="index", y="streamer",
-                      labels={"index": "Streamer", "streamer": "Detecções"},
-                      title="Top Streamers da Semana")
+              x="index", y="streamer",
+              labels={"index": "Streamer", "streamer": "Detecções"},
+              title="Top Streamers da Semana")
         st.plotly_chart(fig5, use_container_width=True)
+        
+        tools.display_dataframe_to_user(name="Dados Clusterizados", dataframe=perfil.head(200))
+        
+    if "perfil" in locals():
+        tools.display_dataframe_to_user(name="Dados Clusterizados", dataframe=perfil.head(200))
+    else:
+        st.warning("⚠️ Vá até a aba de análise primeiro.")
 
-        if "perfil" in locals():
-            tools.display_dataframe_to_user(name="Dados Clusterizados", dataframe=perfil.head(200))
-        else:
-            st.warning("⚠️ Vá até a aba de análise primeiro.")
-
-
-
-threading.Thread(target=varredura_automatica, daemon=True).start()
 
 # 🚀 3. EXECUTAR APP
 if __name__ == "__main__":
