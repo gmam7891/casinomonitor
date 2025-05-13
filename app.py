@@ -1231,7 +1231,7 @@ else:
         st.dataframe(df_live)
 
     elif tipo_analise == "VOD (URL)":
-        df_url = df_geral[df_geral["url"].notna() & df_geral["categoria"].isna()]
+        df_url = df_semana[df_semana["url"].notna() & df_semana["categoria"].isna()]
         st.subheader("🎥 Detecções por URL")
         st.dataframe(df_url)
 
