@@ -93,7 +93,6 @@ def varredura_automatica():
         df2 = carregar_historico("template")
         df3 = carregar_historico("url")
         df = pd.concat([df1, df2, df3], ignore_index=True)
-        jogos_interesse = ["Just Chatting", "Virtual Casino"]
         df = df[df["jogo_detectado"].isin(jogos_interesse)]
         ano, semana, _ = date.today().isocalendar()
         os.makedirs("dados_semanais", exist_ok=True)
@@ -548,9 +547,7 @@ with col2:
 
         if vods:
             # Filtra apenas VODs de interesse
-            vods_filtradas = [
-                vod for vod in vods if vod.get("categoria") in ["Just Chatting", "Virtual Casino"]
-            ]
+            vods_filtradas = vods  # sem filtro de categoria
 
             if vods_filtradas:
                 salvar_deteccao("vods", vods_filtradas)
@@ -574,7 +571,7 @@ with col2:
                               title="Total de Duração de VODs por Streamer")
                 st.plotly_chart(fig2, use_container_width=True)
             else:
-                st.warning("⚠️ Nenhuma VOD de Just Chatting ou Virtual Casino encontrada.")
+                st.warning("⚠️ Nenhuma VOD disponível ou detectável neste período.")
         else:
             st.info("Nenhuma VOD encontrada no período.")
 
@@ -741,9 +738,7 @@ with abas[3]:
         )
 
         if vods:
-            vods_filtradas = [
-                vod for vod in vods if vod.get("categoria") in ["Just Chatting", "Virtual Casino"]
-            ]
+           vods_filtradas = vods
 
             if vods_filtradas:
                 salvar_deteccao("vods", vods_filtradas)
@@ -768,7 +763,8 @@ with abas[3]:
                 st.plotly_chart(fig2, use_container_width=True)
 
             else:
-                st.warning("⚠️ Nenhuma VOD de Just Chatting ou Virtual Casino encontrada.")
+                st.warning("⚠️ Nenhuma VOD disponível ou detectável neste período.")
+
         else:
             st.info("Nenhuma VOD encontrada no período.")
 
@@ -802,7 +798,6 @@ with abas[5]:
         ano, semana, _ = hoje.isocalendar()
         nome_arquivo = f"dados_semanais/semana_{ano}-{semana}.csv"
 
-        jogos_interesse = ["Just Chatting", "Virtual Casino"]
         df_semana = df_geral[df_geral["jogo_detectado"].isin(jogos_interesse)]
         os.makedirs("dados_semanais", exist_ok=True)
         df_semana.to_csv(nome_arquivo, index=False)
@@ -1218,7 +1213,6 @@ if st.sidebar.button("🔁 Atualizar dados da semana"):
     df2 = carregar_historico("template")
     df3 = carregar_historico("url")
     df = pd.concat([df1, df2, df3], ignore_index=True)
-    jogos_interesse = ["Just Chatting", "Virtual Casino"]
     df = df[df["jogo_detectado"].isin(jogos_interesse)]
     ano, semana, _ = date.today().isocalendar()
     os.makedirs("dados_semanais", exist_ok=True)
