@@ -345,8 +345,9 @@ def salvar_deteccao(tipo, dados):
     if os.path.exists(nome_arquivo):
         df_existente = pd.read_csv(nome_arquivo)
         df = pd.concat([df_existente, df_novo], ignore_index=True)
+        df = df.drop_duplicates()
     else:
-        df = df_novo
+        df = df_novo.drop_duplicates()
 
     df.to_csv(nome_arquivo, index=False)
 
