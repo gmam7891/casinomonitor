@@ -1236,12 +1236,17 @@ else:
             st.subheader("🎥 Detecções por URL")
             st.dataframe(df_url)
         else:
-            st.warning("⚠️ Colunas 'url' ou 'categoria' não existem em df_semana.")
+            st.warning("⚠️ Colunas 'url' ou 'categoria' não existem nos dados semanais.")
+
 
     elif tipo_analise == "Período":
-        df_periodo = df_semana[df_semana["categoria"].isna() & df_semana["url"].isna()]
-        st.subheader("📅 Detecções por Período")
-        st.dataframe(df_periodo)
+        if "url" in df_semana.columns and "categoria" in df_semana.columns:
+            df_periodo = df_semana[df_semana["categoria"].isna() & df_semana["url"].isna()]
+            st.subheader("📅 Detecções por Período")
+            st.dataframe(df_periodo)
+        else:
+            st.warning("⚠️ Colunas 'url' ou 'categoria' não existem nos dados semanais.")
+
 
     elif tipo_analise == "Dashboard":
         st.subheader("📊 Painel Semanal de Detecções")
