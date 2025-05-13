@@ -122,6 +122,20 @@ def varredura_automatica():
         os.makedirs("dados_semanais", exist_ok=True)
         df.to_csv(f"dados_semanais/semana_{ano}-{semana}.csv", index=False)
 
+        # Clusterização automática semanal (se houver dados suficientes)
+        try:
+            if df.shape[0] > 1000:
+                print(f"🧠 Rodando clusterização automática... ({df.shape[0]} linhas)")
+                perfil, resumo = clusterizar_streamers(df)
+                # Salva os resultados do cluster, se quiser
+                perfil.to_csv(f"dados_semanais/perfil_cluster_semana_{ano}-{semana}.csv", index=False)
+                resumo.to_csv(f"dados_semanais/resumo_cluster_semana_{ano}-{semana}.csv", index=False)
+                print("✅ Clusterização semanal concluída e salva.")
+            else:
+                print(f"ℹ️ Clusterização não executada (apenas {df.shape[0]} linhas).")
+        except Exception as e:
+            print(f"❌ Erro na clusterização automática: {e}")
+
         print(f"📁 Varredura automática concluída em {datetime.now()} — CSV semanal atualizado.")
         time.sleep(900)  # espera 15 minutos
 
