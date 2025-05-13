@@ -89,15 +89,41 @@ except ImportError:
 
 def varredura_automatica():
     while True:
+        print(f"🔄 Iniciando varredura automática: {datetime.now()}")
+
+        # 1. Verificar lives dos streamers cadastrados
+        resultados_lives = []
+        for streamer in TODOS_STREAMERS:
+            res = verificar_jogo_em_live(streamer, HEADERS_TWITCH, BASE_URL_TWITCH)
+            if res and len(res) == 3:
+                jogo, categoria, viewers = res
+                resultados_lives.append({
+                    "streamer": streamer,
+                    "jogo_detectado": jogo,
+                    "categoria": categoria,
+                    "viewers": viewers,
+                    "data_hora": datetime.now()
+                })
+
+        if resultados_lives:
+            salvar_deteccao("lives", resultados_lives)
+            print(f"✅ {len(resultados_lives)} lives detectadas e salvas.")
+        else:
+            print("ℹ️ Nenhuma live detectada.")
+
+        # 2. Atualizar dados semanais com base nos históricos
         df1 = carregar_historico("lives")
         df2 = carregar_historico("template")
         df3 = carregar_historico("url")
         df = pd.concat([df1, df2, df3], ignore_index=True)
+
         ano, semana, _ = date.today().isocalendar()
         os.makedirs("dados_semanais", exist_ok=True)
         df.to_csv(f"dados_semanais/semana_{ano}-{semana}.csv", index=False)
-        print(f"✅ Varredura automática concluída em {datetime.now()}")
-        time.sleep(900)
+
+        print(f"📁 Varredura automática concluída em {datetime.now()} — CSV semanal atualizado.")
+        time.sleep(900)  # espera 15 minutos
+
 
 # ---------------- Importar módulos internos ----------------
 from ml_training import treinar_modelo
