@@ -375,36 +375,18 @@ def calcular_minutos_por_streamer(dados, nome_jogo="pragmatic"):
 STREAMERS_INTERESSE = carregar_streamers()
 TODOS_STREAMERS = STREAMERS_INTERESSE
 
-# ------------------ SIDEBAR REFACTORED ------------------
+# ------------------ SIDEBAR: Filtros Gerais ------------------
 with st.sidebar.expander("🎯 Filtros de Data e URL"):
     data_inicio = st.date_input("Data de início", value=datetime.today() - timedelta(days=7))
     data_fim = st.date_input("Data de fim", value=datetime.today())
     url_custom = st.text_input("URL personalizada (VOD .m3u8 ou com ?t=...)")
     segundo_alvo = st.number_input("Segundo para captura manual", min_value=0, max_value=99999, value=0)
 
-# ✅ NOVO: Checkbox de filtro por categoria
-with st.sidebar.expander("⚙️ Filtro de Categoria"):
-    usar_filtro_virtual_casino = st.checkbox("Filtrar apenas 'Virtual Casino'", value=False)
+# ✅ NOVO: Checkbox para controlar se o filtro por 'Virtual Casino' deve ser aplicado
+with st.sidebar.expander("⚙️ Filtro por Categoria"):
+    usar_filtro_virtual_casino = st.checkbox("🔘 Analisar apenas a categoria 'Virtual Casino'", value=False)
 
-with st.sidebar.expander("🔧 Utilitários Twitch"):
-    col1, col2 = st.columns(2)
-    with col1:
-        if st.button("🔍 Testar conexão"):
-            test_url = "https://api.twitch.tv/helix/streams?first=1"
-            resp = requests.get(test_url, headers=HEADERS_TWITCH)
-            st.write("Status:", resp.status_code)
-            try:
-                st.json(resp.json())
-            except Exception as e:
-                st.error(f"Erro ao converter resposta: {e}")
-    with col2:
-        if st.button("🎲 Testar categoria"):
-            nome_categoria = "Virtual Casino"
-            url = f"{BASE_URL_TWITCH}games?name={nome_categoria}"
-            resp = requests.get(url, headers=HEADERS_TWITCH)
-            st.write("🔁 Status:", resp.status_code)
-            st.json(resp.json())
-
+# ------------------ MODELO ML ------------------
 with st.sidebar.expander("🧠 Modelo de Detecção"):
     if "modelo_ml" in st.session_state:
         st.success("✅ Modelo ML carregado")
@@ -421,7 +403,7 @@ with st.sidebar.expander("🧠 Modelo de Detecção"):
         else:
             st.warning("⚠️ Falha no treinamento do modelo.")
 
-# ------------------ AÇÃO: Análise de VOD por Período ------------------
+# ------------------ ANÁLISE DE VOD / PERÍODO ------------------
 with st.sidebar.expander("🎯 Análise de VOD / Período"):
     streamer_escolhido = st.selectbox("👤 Escolha o streamer", carregar_streamers())
     tipo_analise = st.radio("Tipo de análise", ["VOD específica (URL)", "Por período"])
@@ -436,7 +418,6 @@ with st.sidebar.expander("🎯 Análise de VOD / Período"):
 
                 if m3u8_url:
                     tempo_inicial = extrair_segundos_da_url_vod(vod_url_individual)
-
                     st.info("📈 Iniciando varredura profunda (240 frames a cada 60s)...")
 
                     resultado = varrer_url_customizada_paralela(
@@ -475,7 +456,7 @@ with st.sidebar.expander("🎯 Análise de VOD / Período"):
                     BASE_URL_TWITCH
                 )
 
-            # ✅ Aplica filtro se checkbox estiver marcado
+            # ✅ Aplicar filtro se marcado
             if usar_filtro_virtual_casino:
                 vods = [vod for vod in vods if vod.get("categoria") == "Virtual Casino"]
 
@@ -503,7 +484,7 @@ with st.sidebar.expander("🎯 Análise de VOD / Período"):
                     st.error("❌ Ocorreu um erro durante a análise.")
                     st.exception(e)
 
-# ------------------ AÇÃO: Verificar Lives Agora (aplicação do filtro) ------------------
+# ------------------ BOTÃO: Verificar lives agora ------------------
 if st.button("🔍 Verificar lives agora"):
     resultados = []
 
@@ -519,7 +500,7 @@ if st.button("🔍 Verificar lives agora"):
                 "timestamp": datetime.now()
             })
 
-    # ✅ Aplica filtro se marcado
+    # ✅ Aplicar filtro se checkbox marcado
     if usar_filtro_virtual_casino:
         resultados = [r for r in resultados if r.get("categoria") == "Virtual Casino"]
 
@@ -528,6 +509,28 @@ if st.button("🔍 Verificar lives agora"):
         st.success(f"{len(resultados)} detecções salvas com sucesso!")
     else:
         st.info("Nenhum jogo detectado ao vivo.")
+
+# ------------------ BOTÃO: Verificar resumo de VODs ------------------
+if st.button("📺 Verificar resumo de VODs"):
+    dt_ini = datetime.combine(data_inicio, datetime.min.time())
+    dt_fim = datetime.combine(data_fim, datetime.max.time())
+
+    vods = buscar_vods_twitch_por_periodo(
+        dt_ini, dt_fim, HEADERS_TWITCH, BASE_URL_TWITCH, TODOS_STREAMERS
+    )
+
+    # ✅ Aplicar filtro se necessário
+    vods_filtradas = vods
+    if usar_filtro_virtual_casino:
+        vods_filtradas = [vod for vod in vods if vod.get("categoria") == "Virtual Casino"]
+
+    if vods_filtradas:
+        salvar_deteccao("vods", vods_filtradas)
+        st.success(f"{len(vods_filtradas)} VODs salvas com sucesso!")
+
+        # aqui seguiria com a exibição dos gráficos, dataframes, etc.
+    else:
+        st.warning("⚠️ Nenhuma VOD com filtro aplicado encontrada.")
 
 
 # ------------------ EXIBIÇÃO DE RESULTADOS (MELHORADA) ------------------
