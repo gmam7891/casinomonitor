@@ -14,3 +14,4 @@ matplotlib
 ultralytics
 numpy
 streamlink
+upgrade plotly
