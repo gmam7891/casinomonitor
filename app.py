@@ -1264,6 +1264,37 @@ df_semana = carregar_dados_semanais()
 if df_semana.empty:
     st.info("Nenhum dado disponível para esta semana. Clique na barra lateral para atualizar.")
 else:
+
+    # ✅ PAINEL DE DESTAQUES
+    st.markdown("## 🌟 Destaques da Semana")
+
+    col1, col2, col3 = st.columns(3)
+
+    with col1:
+        if "streamer" in df_semana.columns:
+            top_streamer = df_semana["streamer"].value_counts().idxmax()
+            total = df_semana["streamer"].value_counts().max()
+            st.metric("🧍‍♂️ Top Streamer", top_streamer, f"{total} detecções")
+        else:
+            st.warning("Sem dados de streamer.")
+
+    with col2:
+        if "jogo_detectado" in df_semana.columns:
+            top_jogo = df_semana["jogo_detectado"].value_counts().idxmax()
+            total = df_semana["jogo_detectado"].value_counts().max()
+            st.metric("🎰 Jogo da Semana", top_jogo, f"{total} aparições")
+        else:
+            st.warning("Sem dados de jogos.")
+
+    with col3:
+        if "streamer" in df_semana.columns and "viewers" in df_semana.columns:
+            pico = df_semana.loc[df_semana["viewers"].idxmax()]
+            st.metric("👀 Maior Audiência", pico["streamer"], f"{int(pico['viewers'])} viewers")
+        else:
+            st.warning("Sem dados de audiência.")
+
+    # 🔽 Continua o app normalmente com:
+
     tipo_analise = st.radio("Visualizar por:", ["Live", "VOD (URL)", "Período", "Dashboard"])
 
     if tipo_analise == "Live":
