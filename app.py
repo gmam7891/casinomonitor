@@ -1,7 +1,27 @@
-import sys
 import os
-sys.path.append(os.path.dirname(__file__))
-os.makedirs("output", exist_ok=True)
+from datetime import date
+import pandas as pd
+import streamlit as st
+
+@st.cache_data
+def carregar_dados_semanais():
+    caminho = "output/dados_semana.csv"
+
+    if not os.path.exists(caminho):
+        colunas = ["Data", "Streamer", "Jogo", "Tipo", "Canal", "Viewers", "Screenshot", "Título", "Duração", "Link", "Clip"]
+        return pd.DataFrame(columns=colunas)
+
+    df = pd.read_csv(caminho)
+    df['Data'] = pd.to_datetime(df['Data'])
+    df['Semana'] = df['Data'].dt.isocalendar().week
+    df['Ano'] = df['Data'].dt.isocalendar().year
+    ano, semana, _ = date.today().isocalendar()
+    df_semana = df[(df['Ano'] == ano) & (df['Semana'] == semana)]
+
+    return df_semana
+
+# chamada do carregamento
+df_semana = carregar_dados_semanais()
 
 from datetime import date
 import streamlit as st
