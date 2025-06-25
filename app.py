@@ -1,6 +1,7 @@
 import sys
 import os
 sys.path.append(os.path.dirname(__file__))
+os.makedirs("output", exist_ok=True)
 
 from datetime import date
 import streamlit as st
