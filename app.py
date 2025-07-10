@@ -438,7 +438,10 @@ TODOS_STREAMERS = STREAMERS_INTERESSE
 
 # ------------------ SIDEBAR REFACTORED ------------------
 with st.sidebar.expander("🎯 Filtros de Data e URL"):
-    data_inicio = st.date_input("Data de início", value=datetime.today() - timedelta(days=7))
+    data_inicio = st.date_input(
+    "Data de início",
+    value=date.today() - timedelta(days=7)
+    )
     data_fim = st.date_input("Data de fim", value=datetime.today())
     url_custom = st.text_input("URL personalizada (VOD .m3u8 ou com ?t=...)")
     segundo_alvo = st.number_input("Segundo para captura manual", min_value=0, max_value=99999, value=0)
