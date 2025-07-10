@@ -181,8 +181,6 @@ logging.basicConfig(level=logging.INFO, format='[%(levelname)s] %(asctime)s - %(
 # ---------------- CABEÇALHO ----------------
 st.markdown("""
 <div style='background-color:white; padding:10px; display:flex; align-items:center;'>
-    <img src='https://findfaircasinos.com/gfx/uploads/620_620_kr/716_Pragmatic%20play%20logo.png' 
-         style='height:60px; margin-right:20px;'>
     <h1 style='color:black; margin:0;'>CASINO MONITOR</h1>
 </div>
 """, unsafe_allow_html=True)
