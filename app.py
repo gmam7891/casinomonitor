@@ -1391,3 +1391,21 @@ threading.Thread(target=varredura_automatica, daemon=True).start()
 if __name__ == "__main__":
     main()
 
+opcao = st.sidebar.radio(
+    "Selecione uma área:",
+    ("Dashboard", "Clusterização", "Treinar Modelo", "Sobre")
+)
+
+if opcao == "Dashboard":
+    from src import dashboard
+    dashboard  # O Streamlit já executa tudo do script
+elif opcao == "Clusterização":
+    from cluster_dashboard import exibir_dashboard_cluster
+    exibir_dashboard_cluster()
+elif opcao == "Treinar Modelo":
+    st.info("Aqui você pode integrar seu script de treinamento ML.")
+else:
+    st.markdown("""
+    **CasinoMonitor** © 2025  
+    Pipeline de detecção multi-provedor, persistência em SQLite e dashboards interativos.
+    """)
