@@ -1,6 +1,9 @@
 # ==============================================================================
 # 1. IMPORTS E CONFIGURAÇÃO INICIAL
 # ==============================================================================
+from app_config import inicializar_sessao
+inicializar_sessao()
+
 import os
 import streamlit as st
 import pandas as pd
